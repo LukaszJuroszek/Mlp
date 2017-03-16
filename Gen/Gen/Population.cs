@@ -21,7 +21,7 @@ namespace Gen
         {
             var result = new List<IndividualPerson>();
             for (var i = 0;i < lenth;i++)
-                result.Add(new IndividualPerson(Template.Length,Template));
+                result.Add(new IndividualPerson(Template,Template.Length));
             return result;
         }
         private void CoutPopulationMarks()
@@ -41,9 +41,29 @@ namespace Gen
             }
             return CurrentPopulation.Count;
         }
-        public void CrossPopulation()
+        private int GetIndividualSize() => CurrentPopulation.First().GetIndividualSize() + 1;
+        private void CrossTwoPerson()
         {
-
+            var firstPersonIndex = GetRandomParentIndex();
+            var secondPersonIndex = GetRandomParentIndex();
+            var splitingNumber = rand.Next(0,GetIndividualSize());
+            CrossTwoPersonBySplitingNumber(firstPersonIndex,secondPersonIndex,splitingNumber);
+        }
+        private void CrossTwoPersonBySplitingNumber(int firstPersonIndex,int secondPersonIndex,int splitingNumber)
+        {
+            var firstPersonAfterCrossing = CrossPersonWithSecondBySplitingNumber(splitingNumber,CurrentPopulation[firstPersonIndex],CurrentPopulation[secondPersonIndex]);
+            var secondPersonAfterCrossing = CrossPersonWithSecondBySplitingNumber(splitingNumber,CurrentPopulation[secondPersonIndex],CurrentPopulation[firstPersonIndex]);
+            CurrentPopulation[firstPersonIndex].SetIndividual(firstPersonAfterCrossing,Template);
+            CurrentPopulation[secondPersonIndex].SetIndividual(secondPersonAfterCrossing,Template);
+        }
+        private List<int> CrossPersonWithSecondBySplitingNumber(int splitingNumber,IndividualPerson firstPerson,IndividualPerson secondPerson)
+        {
+            var result = new List<int>();
+            foreach (var item in firstPerson.GetIndividual().Take(splitingNumber))
+                result.Add(item);
+            foreach (var item in secondPerson.GetIndividual().Skip(splitingNumber))
+                result.Add(item);
+            return result;
         }
     }
 }

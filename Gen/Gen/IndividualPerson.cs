@@ -7,34 +7,48 @@ namespace Gen
     public class IndividualPerson
     {
         public static Random _random = new Random();
-        public List<int> Individual { get; set; }
-        public int Mark { get; set; } = 0;
-        public IndividualPerson(int size,int[] template)
+        private List<int> individual;
+        public List<int> GetIndividual()
         {
-            GenerateInvidual(size);
-            Mark = CountMarks(template);
+            return individual;
         }
-        public int CountMarks(int[] template)
+        public void SetIndividual(List<int> value)
+        {
+            individual = value;
+        }
+        public void SetIndividual(List<int> value,int[] template)
+        {
+            individual = value;
+            CountMarks(template);
+        }
+        public int Mark { get; set; } = 0;
+        public IndividualPerson(int[] template,int sizeOfeInvidual)
+        {
+            GenerateInvidual(sizeOfeInvidual);
+            CountMarks(template);
+        }
+        public int GetIndividualSize() => GetIndividual().Count;
+        public void CountMarks(int[] template)
         {
             var result = 0;
-            for (var i = 0;i < Individual.Count;i++)
-                if (Individual.Skip(i).First() == template[i])
+            for (var i = 0;i < GetIndividual().Count;i++)
+                if (GetIndividual().Skip(i).First() == template[i])
                     result++;
-            return result;
+            Mark = result;
         }
         public void GenerateInvidual(int size)
         {
-            Individual = new List<int>();
+            SetIndividual(new List<int>());
             for (var i = 0;i < size;i++)
             {
                 var number = _random.Next(0,2);
-                Individual.Add(number);
+                GetIndividual().Add(number);
             }
         }
         public override string ToString()
         {
             var st = new StringBuilder();
-            foreach (var item in Individual)
+            foreach (var item in GetIndividual())
                 st.Append(item + " ");
             st.Append(Mark);
             return st.ToString();
