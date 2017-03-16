@@ -32,7 +32,7 @@ namespace Gen
         {
             var result = 0;
             for (var i = 0;i < GetIndividual().Count;i++)
-                if (GetIndividual().Skip(i).First() == template[i])
+                if (GetIndividual()[i] == template[i])
                     result++;
             Mark = result;
         }
@@ -50,7 +50,7 @@ namespace Gen
             var st = new StringBuilder();
             foreach (var item in GetIndividual())
                 st.Append(item + " ");
-            st.Append(Mark);
+            st.Append($"Mark: {Mark}");
             return st.ToString();
         }
     }

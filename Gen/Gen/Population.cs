@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 
 namespace Gen
 {
@@ -64,6 +65,28 @@ namespace Gen
             foreach (var item in secondPerson.GetIndividual().Skip(splitingNumber))
                 result.Add(item);
             return result;
+        }
+        public void CrossPopulation()
+        {
+            foreach (var item in Enumerable.Range(1,CurrentPopulation.Count))
+            {
+                CrossTwoPerson();
+            }
+            CoutPopulationMarks();
+        }
+        public override string ToString()
+        {
+            var st = new StringBuilder();
+            foreach (var item in CurrentPopulation)
+            {
+                st.AppendLine(item.ToString());
+            }
+            st.Append($"Mark Sum:{GetAllMarks()}, Template ");
+            foreach (var item in Template)
+            {
+                st.Append(item+" ");
+            }
+            return st.ToString();
         }
     }
 }
