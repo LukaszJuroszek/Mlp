@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Programownie4
+namespace Programowanie4
 {
     class Program
     {
