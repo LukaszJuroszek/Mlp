@@ -9,7 +9,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DapperTest", "..\DapperTest
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NeutralNetworks", "NeutralNetworks\NeutralNetworks.csproj", "{BCE6A7E7-62D9-4512-B49E-9B4C962A3ED0}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MLP", "..\..\..\..\Desktop\MLP\MLP\MLP.csproj", "{4AAF8636-F9BE-4130-ABEE-906546ACD865}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MLP", "MLP\MLP.csproj", "{4AAF8636-F9BE-4130-ABEE-906546ACD865}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
