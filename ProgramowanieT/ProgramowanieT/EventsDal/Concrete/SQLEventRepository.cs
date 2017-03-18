@@ -9,8 +9,7 @@ namespace EventsDal.Concrete
 {
     public class SQLEventRepository : IEventRepository
     {
-        private const string stringFromat = "yyyy-MM-dd HH:mm:ss";
-        private const string stringFromat2 = "yyyy-MM-dd";
+        private const string stringFromat = "yyyy-MM-dd HH:mm:ss.fff";
 
         private static SqlConnection DBConnection() => new SqlConnection(ConfigurationManager.ConnectionStrings["EventsDapper"].ConnectionString);
         private bool RowsAffected(int rowsAffected) => rowsAffected > 0 ? true : false;
@@ -38,7 +37,7 @@ namespace EventsDal.Concrete
             {
                 db.Open();
                 //SQL WHEN is slq syntax !!!
-                var rowsAffected = db.Query("UPDATE Event SET Title = @Title ,Description = @Description, \"When\" = @When WHERE Id =  @Id",new { Id = e.Id,Title = e.Title,Description = e.Description,When = e.When.Date.ToString(stringFromat2) });
+                var rowsAffected = db.Query("UPDATE Event SET Title = @Title ,Description = @Description, \"When\" = @When WHERE Id =  @Id",new { Id = e.Id,Title = e.Title,Description = e.Description,When = e.When.Date.ToString(stringFromat) });
                 //return RowsAffected(rowsAffected);
             }
         }

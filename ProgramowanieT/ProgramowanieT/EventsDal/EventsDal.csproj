@@ -46,6 +46,7 @@
   <ItemGroup>
     <Compile Include="Concrete\MemoryEventRepository.cs" />
     <Compile Include="Concrete\SQLEventRepository.cs" />
+    <Compile Include="Concrete\XMLEventRepository.cs" />
     <Compile Include="Model\Event.cs" />
     <Compile Include="Model\IEventRepository.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

@@ -1,0 +1,8 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<Events>
+  <Event id="1">
+    <Title>"test"</Title>
+    <Description>"test"</Description>
+    <When>1999-03-19</When>
+  </Event>
+</Events>
