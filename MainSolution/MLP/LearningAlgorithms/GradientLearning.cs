@@ -7,18 +7,18 @@ namespace MLPProgram.LearningAlgorithms
         public double _etaPlus = 1.2, _etaMinus = 0.5, _minDelta = 0.00001, _maxDelta = 10, _errorExponent = 2.0;
         private MLP Network { get; set; }
         public bool Cv { get; set; }
-        public double Test(double[][] TrainingDataSet,double[][] TestDataSet)
+        public double Test(double[][] trainingDataSet,double[][] testDataSet)
         {
             double errorsRMSE;
-            return Network.Accuracy(TestDataSet,out errorsRMSE,Network.TransferFunction,0);
+            return Network.Accuracy(testDataSet,out errorsRMSE,Network.TransferFunction,0);
         }
-        public void Train(INetwork network1,double[][] TrainingDataSet,
+        public void Train(INetwork network,double[][] trainingDataSet,
             bool classification,int numEpochs = 30,int batchSize = 30,double learnRate = 0.05,double momentum = 0.5)
         {
-            Network = (MLP)network1;
+            Network = (MLP)network;
             var numInputs = Network.Layer[0];
             var numOutputs = Network.Layer[Network.NumLayers - 1];
-            var numVectors = TrainingDataSet.Length;
+            var numVectors = trainingDataSet.Length;
             if (batchSize > numVectors)
                 batchSize = numVectors;
             if (this is Rprop)
@@ -46,12 +46,12 @@ namespace MLPProgram.LearningAlgorithms
                 {
                     for (var b = 0;b < batchSize;b++)
                     {
-                        Network.ForwardPass(TrainingDataSet[v],Network.TransferFunction);
+                        Network.ForwardPass(trainingDataSet[v],Network.TransferFunction);
                         // find SignalErrors for the output layer
                         double sumError = 0;
                         for (var n = 0;n < numOutputs;n++)
                         {
-                            double error = TrainingDataSet[v][numInputs + n] - Network.Output[Network.NumLayers - 1][n];
+                            double error = trainingDataSet[v][numInputs + n] - Network.Output[Network.NumLayers - 1][n];
                             error = Math.Sign(error) * Math.Pow(Math.Abs(error),_errorExponent);
                             sumError += Math.Abs(error);
                             if (classification)
