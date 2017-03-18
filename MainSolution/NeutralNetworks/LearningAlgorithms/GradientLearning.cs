@@ -1,11 +1,11 @@
 ﻿using System;
-namespace DL.LearningAlgorithms
+namespace NeutralNetworks.LearningAlgorithms
 {
     abstract class GradientLearning : ILearningAlgorithm
     {
         public double etaPlus = 1.2, etaMinus = 0.5, minDelta = 0.00001, maxDelta = 10, errorExponent = 1.0;
-        public bool cv { get; set; }
-        public int numSelectedVectors { get; set; }
+        public bool Cv { get; set; }
+        public int NumSelectedVectors { get; set; }
         Networks.MLP network;
         public double Test(double[][] TrainingDataSet,double[][] TestDataSet)
         {
@@ -56,7 +56,7 @@ namespace DL.LearningAlgorithms
                 double sum;
                 int v = 0;
                 int nsa = TrainingDataSet[0].Length - 2;
-                numSelectedVectors = numVectors;
+                NumSelectedVectors = numVectors;
                 while (v < numVectors)
                 {
                     for (int b = 0;b < batchSize;b++)
@@ -87,11 +87,11 @@ namespace DL.LearningAlgorithms
                             if (sumError <= minError0 || sumError >= maxError0)
                             {
                                 TrainingDataSet[v][nsa] = 0;
-                                numSelectedVectors--;
+                                NumSelectedVectors--;
                             }
                         } else
                         {
-                            numSelectedVectors--;
+                            NumSelectedVectors--;
                         }
                         // find SignalErrors for all hidden layers
                         for (int L = network.numLayers - 2;L > 0;L--)
@@ -121,7 +121,7 @@ namespace DL.LearningAlgorithms
                         if (v == numVectors)
                             break;
                     }
-                    updateWeights(network,learnRate,momentum,etaPlus,etaMinus,minDelta,maxDelta,numRemovedFeatures);
+                    UpdateWeights(network,learnRate,momentum,etaPlus,etaMinus,minDelta,maxDelta,numRemovedFeatures);
                     // zero-out gradients
                     for (int L = 1;L < network.numLayers;L++)
                         for (int n = 0;n < network.Layer[L];n++)
@@ -130,6 +130,6 @@ namespace DL.LearningAlgorithms
                 }
             }
         }
-        abstract protected void updateWeights(Networks.MLP network,double learnRate,double momentum,double etaPlus,double etaMinus,double minDelta,double maxDelta,double inputWeightRegularizationCoef = -1);
+        abstract protected void UpdateWeights(Networks.MLP network,double learnRate,double momentum,double etaPlus,double etaMinus,double minDelta,double maxDelta,double inputWeightRegularizationCoef = -1);
     }
 }

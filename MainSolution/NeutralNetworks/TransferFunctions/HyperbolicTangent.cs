@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace DL.TransferFunctions
+namespace NeutralNetworks.TransferFunctions
 {
     class HyperbolicTangent : ITransferFunction
     {

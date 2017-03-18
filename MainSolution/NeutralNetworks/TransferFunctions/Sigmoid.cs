@@ -1,6 +1,7 @@
-﻿using System;
+﻿using DL.TransferFunctions;
+using System;
 
-namespace DL.TransferFunctions
+namespace NeutralNetworks.TransferFunctions
 {
     class Sigmoid : ITransferFunction
     {

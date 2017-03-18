@@ -1,8 +1,8 @@
-﻿namespace DL.LearningAlgorithms
+﻿namespace NeutralNetworks.LearningAlgorithms
 {
     class BP : GradientLearning, ILearningAlgorithm
     {
-        protected override void updateWeights(Networks.MLP network,double learnRate,double momentum,double etaPlus,double etaMinus,double minDelta,double maxDelta,double inputWeightRegularizationCoef = -1)
+        protected override void UpdateWeights(Networks.MLP network,double learnRate,double momentum,double etaPlus,double etaMinus,double minDelta,double maxDelta,double inputWeightRegularizationCoef = -1)
         {
             for (int L = network.numLayers - 1;L > 0;L--)
                 for (int n = 0;n < network.Layer[L];n++)

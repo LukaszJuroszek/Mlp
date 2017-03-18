@@ -1,4 +1,4 @@
-﻿namespace DL.Networks
+﻿namespace NeutralNetworks.Networks
 {
     interface INetwork
     {

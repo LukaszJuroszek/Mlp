@@ -1,4 +1,4 @@
-﻿namespace DL.TransferFunctions
+﻿namespace NeutralNetworks.TransferFunctions
 {
     interface ITransferFunction
     {
