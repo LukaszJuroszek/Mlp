@@ -10,7 +10,7 @@ namespace Gen
             var pop = new Population(popLenth,new int[] { 1,1,1,1,0,0,0,0});
             Console.WriteLine(pop);
             Console.WriteLine("po skrzyżowaniu");
-            for (int i = 0;i < 1000;i++)
+            for (var i = 0;i < 1000;i++)
             {
             pop.CrossPopulation();
             }

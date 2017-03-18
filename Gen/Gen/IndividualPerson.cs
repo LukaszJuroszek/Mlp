@@ -8,6 +8,7 @@ namespace Gen
     {
         public static Random _random = new Random();
         private List<int> individual;
+        public int Mark { get; set; } = 0;
         public List<int> GetIndividual()
         {
             return individual;
@@ -21,7 +22,6 @@ namespace Gen
             individual = value;
             CountMarks(template);
         }
-        public int Mark { get; set; } = 0;
         public IndividualPerson(int[] template,int sizeOfeInvidual)
         {
             GenerateInvidual(sizeOfeInvidual);
