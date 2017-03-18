@@ -35,19 +35,19 @@ namespace MLPProgram
                 {
                     if (theLine.Trim().Length > 2)
                     {
-                        string[] S = theLine.Split(new string[] { " ",";" },StringSplitOptions.RemoveEmptyEntries);
+                        string[] s = theLine.Split(new string[] { " ",";" },StringSplitOptions.RemoveEmptyEntries);
                         int a = 0;
                         for (a = 0;a < numAttributes;a++)
-                            DataSet[v][a] = Double.Parse(S[a],CultureInfo.InvariantCulture);
+                            DataSet[v][a] = Double.Parse(s[a],CultureInfo.InvariantCulture);
                         if (Headers[Headers.Length - 2].ToLower() == "outlier")
-                            DataSet[v][a] = Double.Parse(S[S.Length - 2],CultureInfo.InvariantCulture);
+                            DataSet[v][a] = Double.Parse(s[s.Length - 2],CultureInfo.InvariantCulture);
                         else if (Headers[Headers.Length - 1].ToLower() == "outlier")
-                            DataSet[v][a] = Double.Parse(S[S.Length - 1],CultureInfo.InvariantCulture);
+                            DataSet[v][a] = Double.Parse(s[s.Length - 1],CultureInfo.InvariantCulture);
                         else
                             DataSet[v][a] = 1;
                         a++;
                         if (Headers[Headers.Length - 1].ToLower() == "vector")
-                            DataSet[v][a] = Int32.Parse(S[S.Length - 1],CultureInfo.InvariantCulture);
+                            DataSet[v][a] = Int32.Parse(s[s.Length - 1],CultureInfo.InvariantCulture);
                         else
                             DataSet[v][a] = v;
                         v++;
