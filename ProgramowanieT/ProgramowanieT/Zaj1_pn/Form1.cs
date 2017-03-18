@@ -1,15 +1,10 @@
 ﻿using EventsDal.Concrete;
 using EventsDal.Model;
 using System;
-using System.Collections.Generic;
-using System.ComponentModel;
 using System.Configuration;
 using System.Data;
 using System.Data.SqlClient;
-using System.Drawing;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace Zaj1_pn
@@ -21,9 +16,9 @@ namespace Zaj1_pn
         {
             InitializeComponent();
             //sql, xml
-            _eventsRepository = new MemoryEventRepository();
+            _eventsRepository = new SQLEventRepository();
+            //_eventsRepository = new MemoryEventRepository();
         }
-
         public void Form1_Load(object sender,EventArgs e)
         {
             var events = _eventsRepository.GetAll();
@@ -39,17 +34,15 @@ namespace Zaj1_pn
             //    dgvEvents.DataSource = dt;
             //}
         }
-
         private void btnAdd_Click(object sender,EventArgs e)
         {
             var frmAddEdit = new FrmAddEdit();
             if (frmAddEdit.ShowDialog() == DialogResult.OK)
             {
-                _eventsRepository.Add(frmAddEdit.Save());
+                _eventsRepository.Add(frmAddEdit.GetEventToSave());
                 Form1_Load(sender,e);
             }
         }
-
         private void btnDelete_Click(object sender,EventArgs e)
         {
             foreach (var row in dgvEvents.SelectedRows.Cast<DataGridViewRow>())
@@ -59,7 +52,6 @@ namespace Zaj1_pn
             }
             Form1_Load(sender,e);
         }
-
         private void btnEdit_Click(object sender,EventArgs e)
         {
             var id = int.Parse(dgvEvents.Rows[dgvEvents.SelectedCells[0].RowIndex].Cells[0].Value.ToString());
@@ -69,11 +61,10 @@ namespace Zaj1_pn
             var frmAddEdit = new FrmAddEdit(title,desc,when);
             if (frmAddEdit.ShowDialog() == DialogResult.OK)
             {
-                _eventsRepository.Edit(frmAddEdit.Edit(id));
+                _eventsRepository.Edit(frmAddEdit.GetEventToEdit(id));
                 Form1_Load(sender,e);
             }
         }
-
         private void Delete(int id)
         {
             var connStr = ConfigurationManager.ConnectionStrings["Events"].ConnectionString;
@@ -85,7 +76,6 @@ namespace Zaj1_pn
                 cmd.ExecuteNonQuery();
             }
         }
-
         private void btnRefresh_Click(object sender,EventArgs e)
         {
             Form1_Load(sender,e);

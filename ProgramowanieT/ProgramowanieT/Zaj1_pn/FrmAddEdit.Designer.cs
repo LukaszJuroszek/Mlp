@@ -55,6 +55,7 @@
             // dtpWhen
             // 
             this.dtpWhen.Location = new System.Drawing.Point(61, 216);
+            this.dtpWhen.MinDate = new System.DateTime(1800, 1, 1, 0, 0, 0, 0);
             this.dtpWhen.Name = "dtpWhen";
             this.dtpWhen.Size = new System.Drawing.Size(200, 20);
             this.dtpWhen.TabIndex = 1;

@@ -25,10 +25,8 @@ namespace EventsDal.Concrete
         {
             var replacedItem = _events.Where(x => x.Id == e.Id).First();
             var indexOfItem = _events.IndexOf(replacedItem);
-            if (indexOfItem!=-1)
-            {
+            if (indexOfItem != -1)
                 _events[indexOfItem] = e;
-            }
         }
         public IQueryable<Event> GetAll()
         {

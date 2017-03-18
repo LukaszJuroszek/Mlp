@@ -20,15 +20,13 @@ namespace Zaj1_pn
             InitializeComponent();
         }
 
-        public FrmAddEdit(string title,string description,DateTime when)
-            : this()
+        public FrmAddEdit(string title,string description,DateTime when) : this()
         {
             textBoxTitle.Text = title;
             textBoxOpis.Text = description;
             dtpWhen.Value = when;
         }
-
-        public Event Save()
+        public Event GetEventToSave()
         {
             //var connStr = ConfigurationManager.ConnectionStrings["Events"].ConnectionString;
             //using (var conn = new SqlConnection(connStr))
@@ -39,11 +37,10 @@ namespace Zaj1_pn
             //    cmd.Parameters.AddWithValue("@Description",textBoxOpis.Text);
             //    cmd.Parameters.AddWithValue("@When",dtpWhen.Value);
             //    cmd.ExecuteNonQuery();
-                return new Event {Title = textBoxTitle.Text,Description = textBoxOpis.Text,When = dtpWhen.Value };
-//}
+            return new Event { Title = textBoxTitle.Text,Description = textBoxOpis.Text,When = dtpWhen.Value };
+            //}
         }
-
-        public Event Edit(int id)
+        public Event GetEventToEdit(int id)
         {
             //var connStr = ConfigurationManager.ConnectionStrings["Events"].ConnectionString;
             //using (var conn = new SqlConnection(connStr))
