@@ -63,6 +63,11 @@ namespace EventsDal.Concrete
             }
             return results.AsQueryable();
         }
+        public Event GetByID(int id)
+        {
+            var doc = XDocument.Load(fileName);
+            return GetEventFromXElement(GetEventXElementByIdInXDocument(id,doc));
+        }
         private static IEnumerable<XElement> GetAllEventsFromXDocument(XDocument doc)
         {
             return doc.Document.Descendants().Where(x => x.Name == EventEnum.Event.ToString());
@@ -96,11 +101,6 @@ namespace EventsDal.Concrete
         private static bool HasIdFristAtribute(XElement item)
         {
             return item.FirstAttribute.Name.LocalName.Equals(EventEnum.Id.ToString());
-        }
-        public Event GetByID(int id)
-        {
-            var doc = XDocument.Load(fileName);
-            return GetEventFromXElement(GetEventXElementByIdInXDocument(id,doc));
         }
         private static XElement GetEventXElementByIdInXDocument(int id,XDocument doc)
         {
