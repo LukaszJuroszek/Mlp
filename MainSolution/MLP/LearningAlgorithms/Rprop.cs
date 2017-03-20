@@ -1,10 +1,19 @@
 ﻿using MLPProgram.Networks;
 using System;
+
 namespace MLPProgram.LearningAlgorithms
 {
     class Rprop : GradientLearning, ILearningAlgorithm
     {
-        protected override void UpdateWeights(MLP network,double learnRate,double momentum,double etaPlus,double etaMinus,double minDelta,double maxDelta,double inputWeightRegularizationCoef = -1)
+        protected override void UpdateWeights(
+            MLP network,
+            double learnRate,
+            double momentum,
+            double etaPlus,
+            double etaMinus,
+            double minDelta,
+            double maxDelta,
+            double inputWeightRegularizationCoef = -1)
         {
             for (var l = network.NumLayers - 1;l > 0;l--)
             {

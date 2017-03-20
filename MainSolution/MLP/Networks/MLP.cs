@@ -55,13 +55,6 @@ namespace MLPProgram.Networks
                 }
             }
         }
-        private void InitTrirdDimension(int[] layer,int l,int n)
-        {
-            Weights[l][n] = new double[layer[l - 1] + 1];
-            WeightDiff[l][n] = new double[layer[l - 1] + 1];
-            PrevWeightDiff[l][n] = new double[layer[l - 1] + 1];
-            Delta[l][n] = new double[layer[l - 1] + 1];
-        }
         private void InitSecondDimension(int[] layer,int l)
         {
             Weights[l] = new double[layer[l]][];
@@ -70,6 +63,13 @@ namespace MLPProgram.Networks
             Delta[l] = new double[layer[l]][];
             SignalError[l] = new double[layer[l]];
             Output[l] = new double[layer[l]];
+        }
+        private void InitTrirdDimension(int[] layer,int l,int n)
+        {
+            Weights[l][n] = new double[layer[l - 1] + 1];
+            WeightDiff[l][n] = new double[layer[l - 1] + 1];
+            PrevWeightDiff[l][n] = new double[layer[l - 1] + 1];
+            Delta[l][n] = new double[layer[l - 1] + 1];
         }
         public double Accuracy(double[][] dataSet,out double error,ITransferFunction transferFunction,int lok = 0)
         {

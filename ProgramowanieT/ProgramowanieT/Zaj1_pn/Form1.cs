@@ -6,7 +6,6 @@ using System.Data;
 using System.Data.SqlClient;
 using System.Linq;
 using System.Windows.Forms;
-
 namespace Zaj1_pn
 {
     public partial class Form1 : Form

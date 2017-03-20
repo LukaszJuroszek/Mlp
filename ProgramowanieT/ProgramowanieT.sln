@@ -9,6 +9,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Zaj0_pn", "ProgramowanieT\Z
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EventsDal", "ProgramowanieT\EventsDal\EventsDal.csproj", "{D2F2AC53-A67C-4D6E-BB3A-09B70C17A49D}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "T3SamPraca", "T3SamPraca\T3SamPraca.csproj", "{415516FE-2B41-4698-ACC7-C36FC80DDC1F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -27,6 +29,10 @@ Global
 		{D2F2AC53-A67C-4D6E-BB3A-09B70C17A49D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D2F2AC53-A67C-4D6E-BB3A-09B70C17A49D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D2F2AC53-A67C-4D6E-BB3A-09B70C17A49D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{415516FE-2B41-4698-ACC7-C36FC80DDC1F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{415516FE-2B41-4698-ACC7-C36FC80DDC1F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{415516FE-2B41-4698-ACC7-C36FC80DDC1F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{415516FE-2B41-4698-ACC7-C36FC80DDC1F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

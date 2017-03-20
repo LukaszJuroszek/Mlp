@@ -22,10 +22,10 @@ namespace MLPProgram
                     if (theLine.Trim().Length > 4)
                         numVectors++;
             }
-            double[][] DataSet = new double[numVectors][];
+            double[][] dataSet = new double[numVectors][];
             for (var w = 0;w < numVectors;w++)
             {
-                DataSet[w] = new double[numAttributes + 2]; //the two additional columns are: outlier coefficiant and vector number              
+                dataSet[w] = new double[numAttributes + 2]; //the two additional columns are: outlier coefficiant and vector number              
             }
             using (var sr = new StreamReader(fileName))
             {
@@ -38,62 +38,62 @@ namespace MLPProgram
                         string[] s = theLine.Split(new string[] { " ",";" },StringSplitOptions.RemoveEmptyEntries);
                         int a = 0;
                         for (a = 0;a < numAttributes;a++)
-                            DataSet[v][a] = Double.Parse(s[a],CultureInfo.InvariantCulture);
+                            dataSet[v][a] = Double.Parse(s[a],CultureInfo.InvariantCulture);
                         if (Headers[Headers.Length - 2].ToLower() == "outlier")
-                            DataSet[v][a] = Double.Parse(s[s.Length - 2],CultureInfo.InvariantCulture);
+                            dataSet[v][a] = Double.Parse(s[s.Length - 2],CultureInfo.InvariantCulture);
                         else if (Headers[Headers.Length - 1].ToLower() == "outlier")
-                            DataSet[v][a] = Double.Parse(s[s.Length - 1],CultureInfo.InvariantCulture);
+                            dataSet[v][a] = Double.Parse(s[s.Length - 1],CultureInfo.InvariantCulture);
                         else
-                            DataSet[v][a] = 1;
+                            dataSet[v][a] = 1;
                         a++;
                         if (Headers[Headers.Length - 1].ToLower() == "vector")
-                            DataSet[v][a] = Int32.Parse(s[s.Length - 1],CultureInfo.InvariantCulture);
+                            dataSet[v][a] = Int32.Parse(s[s.Length - 1],CultureInfo.InvariantCulture);
                         else
-                            DataSet[v][a] = v;
+                            dataSet[v][a] = v;
                         v++;
                     }
                 }
             }
-            numInput = DataSet[1].Length - 3;  //the two additional columns are: outlier coefficiant and vector number
-            HashSet<int> CL = new HashSet<int>();
-            for (int i = 0;i < DataSet.Length;i++)
-                CL.Add((int)DataSet[i][DataSet[1].Length - 3]);
-            numOutput = CL.Count;
+            numInput = dataSet[1].Length - 3;  //the two additional columns are: outlier coefficiant and vector number
+            var cl = new HashSet<int>();
+            for (int i = 0;i < dataSet.Length;i++)
+                cl.Add((int)dataSet[i][dataSet[1].Length - 3]);
+            numOutput = cl.Count;
             classification = false;
             if (headerLine.ToLower().EndsWith("class") && multipleClassColumns)
             {
                 classification = true;
-                int numCol = DataSet[1].Length - 1 + CL.Count;
-                double[][] DataSet2 = new double[DataSet.Length][];
-                for (int i = 0;i < DataSet.Length;i++)
-                    DataSet2[i] = new double[numCol];
-                for (int v = 0;v < DataSet.Length;v++)
+                var numCol = dataSet[1].Length - 1 + cl.Count;
+                double[][] dataSet2 = new double[dataSet.Length][];
+                for (var i = 0;i < dataSet.Length;i++)
+                    dataSet2[i] = new double[numCol];
+                for (var v = 0;v < dataSet.Length;v++)
                 {
-                    for (int a = 0;a < DataSet[1].Length - 3;a++)
-                        DataSet2[v][a] = DataSet[v][a];
-                    for (int a = DataSet[1].Length - 2;a < DataSet[1].Length;a++) //outlier and vector columns
-                        DataSet2[v][a] = DataSet[v][a];
-                    int k = (int)DataSet[v][DataSet[1].Length - 3]; //class column
-                    int m = 0;
-                    for (int a = DataSet[1].Length - 3;a < numCol - 2;a++)
+                    for (var a = 0;a < dataSet[1].Length - 3;a++)
+                        dataSet2[v][a] = dataSet[v][a];
+                    for (var a = dataSet[1].Length - 2;a < dataSet[1].Length;a++) //outlier and vector columns
+                        dataSet2[v][a] = dataSet[v][a];
+                    var k = (int)dataSet[v][dataSet[1].Length - 3]; //class column
+                    var m = 0;
+                    for (var a = dataSet[1].Length - 3;a < numCol - 2;a++)
                     {
                         m++;
                         if (m == k)
-                            DataSet2[v][a] = 1;
+                            dataSet2[v][a] = 1;
                         else
-                            DataSet2[v][a] = transferFunction is Sigmoid ? 0 : -1;
+                            dataSet2[v][a] = transferFunction is Sigmoid ? 0 : -1;
                     }
-                    DataSet2[v][DataSet2[0].Length - 2] = DataSet[v][DataSet[0].Length - 2]; //outlier
-                    DataSet2[v][DataSet2[0].Length - 1] = DataSet[v][DataSet[0].Length - 1]; // v;
+                    dataSet2[v][dataSet2[0].Length - 2] = dataSet[v][dataSet[0].Length - 2]; //outlier
+                    dataSet2[v][dataSet2[0].Length - 1] = dataSet[v][dataSet[0].Length - 1]; // v;
                 }
-                return DataSet2;
+                return dataSet2;
             } else if (headerLine.ToLower().EndsWith("class"))
             {
-                return DataSet;
+                return dataSet;
             } else
             {
                 numOutput = 1;
-                return DataSet;
+                return dataSet;
             }
         }
     }

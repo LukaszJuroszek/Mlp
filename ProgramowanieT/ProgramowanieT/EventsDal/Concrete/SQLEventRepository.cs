@@ -10,7 +10,6 @@ namespace EventsDal.Concrete
     public class SQLEventRepository : IEventRepository
     {
         private const string stringFromat = "yyyy-MM-dd HH:mm:ss.fff";
-
         private static SqlConnection DBConnection() => new SqlConnection(ConfigurationManager.ConnectionStrings["EventsDapper"].ConnectionString);
         private bool RowsAffected(int rowsAffected) => rowsAffected > 0 ? true : false;
         public void Add(Event e)
@@ -18,7 +17,8 @@ namespace EventsDal.Concrete
             using (var db = DBConnection())
             {
                 db.Open();
-                var rowsAffected = db.Execute("INSERT INTO Event values(@Title,@Description,@When)",new { Title = e.Title,Description = e.Description,When = e.When.Date.ToString(stringFromat) });
+                /*var rowsAffected =*/
+                db.Execute("INSERT INTO Event values(@Title,@Description,@When)", new { Title = e.Title, Description = e.Description, When = e.When.Date.ToString(stringFromat) });
                 //return RowsAffected(rowsAffected);
             }
         }
@@ -27,7 +27,8 @@ namespace EventsDal.Concrete
             using (var db = DBConnection())
             {
                 db.Open();
-                var rowsAffected = db.Execute("DELETE FROM Event WHERE Id = @Id",new { Id = id });
+                /*var rowsAffected = */
+                db.Execute("DELETE FROM Event WHERE Id = @Id", new { Id = id });
                 //  return RowsAffected(rowsAffected);
             }
         }
@@ -37,7 +38,8 @@ namespace EventsDal.Concrete
             {
                 db.Open();
                 //SQL WHEN is slq syntax !!!
-                var rowsAffected = db.Query("UPDATE Event SET Title = @Title ,Description = @Description, \"When\" = @When WHERE Id =  @Id",new { Id = e.Id,Title = e.Title,Description = e.Description,When = e.When.Date.ToString(stringFromat) });
+                /*var rowsAffected =*/
+                db.Query("UPDATE Event SET Title = @Title ,Description = @Description, \"When\" = @When WHERE Id =  @Id", new { Id = e.Id, Title = e.Title, Description = e.Description, When = e.When.Date.ToString(stringFromat) });
                 //return RowsAffected(rowsAffected);
             }
         }
@@ -46,8 +48,7 @@ namespace EventsDal.Concrete
             using (var db = DBConnection())
             {
                 db.Open();
-                var result = db.Query<Event>("SELECT TOP 1000 * FROM Event");
-                return result.AsQueryable();
+                return db.Query<Event>("SELECT TOP 1000 * FROM Event").AsQueryable();
             }
         }
         public Event GetByID(int id)
@@ -55,8 +56,7 @@ namespace EventsDal.Concrete
             using (var db = DBConnection())
             {
                 db.Open();
-                var result = db.QueryFirstOrDefault<Event>("SELECT * FROM Event WHERE Id = @Id",new { Id = id });
-                return result;
+                return db.QueryFirstOrDefault<Event>("SELECT * FROM Event WHERE Id = @Id", new { Id = id });
             }
         }
     }

@@ -46,8 +46,7 @@ namespace EventsDal.Concrete
         public void Delete(int id)
         {
             var doc = XDocument.Load(fileName);
-            GetEventXElementByIdInXDocument(id,doc)
-                 .Remove();
+            GetEventXElementByIdInXDocument(id,doc).Remove();
             doc.Save(fileName);
         }
         public IQueryable<Event> GetAll()

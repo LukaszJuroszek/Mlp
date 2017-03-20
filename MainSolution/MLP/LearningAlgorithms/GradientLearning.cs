@@ -1,5 +1,6 @@
 ﻿using MLPProgram.Networks;
 using System;
+
 namespace MLPProgram.LearningAlgorithms
 {
     abstract class GradientLearning : ILearningAlgorithm
@@ -14,7 +15,7 @@ namespace MLPProgram.LearningAlgorithms
         }
         public void Train(INetwork network,double[][] trainingDataSet,
             bool classification,int numEpochs = 30,int batchSize = 30,double learnRate = 0.05,double momentum = 0.5)
-        {
+        { 
             Network = (MLP)network;
             var numInputs = Network.Layer[0];
             var numOutputs = Network.Layer[Network.NumLayers - 1];
@@ -51,7 +52,7 @@ namespace MLPProgram.LearningAlgorithms
                         double sumError = 0;
                         for (var n = 0;n < numOutputs;n++)
                         {
-                            double error = trainingDataSet[v][numInputs + n] - Network.Output[Network.NumLayers - 1][n];
+                            var error = trainingDataSet[v][numInputs + n] - Network.Output[Network.NumLayers - 1][n];
                             error = Math.Sign(error) * Math.Pow(Math.Abs(error),_errorExponent);
                             sumError += Math.Abs(error);
                             if (classification)
