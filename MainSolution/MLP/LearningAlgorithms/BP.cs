@@ -1,6 +1,7 @@
 ﻿using MLPProgram.Networks;
 using Alea;
 using Alea.Parallel;
+using System;
 
 namespace MLPProgram.LearningAlgorithms
 {
@@ -17,7 +18,7 @@ namespace MLPProgram.LearningAlgorithms
             double maxDelta,
             double inputWeightRegularizationCoef = -1)
         {
-            var gpu = Gpu.Default;
+            //var gpu = Gpu.Default;
             for (var l = network._numLayers - 1; l > 0; l--)
             {
                 for (var n = 0; n < network._layer[l]; n++)

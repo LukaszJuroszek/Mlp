@@ -30,7 +30,7 @@ namespace MLPProgram.Networks
         [GpuParam]
         public ITransferFunction _transferFunction;
         [GpuParam]
-        public bool classification;
+        public bool _classification;
         [GpuParam]
         public int _numWeights;
         public MLP(int[] layer, bool classification, ITransferFunction transferFunction, string weightFile = "")
@@ -47,7 +47,7 @@ namespace MLPProgram.Networks
         }
         private void InitFilds(int[] layer, bool classification, ITransferFunction transferFunction)
         {
-            this.classification = classification;
+            _classification = classification;
             _layer = layer;
             _transferFunction = transferFunction;
             _numLayers = layer.Length;
@@ -133,7 +133,7 @@ namespace MLPProgram.Networks
                         sum += _output[l - 1][w] * _weights[l][n][w];
                     }
                     sum += _weights[l][n][_layer[l - 1]]; //bias
-                    if (l == _numLayers - 1 && !classification)
+                    if (l == _numLayers - 1 && !_classification)
                         _output[l][n] = sum;
                     else
                         _output[l][n] = transferFunction.TransferFunction(sum);
@@ -158,7 +158,7 @@ namespace MLPProgram.Networks
                         for (var w = 0; w < _layer[l - 1]; w++)
                             sum += _output[l - 1][w] * _weights[l][n][w];
                         sum += _weights[l][n][_layer[l - 1]];
-                        if (l == _numLayers - 1 && !classification)
+                        if (l == _numLayers - 1 && !_classification)
                             _output[l][n] = sum;
                         else
                             _output[l][n] = _transferFunction.TransferFunction(sum);
