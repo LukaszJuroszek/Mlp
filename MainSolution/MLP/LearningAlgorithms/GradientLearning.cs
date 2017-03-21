@@ -11,14 +11,14 @@ namespace MLPProgram.LearningAlgorithms
         public double Test(double[][] trainingDataSet,double[][] testDataSet)
         {
             double errorsRMSE;
-            return Network.Accuracy(testDataSet,out errorsRMSE,Network.TransferFunction,0);
+            return Network.Accuracy(testDataSet,out errorsRMSE,Network._transferFunction,0);
         }
         public void Train(INetwork network,double[][] trainingDataSet,
             bool classification,int numEpochs = 30,int batchSize = 30,double learnRate = 0.05,double momentum = 0.5)
         { 
             Network = (MLP)network;
-            var numInputs = Network.Layer[0];
-            var numOutputs = Network.Layer[Network.NumLayers - 1];
+            var numInputs = Network._layer[0];
+            var numOutputs = Network._layer[Network._numLayers - 1];
             var numVectors = trainingDataSet.Length;
             if (batchSize > numVectors)
                 batchSize = numVectors;
@@ -27,58 +27,58 @@ namespace MLPProgram.LearningAlgorithms
             // int maxDegreeOfParallelism = Math.Max(1,(batchSize * network.numWeights) / 250);
             var epoch = 0;
             var derivative = 0.0;
-            for (var l = 1;l < Network.NumLayers;l++)
-                for (var n = 0;n < Network.Layer[l];n++)
-                    for (var w = 0;w <= Network.Layer[l - 1];w++)
+            for (var l = 1;l < Network._numLayers;l++)
+                for (var n = 0;n < Network._layer[l];n++)
+                    for (var w = 0;w <= Network._layer[l - 1];w++)
                     {
-                        Network.WeightDiff[l][n][w] = 0;
-                        Network.Delta[l][n][w] = 0.1;
+                        Network._weightDiff[l][n][w] = 0;
+                        Network._delta[l][n][w] = 0.1;
                     }
             while (epoch < numEpochs) // main training loop
             {
                 epoch++;
-                for (var l = 1;l < Network.NumLayers;l++)
-                    for (var n = 0;n < Network.Layer[l];n++)
-                        for (var w = 0;w <= Network.Layer[l - 1];w++)
-                            Network.WeightDiff[l][n][w] = 0;
+                for (var l = 1;l < Network._numLayers;l++)
+                    for (var n = 0;n < Network._layer[l];n++)
+                        for (var w = 0;w <= Network._layer[l - 1];w++)
+                            Network._weightDiff[l][n][w] = 0;
                 double sum;
                 var v = 0;
                 while (v < numVectors)
                 {
                     for (var b = 0;b < batchSize;b++)
                     {
-                        Network.ForwardPass(trainingDataSet[v],Network.TransferFunction);
+                        Network.ForwardPass(trainingDataSet[v],Network._transferFunction);
                         // find SignalErrors for the output layer
                         double sumError = 0;
                         for (var n = 0;n < numOutputs;n++)
                         {
-                            var error = trainingDataSet[v][numInputs + n] - Network.Output[Network.NumLayers - 1][n];
+                            var error = trainingDataSet[v][numInputs + n] - Network._output[Network._numLayers - 1][n];
                             error = Math.Sign(error) * Math.Pow(Math.Abs(error),_errorExponent);
                             sumError += Math.Abs(error);
                             if (classification)
                             {
-                                derivative = Network.TransferFunction.Derivative(Network.Output[Network.NumLayers - 1][n]);
+                                derivative = Network._transferFunction.Derivative(Network._output[Network._numLayers - 1][n]);
                             } else
                                 derivative = 1.0;
-                            Network.SignalError[Network.NumLayers - 1][n] = error * derivative;
+                            Network._signalError[Network._numLayers - 1][n] = error * derivative;
                         }
                         // find SignalErrors for all hidden layers
-                        for (var l = Network.NumLayers - 2;l > 0;l--)
-                            for (var n = 0;n < Network.Layer[l];n++)
+                        for (var l = Network._numLayers - 2;l > 0;l--)
+                            for (var n = 0;n < Network._layer[l];n++)
                             {
                                 sum = 0.0;
-                                for (var w = 0;w < Network.Layer[l + 1];w++)
-                                    sum += Network.SignalError[l + 1][w] * Network.Weights[l + 1][w][n];
-                                derivative = Network.TransferFunction.Derivative(Network.Output[l][n]);
-                                Network.SignalError[l][n] = derivative * sum;
+                                for (var w = 0;w < Network._layer[l + 1];w++)
+                                    sum += Network._signalError[l + 1][w] * Network._weights[l + 1][w][n];
+                                derivative = Network._transferFunction.Derivative(Network._output[l][n]);
+                                Network._signalError[l][n] = derivative * sum;
                             }
-                        for (var l = Network.NumLayers - 1;l > 0;l--)
-                            for (var n = 0;n < Network.Layer[l];n++)
+                        for (var l = Network._numLayers - 1;l > 0;l--)
+                            for (var n = 0;n < Network._layer[l];n++)
                             {
                                 //bias
-                                Network.WeightDiff[l][n][Network.Layer[l - 1]] += learnRate * Network.SignalError[l][n];
-                                for (var w = 0;w < Network.Layer[l - 1];w++)
-                                    Network.WeightDiff[l][n][w] += learnRate * Network.SignalError[l][n] * Network.Output[l - 1][w];
+                                Network._weightDiff[l][n][Network._layer[l - 1]] += learnRate * Network._signalError[l][n];
+                                for (var w = 0;w < Network._layer[l - 1];w++)
+                                    Network._weightDiff[l][n][w] += learnRate * Network._signalError[l][n] * Network._output[l - 1][w];
                             }
                         v++;
                         if (v == numVectors)
@@ -86,10 +86,10 @@ namespace MLPProgram.LearningAlgorithms
                     }
                     UpdateWeights(Network,learnRate,momentum,_etaPlus,_etaMinus,_minDelta,_maxDelta);
                     // zero-out gradients
-                    for (var l = 1;l < Network.NumLayers;l++)
-                        for (var n = 0;n < Network.Layer[l];n++)
-                            for (var w = 0;w <= Network.Layer[l - 1];w++)
-                                Network.WeightDiff[l][n][w] = 0;
+                    for (var l = 1;l < Network._numLayers;l++)
+                        for (var n = 0;n < Network._layer[l];n++)
+                            for (var w = 0;w <= Network._layer[l - 1];w++)
+                                Network._weightDiff[l][n][w] = 0;
                 }
             }
         }
