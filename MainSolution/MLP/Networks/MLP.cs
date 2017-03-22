@@ -3,7 +3,7 @@ using MLPProgram.TransferFunctions;
 using System;
 namespace MLPProgram.Networks
 {
-    class MLP : INetwork
+    public class MLP : INetwork
     {
         [GpuParam]
         public double[] _featureImportance;

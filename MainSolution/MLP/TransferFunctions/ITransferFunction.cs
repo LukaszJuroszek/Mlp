@@ -1,6 +1,6 @@
 ﻿namespace MLPProgram.TransferFunctions
 {
-    interface ITransferFunction
+   public interface ITransferFunction
     {
         double TransferFunction(double x);
         double Derivative(double x);

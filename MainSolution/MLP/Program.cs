@@ -25,9 +25,9 @@ namespace MLPProgram
             ll.Add(numOutput);
             int[] layers = ll.ToArray();
             var network = new MLP(layers, classification, transferFunction);
-            var learningAlgorithm = new BP();
+            var learningAlgorithm = new BP(network);
             //ILearningAlgorithm learningAlgorithm = new Rprop();
-            learningAlgorithm.Train(network, trainingDataset, classification, numEpochs: 50, batchSize: 30, learnRate: 0.05, momentum: 0.5);
+            learningAlgorithm.Train(trainingDataset, classification, numEpochs: 50, batchSize: 30, learnRate: 0.05, momentum: 0.5);
             double[][] testDataset = Utils.LoadFile(testFile, out headerLine, out numInput, out numOutput, out classification, transferFunction);
             double testAccuracy = network.Accuracy(testDataset, out double mseTrain, transferFunction);
             st.Stop();
