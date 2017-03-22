@@ -1,11 +1,7 @@
 ﻿using Alea;
 using Alea.Parallel;
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace AleaClasTest
 {
@@ -48,14 +44,14 @@ namespace AleaClasTest
             for (var i = 0; i < _size; i++)
             {
                 st.Reset();
-            st.Start();
+                st.Start();
                 gpu.For(0, result.Length, x =>
                 {
                     for (var p = 0; p < result.Length; p++)
                         result[x][p] = _arg1[x][p] + _arg2[x][p];
                 });
-            st.Stop();
-            Console.WriteLine(st.Elapsed);
+                st.Stop();
+                Console.WriteLine(st.Elapsed);
             }
             return result;
         }

@@ -24,12 +24,15 @@ namespace MLPProgram.LearningAlgorithms
                 for (var n = 0; n < network._layer[l]; n++)
                 {
                     for (var w = 0; w <= network._layer[l - 1]; w++)
-                    {
                         network._weights[l][n][w] += network._weightDiff[l][n][w] + momentum * network._prevWeightDiff[l][n][w];
+
+                    for (var w = 0; w < network._layer[l - 1]; w++)
+                    {
                         network._prevWeightDiff[l][n][w] = network._weightDiff[l][n][w];
                     }
                 }
             }
         }
     }
+}
 }

@@ -8,13 +8,13 @@ namespace MLPProgram.LearningAlgorithms
         public double _etaPlus = 1.2, _etaMinus = 0.5, _minDelta = 0.00001, _maxDelta = 10, _errorExponent = 2.0;
         private MLP Network { get; set; }
         public bool cv { get; set; }
-        public double Test(double[][] trainingDataSet,double[][] testDataSet)
+        public double Test(double[][] trainingDataSet, double[][] testDataSet)
         {
             return Network.Accuracy(testDataSet, out var errorsRMSE, Network._transferFunction, 0);
         }
-        public void Train(INetwork network,double[][] trainingDataSet,
-            bool classification,int numEpochs = 30,int batchSize = 30,double learnRate = 0.05,double momentum = 0.5)
-        { 
+        public void Train(INetwork network, double[][] trainingDataSet,
+            bool classification, int numEpochs = 30, int batchSize = 30, double learnRate = 0.05, double momentum = 0.5)
+        {
             Network = (MLP)network;
             var numInputs = Network._layer[0];
             var numOutputs = Network._layer[Network._numLayers - 1];
@@ -26,9 +26,9 @@ namespace MLPProgram.LearningAlgorithms
             // int maxDegreeOfParallelism = Math.Max(1,(batchSize * network.numWeights) / 250);
             var epoch = 0;
             var derivative = 0.0;
-            for (var l = 1;l < Network._numLayers;l++)
-                for (var n = 0;n < Network._layer[l];n++)
-                    for (var w = 0;w <= Network._layer[l - 1];w++)
+            for (var l = 1; l < Network._numLayers; l++)
+                for (var n = 0; n < Network._layer[l]; n++)
+                    for (var w = 0; w <= Network._layer[l - 1]; w++)
                     {
                         Network._weightDiff[l][n][w] = 0;
                         Network._delta[l][n][w] = 0.1;
@@ -94,6 +94,6 @@ namespace MLPProgram.LearningAlgorithms
                     for (var w = 0; w <= Network._layer[l - 1]; w++)
                         Network._weightDiff[l][n][w] = 0;
         }
-        abstract protected void UpdateWeights(MLP network,double learnRate,double momentum,double etaPlus,double etaMinus,double minDelta,double maxDelta,double inputWeightRegularizationCoef = -1);
+        abstract protected void UpdateWeights(MLP network, double learnRate, double momentum, double etaPlus, double etaMinus, double minDelta, double maxDelta, double inputWeightRegularizationCoef = -1);
     }
 }
