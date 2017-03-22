@@ -7,38 +7,24 @@ namespace AleaClasTest
 {
     class Program
     {
-        public static int _size = 50;
-        [GpuParam]
-        public int[][] _arg1;
-        [GpuParam]
-        public int[][] _arg2;
-        public Program()
+        struct Container
         {
-            _arg1 = new int[_size][];
-            _arg2 = new int[_size][];
-            for (int i = 0; i < _size; i++)
-            {
-                _arg1[i] = new int[_size];
-                _arg2[i] = new int[_size];
-
-            }
-            for (var i = 0; i < _arg1.GetLength(0); i++)
-            {
-                for (var p = 0; p < _arg1.GetLength(0); p++)
-                {
-                    _arg1[i][p] = p;
-                    _arg2[i][p] = p;
-                }
-            }
+            public int[][] _arg1;
+            public int[][] _arg2;
         }
+        public static int _size = 50;
         [GpuManaged]
-        public int[][] Run()
+        public double[][] Run()
         {
+            var continer = new ClassWithFieldsForTest(_size);
+            Container co;
+            co._arg1 = continer._arg1;
+            co._arg2 = continer._arg2;
             var gpu = Gpu.Default;
-            var result = new int[_size][];
+            var result = new double[_size][];
             for (var i = 0; i < result.Length; i++)
             {
-                result[i] = new int[result.Length];
+                result[i] = new double[result.Length];
             }
             var st = new Stopwatch();
             for (var i = 0; i < _size; i++)
@@ -48,10 +34,21 @@ namespace AleaClasTest
                 gpu.For(0, result.Length, x =>
                 {
                     for (var p = 0; p < result.Length; p++)
-                        result[x][p] = _arg1[x][p] + _arg2[x][p];
+                        result[x][p] = co._arg1[x][p] + co._arg2[x][p] * 0.57;
+                    Console.WriteLine(x);
                 });
                 st.Stop();
-                Console.WriteLine(st.Elapsed);
+                //Console.Write(st.Elapsed);
+                //Console.Write(" ");
+                //st.Reset();
+                //st.Start();
+                //for (int s = 0; s < result.Length; s++)
+                //{
+                //    for (var p = 0; p < result.Length; p++)
+                //        result[s][p] = co._arg1[s][p] + co._arg2[s][p];
+                //}
+                //st.Stop();
+                //Console.WriteLine(st.Elapsed);
             }
             return result;
         }

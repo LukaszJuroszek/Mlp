@@ -3,95 +3,73 @@ using MLPProgram.TransferFunctions;
 using System;
 namespace MLPProgram.Networks
 {
-    public class MLP : INetwork
+    public struct MLP : INetwork
     {
-        [GpuParam]
-        public double[] _featureImportance;
-        [GpuParam]
-        public int[] _featureNumber;
-        [GpuParam]
-        private Random _rnd;
-        [GpuParam]
-        public double[][][] _weightDiff;
-        [GpuParam]
-        public double[][][] _prevWeightDiff;
-        [GpuParam]
-        public double[][][] _delta;
-        [GpuParam]
-        public double[][][] _weights;
-        [GpuParam]
-        public double[][] _signalError;
-        [GpuParam]
-        public double[][] _output;
-        [GpuParam]
-        public int[] _layer;
-        [GpuParam]
-        public int _numLayers;
-        [GpuParam]
-        public ITransferFunction _transferFunction;
-        [GpuParam]
-        public bool _classification;
-        [GpuParam]
-        public int _numWeights;
+        //public double[] featureImportance;
+        //public int[] featureNumber;
+        private Random rnd;
+        public double[][][] weightDiff;
+        public double[][][] prevWeightDiff;
+        public double[][][] delta;
+        public double[][][] weights;
+        public double[][] signalError;
+        public double[][] output;
+        public int[] layer;
+        public int numLayers;
+        public ITransferFunction transferFunction;
+        public bool classification;
+        public int numWeights;
         public MLP(int[] layer, bool classification, ITransferFunction transferFunction, string weightFile = "")
         {
-            InitFilds(layer, classification, transferFunction);
+            this.classification = classification;
+            this.layer = layer;
+            this.transferFunction = transferFunction;
+            numWeights = 0;
+            numLayers = layer.Length;
+            weights = new double[numLayers][][];
+            weightDiff = new double[numLayers][][];
+            delta = new double[numLayers][][];
+            signalError = new double[numLayers][];
+            output = new double[numLayers][];
+            output[0] = new double[layer[0]];
+            prevWeightDiff = new double[numLayers][][];
+            rnd = new Random();
+            InitMultiDimArray(layer);
             var dw0 = 0.20;
-            for (var l = 1; l < _numLayers; l++)
+            for (var l = 1; l < numLayers; l++)
                 for (var n = 0; n < layer[l]; n++)
                     for (var w = 0; w < layer[l - 1] + 1; w++)
                     {
-                        _weights[l][n][w] = 0.4 * (0.5 - _rnd.NextDouble());
-                        _delta[l][n][w] = dw0; //for VSS and Rprop
+                        weights[l][n][w] = 0.4 * (0.5 - rnd.NextDouble());
+                        delta[l][n][w] = dw0; //for Rprop
                     }
         }
-        private void InitFilds(int[] layer, bool classification, ITransferFunction transferFunction)
+        private void InitMultiDimArray(int[] layer)
         {
-            _classification = classification;
-            _layer = layer;
-            _transferFunction = transferFunction;
-            _numLayers = layer.Length;
-            _weights = new double[_numLayers][][];
-            _weightDiff = new double[_numLayers][][];
-            _delta = new double[_numLayers][][];
-            _signalError = new double[_numLayers][];
-            _output = new double[_numLayers][];
-            _output[0] = new double[layer[0]];
-            _numWeights = 0;
-            _prevWeightDiff = new double[_numLayers][][];
-            _rnd = new Random();
-            for (var l = 1; l < _numLayers; l++)
+            for (var l = 1; l < numLayers; l++)
             {
-                InitSecondDimension(layer, l);
+                weights[l] = new double[layer[l]][];
+                weightDiff[l] = new double[layer[l]][];
+                prevWeightDiff[l] = new double[layer[l]][];
+                delta[l] = new double[layer[l]][];
+                signalError[l] = new double[layer[l]];
+                output[l] = new double[layer[l]];
                 for (var n = 0; n < layer[l]; n++)
                 {
-                    InitTrirdDimension(layer, l, n);
-                    _numWeights++;
+                    weights[l][n] = new double[layer[l - 1] + 1];
+                    weightDiff[l][n] = new double[layer[l - 1] + 1];
+                    prevWeightDiff[l][n] = new double[layer[l - 1] + 1];
+                    delta[l][n] = new double[layer[l - 1] + 1];
+                    numWeights++;
                 }
             }
-        }
-        private void InitSecondDimension(int[] layer, int l)
-        {
-            _weights[l] = new double[layer[l]][];
-            _weightDiff[l] = new double[layer[l]][];
-            _prevWeightDiff[l] = new double[layer[l]][];
-            _delta[l] = new double[layer[l]][];
-            _signalError[l] = new double[layer[l]];
-            _output[l] = new double[layer[l]];
-        }
-        private void InitTrirdDimension(int[] layer, int l, int n)
-        {
-            _weights[l][n] = new double[layer[l - 1] + 1];
-            _weightDiff[l][n] = new double[layer[l - 1] + 1];
-            _prevWeightDiff[l][n] = new double[layer[l - 1] + 1];
-            _delta[l][n] = new double[layer[l - 1] + 1];
         }
         public double Accuracy(double[][] dataSet, out double error, ITransferFunction transferFunction, int lok = 0)
         {
             double maxValue = -1;
             error = 0.0;
             var classification = false;
-            if (dataSet[0].Length > _layer[0] + 1)
+            if (dataSet[0].Length > layer[0] + 1)
                 classification = true;
             var numCorrect = 0;
             var maxIndex = -1;
@@ -100,19 +78,19 @@ namespace MLPProgram.Networks
                 ForwardPass(dataSet[v], transferFunction, lok);
                 maxIndex = -1;
                 maxValue = -1.1;
-                for (var n = 0; n < _layer[_numLayers - 1]; n++)
+                for (var n = 0; n < layer[numLayers - 1]; n++)
                 {
                     if (classification)
-                        error += transferFunction.TransferFunction(_output[_numLayers - 1][n] - (2 * dataSet[v][_layer[0] + n] - 1));
+                        error += transferFunction.TransferFunction(output[numLayers - 1][n] - (2 * dataSet[v][layer[0] + n] - 1));
                     else
-                        error += Math.Pow(_output[_numLayers - 1][n] - dataSet[v][_layer[0] + n], 2);
-                    if (_output[_numLayers - 1][n] > maxValue)
+                        error += Math.Pow(output[numLayers - 1][n] - dataSet[v][layer[0] + n], 2);
+                    if (output[numLayers - 1][n] > maxValue)
                     {
-                        maxValue = _output[_numLayers - 1][n];
+                        maxValue = output[numLayers - 1][n];
                         maxIndex = n;
                     }
                 }
-                var position = _layer[0] + maxIndex;
+                var position = layer[0] + maxIndex;
                 if (dataSet[v][position] == 1)
                     numCorrect++;
             }
@@ -121,22 +99,22 @@ namespace MLPProgram.Networks
         }
         public void ForwardPass(double[] vector, ITransferFunction transferFunction, int lok = -1)
         {
-            for (var i = 0; i < _layer[0]; i++)
-                _output[0][i] = vector[i];
-            for (var l = 1; l < _numLayers; l++)
+            for (var i = 0; i < layer[0]; i++)
+                output[0][i] = vector[i];
+            for (var l = 1; l < numLayers; l++)
             {
-                for (var n = 0; n < _layer[l]; n++)
+                for (var n = 0; n < layer[l]; n++)
                 {
                     double sum = 0;
-                    for (var w = 0; w < _layer[l - 1]; w++)
+                    for (var w = 0; w < layer[l - 1]; w++)
                     {
-                        sum += _output[l - 1][w] * _weights[l][n][w];
+                        sum += output[l - 1][w] * weights[l][n][w];
                     }
-                    sum += _weights[l][n][_layer[l - 1]]; //bias
-                    if (l == _numLayers - 1 && !_classification)
-                        _output[l][n] = sum;
+                    sum += weights[l][n][layer[l - 1]]; //bias
+                    if (l == numLayers - 1 && !classification)
+                        output[l][n] = sum;
                     else
-                        _output[l][n] = transferFunction.TransferFunction(sum);
+                        output[l][n] = transferFunction.TransferFunction(sum);
                 }
             }
         }
@@ -148,22 +126,22 @@ namespace MLPProgram.Networks
             for (var v = 0; v < numVect; v++)
             {
                 error = 0;
-                for (var n = 0; n < _layer[0]; n++)
-                    _output[0][n] = DataSet[v][n];
-                for (var l = 1; l < _numLayers; l++)
+                for (var n = 0; n < layer[0]; n++)
+                    output[0][n] = DataSet[v][n];
+                for (var l = 1; l < numLayers; l++)
                 {
-                    for (var n = 0; n < _layer[l]; n++)
+                    for (var n = 0; n < layer[l]; n++)
                     {
                         double sum = 0;
-                        for (var w = 0; w < _layer[l - 1]; w++)
-                            sum += _output[l - 1][w] * _weights[l][n][w];
-                        sum += _weights[l][n][_layer[l - 1]];
-                        if (l == _numLayers - 1 && !_classification)
-                            _output[l][n] = sum;
+                        for (var w = 0; w < layer[l - 1]; w++)
+                            sum += output[l - 1][w] * weights[l][n][w];
+                        sum += weights[l][n][layer[l - 1]];
+                        if (l == numLayers - 1 && !classification)
+                            output[l][n] = sum;
                         else
-                            _output[l][n] = _transferFunction.TransferFunction(sum);
-                        if (l == _numLayers - 1)
-                            error += Math.Pow(Math.Abs(_output[l][n] - DataSet[v][_layer[0] + n]), errorExponent);
+                            output[l][n] = transferFunction.TransferFunction(sum);
+                        if (l == numLayers - 1)
+                            error += Math.Pow(Math.Abs(output[l][n] - DataSet[v][layer[0] + n]), errorExponent);
                     }
                 }
                 errorTable[v] = error;

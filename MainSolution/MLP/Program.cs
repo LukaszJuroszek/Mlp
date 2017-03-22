@@ -17,6 +17,7 @@ namespace MLPProgram
             st.Start();
             var transferFunction = new HyperbolicTangent();
             //ITransferFunction transferFunction = new Sigmoid();
+            //to memory
             double[][] trainingDataset = Utils.LoadFile(trainingFile, out string headerLine, out int numInput, out int numOutput, out bool classification, transferFunction);
             int[] numHidden = new int[] { (int)Math.Sqrt(numInput * numOutput) };
             var ll = new List<int>();
@@ -25,8 +26,8 @@ namespace MLPProgram
             ll.Add(numOutput);
             int[] layers = ll.ToArray();
             var network = new MLP(layers, classification, transferFunction);
-            var learningAlgorithm = new BP(network);
-            //ILearningAlgorithm learningAlgorithm = new Rprop();
+            //var learningAlgorithm = new BP(network);
+            ILearningAlgorithm learningAlgorithm = new Rprop(network);
             learningAlgorithm.Train(trainingDataset, classification, numEpochs: 50, batchSize: 30, learnRate: 0.05, momentum: 0.5);
             double[][] testDataset = Utils.LoadFile(testFile, out headerLine, out numInput, out numOutput, out classification, transferFunction);
             double testAccuracy = network.Accuracy(testDataset, out double mseTrain, transferFunction);
