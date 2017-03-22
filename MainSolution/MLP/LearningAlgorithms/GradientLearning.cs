@@ -14,8 +14,7 @@ namespace MLPProgram.LearningAlgorithms
         {
             return _network.Accuracy(testDataSet, out var errorsRMSE, _network.transferFunction, 0);
         }
-        public void Train(double[][] trainingDataSet,
-            bool classification, int numEpochs = 30, int batchSize = 30, double learnRate = 0.05, double momentum = 0.5)
+        public void Train(double[][] trainingDataSet,bool classification, int numEpochs = 30, int batchSize = 30, double learnRate = 0.05, double momentum = 0.5)
         {
             var numInputs = _network.layer[0];
             var numOutputs = _network.layer[_network.numLayers - 1];

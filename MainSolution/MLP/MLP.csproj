@@ -64,7 +64,7 @@
     <Compile Include="TransferFunctions\HyperbolicTangent.cs" />
     <Compile Include="TransferFunctions\ITransferFunction.cs" />
     <Compile Include="TransferFunctions\Sigmoid.cs" />
-    <Compile Include="Utils.cs" />
+    <Compile Include="DataFileHolder.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
