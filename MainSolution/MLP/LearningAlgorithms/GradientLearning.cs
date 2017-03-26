@@ -10,26 +10,19 @@ namespace MLPProgram.LearningAlgorithms
 
         public double _etaPlus = 1.2, _etaMinus = 0.5, _minDelta = 0.00001, _maxDelta = 10, _errorExponent = 2.0;
         protected MLP _network;
-        protected DataFileHolder _trainingDataSet;
         public double Test(double[][] trainingDataSet, double[][] testDataSet)
         {
-            return _network.Accuracy(testDataSet, out var errorsRMSE, _network.transferFunction, 0);
+            return _network.Accuracy(out var errorsRMSE, 0);
         }
         public void Train(int numEpochs = 30, int batchSize = 30, double learnRate = 0.05, double momentum = 0.5)
         {
-            var numInputs = _trainingDataSet.NumberOfInput;
-            var numOutputs = _trainingDataSet.NumberOfOutput;
-            var numVectors = _trainingDataSet.NumberOFVectors;
+            var numInputs = _network.dataFileHolder.NumberOfInput;
+            var numOutputs = _network.dataFileHolder.NumberOfOutput;
+            var numVectors = _network.dataFileHolder.NumberOFVectors;
+            var derivative = 0.0;
             if (batchSize > numVectors || this is Rprop)
                 batchSize = numVectors;
-            var derivative = 0.0;
-            for (var l = 1; l < _network.numLayers; l++)
-                for (var n = 0; n < _network.layer[l]; n++)
-                    for (var w = 0; w <= _network.layer[l - 1]; w++)
-                    {
-                        _network.weightDiff[l][n][w] = 0;
-                        _network.delta[l][n][w] = 0.1;
-                    }
+            CreateWeightZeroAndAsingDeltaValue(0.1);
             for (var epoch = 0; epoch < numEpochs; epoch++)
             {
                 MakeGradientZero();
@@ -38,23 +31,15 @@ namespace MLPProgram.LearningAlgorithms
                 {
                     for (var b = 0; b < batchSize; b++)
                     {
-                        Program.ForwardPass(_network, _trainingDataSet.Data[v], _network.transferFunction);
+                        Program.ForwardPass(_network, _network.dataFileHolder.Data[v], _network.transferFunction);
                         // find SignalErrors for the output layer
                         double sumError = 0;
                         for (var n = 0; n < numOutputs; n++)
                         {
-                            var error = _trainingDataSet.Data[v][numInputs + n] - _network.output[_network.numLayers - 1][n];
+                            var error = _network.dataFileHolder.Data[v][numInputs + n] - _network.output[_network.numLayers - 1][n];
                             error = Math.Sign(error) * Math.Pow(Math.Abs(error), _errorExponent);
                             sumError += Math.Abs(error);
-                            if (_network.classification)
-                            {
-                                if (_network.transferFunction.Method.Name.Equals(nameof(SigmoidTransferFunction)))
-                                    derivative = SigmoidDerivative(_network.output[_network.numLayers - 1][n]);
-                                else
-                                    derivative = HyperbolicDerivative(_network.output[_network.numLayers - 1][n]);
-                            }
-                            else
-                                derivative = 1.0;
+                            derivative = CalculateDerivativeForSignalErrorsInOutputLayer(n);
                             _network.signalError[_network.numLayers - 1][n] = error * derivative;
                         }
                         // find SignalErrors for all hidden layers
@@ -88,6 +73,33 @@ namespace MLPProgram.LearningAlgorithms
                 }
             }
         }
+
+        private double CalculateDerivativeForSignalErrorsInOutputLayer(int n)
+        {
+            double derivative;
+            if (_network.classification)
+            {
+                if (_network.transferFunction.Method.Name.Equals(nameof(SigmoidTransferFunction)))
+                    derivative = SigmoidDerivative(_network.output[_network.numLayers - 1][n]);
+                else
+                    derivative = HyperbolicDerivative(_network.output[_network.numLayers - 1][n]);
+            }
+            else
+                derivative = 1.0;
+            return derivative;
+        }
+
+        private void CreateWeightZeroAndAsingDeltaValue(double      deltaValue)
+        {
+            for (var l = 1; l < _network.numLayers; l++)
+                for (var n = 0; n < _network.layer[l]; n++)
+                    for (var w = 0; w <= _network.layer[l - 1]; w++)
+                    {
+                        _network.weightDiff[l][n][w] = 0;
+                        _network.delta[l][n][w] = deltaValue;
+                    }
+        }
+
         private void MakeGradientZero()
         {
             for (var l = 1; l < _network.numLayers; l++)

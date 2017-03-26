@@ -21,11 +21,11 @@ namespace MLPProgram
             Console.WriteLine(st.Elapsed);
             st.Reset();
             st.Start();
-            var network = new MLP(trainingDataset.GetLayers(), trainingDataset.Classification, GradientLearning.SigmoidTransferFunction);
-            var learningAlgorithm = new Rprop(network,trainingDataset);
+            var network = new MLP(trainingDataset);
+            var learningAlgorithm = new Rprop(network);
             learningAlgorithm.Train(numEpochs: 50, batchSize: 30, learnRate: 0.05, momentum: 0.5);
             var testDataset = new DataFileHolder(testFile, GradientLearning.SigmoidTransferFunction);
-            var testAccuracy = network.Accuracy(testDataset.Data, out double mseTrain, GradientLearning.SigmoidTransferFunction);
+            var testAccuracy = network.Accuracy(out double mseTrain);
             st.Stop();
             Console.WriteLine(st.Elapsed);
             Console.WriteLine(testAccuracy);
