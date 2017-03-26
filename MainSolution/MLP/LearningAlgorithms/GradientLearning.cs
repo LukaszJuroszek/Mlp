@@ -14,8 +14,10 @@ namespace MLPProgram.LearningAlgorithms
         {
             return _network.Accuracy(out var errorsRMSE, 0);
         }
+        [GpuManaged]
         public void Train(int numEpochs = 30, int batchSize = 30, double learnRate = 0.05, double momentum = 0.5)
         {
+            var gpu = Gpu.Default;
             var numInputs = _network.dataFileHolder.NumberOfInput;
             var numOutputs = _network.dataFileHolder.NumberOfOutput;
             var numVectors = _network.dataFileHolder.NumberOFVectors;
@@ -45,7 +47,9 @@ namespace MLPProgram.LearningAlgorithms
                         // find SignalErrors for all hidden layers
                         for (var l = _network.numLayers - 2; l > 0; l--)
                             for (var n = 0; n < _network.layer[l]; n++)
+                            {
                                 _network.signalError[l][n] = CalculateDerivativeForHiddenLayer(l, n) * SumSignalErrorForHiddenLayer(l, n);
+                            }
                         for (var l = _network.numLayers - 1; l > 0; l--)
                             for (var n = 0; n < _network.layer[l]; n++)
                             {
@@ -73,13 +77,13 @@ namespace MLPProgram.LearningAlgorithms
             return sum;
         }
 
-        private double CalculateDerivativeForHiddenLayer(int layer, int hidenLayeerSecondDim)
+        private double CalculateDerivativeForHiddenLayer(int layer, int hidenLayerSecondDim)
         {
             double derivative;
             if (_network.transferFunction.Method.Name.Equals(nameof(SigmoidTransferFunction)))
-                derivative = SigmoidDerivative(_network.output[layer][hidenLayeerSecondDim]);
+                derivative = SigmoidDerivative(_network.output[layer][hidenLayerSecondDim]);
             else
-                derivative = HyperbolicDerivative(_network.output[layer][hidenLayeerSecondDim]);
+                derivative = HyperbolicDerivative(_network.output[layer][hidenLayerSecondDim]);
             return derivative;
         }
 
@@ -98,7 +102,7 @@ namespace MLPProgram.LearningAlgorithms
             return derivative;
         }
 
-        private void CreateWeightZeroAndAsingDeltaValue(double      deltaValue)
+        private void CreateWeightZeroAndAsingDeltaValue(double deltaValue)
         {
             for (var l = 1; l < _network.numLayers; l++)
                 for (var n = 0; n < _network.layer[l]; n++)
