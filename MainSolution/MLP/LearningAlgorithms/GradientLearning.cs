@@ -45,16 +45,7 @@ namespace MLPProgram.LearningAlgorithms
                         // find SignalErrors for all hidden layers
                         for (var l = _network.numLayers - 2; l > 0; l--)
                             for (var n = 0; n < _network.layer[l]; n++)
-                            {
-                                var sum = 0.0;
-                                for (var w = 0; w < _network.layer[l + 1]; w++)
-                                    sum += _network.signalError[l + 1][w] * _network.weights[l + 1][w][n];
-                                if (_network.transferFunction.Method.Name.Equals(nameof(SigmoidTransferFunction)))
-                                    derivative = SigmoidDerivative(_network.output[l][n]);
-                                else
-                                    derivative = HyperbolicDerivative(_network.output[l][n]);
-                                _network.signalError[l][n] = derivative * sum;
-                            }
+                                _network.signalError[l][n] = CalculateDerivativeForHiddenLayer(l, n) * SumSignalErrorForHiddenLayer(l, n);
                         for (var l = _network.numLayers - 1; l > 0; l--)
                             for (var n = 0; n < _network.layer[l]; n++)
                             {
@@ -74,15 +65,33 @@ namespace MLPProgram.LearningAlgorithms
             }
         }
 
-        private double CalculateDerivativeForSignalErrorsInOutputLayer(int n)
+        private double SumSignalErrorForHiddenLayer(int layer, int hiddenLayerSecondDim)
+        {
+            var sum = 0.0;
+            for (var w = 0; w < _network.layer[layer + 1]; w++)
+                sum += _network.signalError[layer + 1][w] * _network.weights[layer + 1][w][hiddenLayerSecondDim];
+            return sum;
+        }
+
+        private double CalculateDerivativeForHiddenLayer(int layer, int hidenLayeerSecondDim)
+        {
+            double derivative;
+            if (_network.transferFunction.Method.Name.Equals(nameof(SigmoidTransferFunction)))
+                derivative = SigmoidDerivative(_network.output[layer][hidenLayeerSecondDim]);
+            else
+                derivative = HyperbolicDerivative(_network.output[layer][hidenLayeerSecondDim]);
+            return derivative;
+        }
+
+        private double CalculateDerivativeForSignalErrorsInOutputLayer(int outputSecondDim)
         {
             double derivative;
             if (_network.classification)
             {
                 if (_network.transferFunction.Method.Name.Equals(nameof(SigmoidTransferFunction)))
-                    derivative = SigmoidDerivative(_network.output[_network.numLayers - 1][n]);
+                    derivative = SigmoidDerivative(_network.output[_network.numLayers - 1][outputSecondDim]);
                 else
-                    derivative = HyperbolicDerivative(_network.output[_network.numLayers - 1][n]);
+                    derivative = HyperbolicDerivative(_network.output[_network.numLayers - 1][outputSecondDim]);
             }
             else
                 derivative = 1.0;
