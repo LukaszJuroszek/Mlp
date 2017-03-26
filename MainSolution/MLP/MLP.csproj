@@ -61,9 +61,6 @@
     <Compile Include="Networks\MLP.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="TransferFunctions\HyperbolicTangent.cs" />
-    <Compile Include="TransferFunctions\ITransferFunction.cs" />
-    <Compile Include="TransferFunctions\Sigmoid.cs" />
     <Compile Include="DataFileHolder.cs" />
   </ItemGroup>
   <ItemGroup>

@@ -14,12 +14,10 @@ namespace AleaClasTest
         }
         public static int _size = 50;
         [GpuManaged]
-        public double[][] Run()
+        public double[][] Run(ClassWithFieldsForTest continer)
         {
-            var continer = new ClassWithFieldsForTest(_size);
-            Container co;
-            co._arg1 = continer._arg1;
-            co._arg2 = continer._arg2;
+            //co._arg1 = continer._arg1;
+            //co._arg2 = continer._arg2;
             var gpu = Gpu.Default;
             var result = new double[_size][];
             for (var i = 0; i < result.Length; i++)
@@ -34,7 +32,7 @@ namespace AleaClasTest
                 gpu.For(0, result.Length, x =>
                 {
                     for (var p = 0; p < result.Length; p++)
-                        result[x][p] = co._arg1[x][p] + co._arg2[x][p] * 0.57;
+                        result[x][p] = continer._arg1[x][p] + continer._arg2[x][p] * 0.57;
                     Console.WriteLine(x);
                 });
                 st.Stop();
@@ -54,8 +52,9 @@ namespace AleaClasTest
         }
         static void Main(string[] args)
         {
+            var xx = new ClassWithFieldsForTest(Program._size);
             var p = new Program();
-            var x = p.Run();
+            var x = p.Run(xx);
         }
         public void ShowArray(int[][] array)
         {

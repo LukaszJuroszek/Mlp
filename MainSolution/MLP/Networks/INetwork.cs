@@ -1,9 +1,9 @@
-﻿using MLPProgram.TransferFunctions;
+﻿using System;
 
 namespace MLPProgram.Networks
 {
     interface INetwork
     {
-        double Accuracy(double[][] DataSet, out double mse, ITransferFunction transferFunction, int lok=0);
+        double Accuracy(double[][] DataSet, out double mse, Func<double, double> transferFunction, int lok=0);
     }
 }

@@ -5,9 +5,10 @@ namespace MLPProgram.LearningAlgorithms
 {
     class Rprop : GradientLearning, ILearningAlgorithm
     {
-        public Rprop(MLP network)
+        public Rprop(MLP network, DataFileHolder trainingDataSet)
         {
             _network = network;
+            _trainingDataSet = trainingDataSet;
         }
         protected override void UpdateWeights(
             double learnRate,

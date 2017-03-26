@@ -1,6 +1,6 @@
 ﻿namespace AleaClasTest
 {
-    public class ClassWithFieldsForTest
+    public struct ClassWithFieldsForTest
     {
         public int[][] _arg1;
         public int[][] _arg2;

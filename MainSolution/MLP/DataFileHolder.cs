@@ -1,11 +1,10 @@
-﻿using MLPProgram.TransferFunctions;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 namespace MLPProgram
 {
-    class DataFileHolder
+  public class DataFileHolder
     {
         public string HeaderLine { get; set; }
         public int NumberOfInput { get; set; }
@@ -15,7 +14,7 @@ namespace MLPProgram
         public string[] Headers { get; set; }
         public bool Classification { get; set; }
         public double[][] Data { get; set; }
-        public DataFileHolder(string fileName, ITransferFunction transferFunction, bool multipleClassColumns = true, bool firstStandardizeRun = false)
+        public DataFileHolder(string fileName, Func<double, double> transferFunction, bool multipleClassColumns = true, bool firstStandardizeRun = false)
         {
             using (var sr = new StreamReader(fileName))
             {
@@ -86,7 +85,7 @@ namespace MLPProgram
                         if (m == k)
                             dataSet[v][a] = 1;
                         else
-                            dataSet[v][a] = transferFunction is Sigmoid ? 0 : -1;
+                            dataSet[v][a] =  transferFunction.Method.Name.Equals("SigmoidTransferFunction") ? 0 : -1;
                     }
                     dataSet[v][dataSet[0].Length - 2] = result[v][result[0].Length - 2]; //outlier
                     dataSet[v][dataSet[0].Length - 1] = result[v][result[0].Length - 1]; // v;
