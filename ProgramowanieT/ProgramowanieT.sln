@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-VisualStudioVersion = 15.0.26228.4
+VisualStudioVersion = 15.0.26228.9
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Zaj1_pn", "ProgramowanieT\Zaj1_pn\Zaj1_pn.csproj", "{944BA64A-B25E-4B36-8D4A-AC404B318424}"
 EndProject
@@ -10,6 +10,8 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EventsDal", "ProgramowanieT\EventsDal\EventsDal.csproj", "{D2F2AC53-A67C-4D6E-BB3A-09B70C17A49D}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "T3SamPraca", "T3SamPraca\T3SamPraca.csproj", "{415516FE-2B41-4698-ACC7-C36FC80DDC1F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "T4", "T4\T4.csproj", "{9ED291F6-4177-4F04-A51D-962EAAE81565}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -33,6 +35,10 @@ Global
 		{415516FE-2B41-4698-ACC7-C36FC80DDC1F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{415516FE-2B41-4698-ACC7-C36FC80DDC1F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{415516FE-2B41-4698-ACC7-C36FC80DDC1F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9ED291F6-4177-4F04-A51D-962EAAE81565}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9ED291F6-4177-4F04-A51D-962EAAE81565}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9ED291F6-4177-4F04-A51D-962EAAE81565}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9ED291F6-4177-4F04-A51D-962EAAE81565}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
