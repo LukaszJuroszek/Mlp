@@ -9,35 +9,32 @@ namespace MLPProgram
     {
         static void Main(string[] args)
         {
-            var trainingFileName = @"..\..\Datasets\spectfheart_std_sh.txt";
-            var testFile = @"..\..\Datasets\spectfheart_std_sh.txt";
-            do
+            var filePath = @"..\..\Datasets\mortgage_std_sh.txt";
+            var st = new Stopwatch();
+            var totalMs = TimeSpan.FromMilliseconds(0);
+            var trainData = new FileParser(filePath, TransferFunctions.SigmoidTransferFunction);
+            var testDataset = new FileParser(filePath, TransferFunctions.SigmoidTransferFunction);
+            var data = new BaseDataHolder(trainData);
+            var network = new MLP(data);
+            var learningAlgorithm = new Rprop(network);
+            st.Start();
+            for (var i = 0; i < 3; i++)
             {
-                while (!Console.KeyAvailable)
-                {
-                    var st = new Stopwatch();
-                    st.Reset();
-                    st.Start();
-                    //to memory
-                    var trainData = new FileParser(trainingFileName, TransferFunctions.SigmoidTransferFunction);
-                    //st.Stop();
-                    //Console.WriteLine(st.Elapsed);
-                    //st.Reset();
-                    //st.Start();
-                    var data = new BaseDataHolder(trainData);
-                    var network = new MLP(data);
-                    var learningAlgorithm = new Rprop(network);
-                    learningAlgorithm.Train(numEpochs: 50, batchSize: 30, learnRate: 0.05, momentum: 0.5);
-                    var testDataset = new FileParser(testFile, TransferFunctions.SigmoidTransferFunction);
-                    var testAccuracy = network.Accuracy(out double mseTrain);
-                    st.Stop();
-                    Console.WriteLine(st.Elapsed.Milliseconds);
-                    //Console.WriteLine(testAccuracy);
-                    //Console.WriteLine(mseTrain);
-                }
-            } while (Console.ReadKey(true).Key != ConsoleKey.Escape);
+                //to memory
+                //st.Stop();
+                //Console.WriteLine(st.Elapsed);
+                //st.Reset();
+                //st.Start();
+                learningAlgorithm.Train(numEpochs: 50, batchSize: 30, learnRate: 0.05, momentum: 0.5);
+                var testAccuracy = network.Accuracy(out double mseTrain);
+            }
+            //Console.WriteLine(testAccuracy);
+            //Console.WriteLine(mseTrain);
+            st.Stop();
+            Console.WriteLine(st.Elapsed);
+
         }
-        public static void ForwardPass(MLP _network, double[] vector, Func<double, double> transferFunction, int lok = -1)
+        public static void ForwardPass(MLP _network, double[] vector, BaseDataHolder transferFuncFromBaseData, int lok = -1)
         {
             {
                 for (var i = 0; i < _network.layer[0]; i++)
@@ -54,7 +51,7 @@ namespace MLPProgram
                     if (l == _network.numLayers - 1 && !_network.classification)
                         _network.output[l][n] = sum;
                     else
-                        _network.output[l][n] = transferFunction(sum);
+                        _network.output[l][n] = transferFuncFromBaseData.TransferFunction(sum);
                 }
             }
 

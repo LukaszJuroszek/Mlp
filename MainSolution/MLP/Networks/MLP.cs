@@ -29,20 +29,20 @@ namespace MLPProgram.Networks
         [GpuParam]
         public int numWeights;
         [GpuParam]
-        public BaseDataHolder dataAndTransferFunction;
-        public MLP(BaseDataHolder dataAndTransferFunction, string weightFile = "")
+        public BaseDataHolder baseData;
+        public MLP(BaseDataHolder data, string weightFile = "")
         {
-            this.dataAndTransferFunction = dataAndTransferFunction;
-            classification = dataAndTransferFunction._classification;
-            this.layer = dataAndTransferFunction._layer;
+            baseData = data;
+            classification = data._classification;
+            layer = data._layer;
             numWeights = 0;
-            numLayers = this.layer.Length;
+            numLayers = layer.Length;
             weights = new double[numLayers][][];
             weightDiff = new double[numLayers][][];
             delta = new double[numLayers][][];
             signalError = new double[numLayers][];
             output = new double[numLayers][];
-            output[0] = new double[this.layer[0]];
+            output[0] = new double[layer[0]];
             prevWeightDiff = new double[numLayers][][];
             var rnd = new Random();
             InitMultiDimArray(layer);
@@ -81,21 +81,21 @@ namespace MLPProgram.Networks
             double maxValue = -1;
             error = 0.0;
             var classification = false;
-            if (dataAndTransferFunction._data[0].Length > layer[0] + 1)
+            if (baseData._data[0].Length > layer[0] + 1)
                 classification = true;
             var numCorrect = 0;
             var maxIndex = -1;
-            for (var v = 0; v < dataAndTransferFunction._data.Length; v++)
+            for (var v = 0; v < baseData._data.Length; v++)
             {
-                Program.ForwardPass(this, dataAndTransferFunction._data[v], dataAndTransferFunction._transferFunction, lok);
+                Program.ForwardPass(this, baseData._data[v], baseData, lok);
                 maxIndex = -1;
                 maxValue = -1.1;
                 for (var n = 0; n < layer[numLayers - 1]; n++)
                 {
                     if (classification)
-                        error += dataAndTransferFunction._transferFunction(output[numLayers - 1][n] - (2 * dataAndTransferFunction._data[v][layer[0] + n] - 1));
+                        error += baseData.TransferFunction(output[numLayers - 1][n] - (2 * baseData._data[v][layer[0] + n] - 1));
                     else
-                        error += Math.Pow(output[numLayers - 1][n] - dataAndTransferFunction._data[v][layer[0] + n], 2);
+                        error += Math.Pow(output[numLayers - 1][n] - baseData._data[v][layer[0] + n], 2);
                     if (output[numLayers - 1][n] > maxValue)
                     {
                         maxValue = output[numLayers - 1][n];
@@ -103,11 +103,11 @@ namespace MLPProgram.Networks
                     }
                 }
                 var position = layer[0] + maxIndex;
-                if (dataAndTransferFunction._data[v][position] == 1)
+                if (baseData._data[v][position] == 1)
                     numCorrect++;
             }
-            error /= dataAndTransferFunction._data.Length;
-            return (double)numCorrect / dataAndTransferFunction._data.Length;
+            error /= baseData._data.Length;
+            return (double)numCorrect / baseData._data.Length;
         }
 
         public double[] GetNonSignalErrorTable(double[][] DataSet, ref double accuracy, double errorExponent = 2.0)
@@ -131,7 +131,7 @@ namespace MLPProgram.Networks
                         if (l == numLayers - 1 && !classification)
                             output[l][n] = sum;
                         else
-                            output[l][n] = dataAndTransferFunction._transferFunction(sum);
+                            output[l][n] = baseData.TransferFunction(sum);
                         if (l == numLayers - 1)
                             error += Math.Pow(Math.Abs(output[l][n] - DataSet[v][layer[0] + n]), errorExponent);
                     }
