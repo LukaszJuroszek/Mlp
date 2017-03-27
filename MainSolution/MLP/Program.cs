@@ -31,7 +31,7 @@ namespace MLPProgram
             Console.WriteLine(testAccuracy);
             Console.WriteLine(mseTrain);
         }
-        public static void ForwardPass(MLP _network,double[] vector, Func<double, double> transferFunction, int lok = -1)
+        public static void ForwardPass(MLP _network, double[] vector, Func<double, double> transferFunction, int lok = -1)
         {
             {
                 for (var i = 0; i < _network.layer[0]; i++)
@@ -51,7 +51,7 @@ namespace MLPProgram
                         _network.output[l][n] = transferFunction(sum);
                 }
             }
-           
+
         }
     }
 }

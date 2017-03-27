@@ -7,8 +7,9 @@ namespace MLPProgram.LearningAlgorithms
 {
     abstract class GradientLearning : ILearningAlgorithm
     {
-
+        [GpuParam]
         public double _etaPlus = 1.2, _etaMinus = 0.5, _minDelta = 0.00001, _maxDelta = 10, _errorExponent = 2.0;
+        [GpuParam]
         protected MLP _network;
         public double Test(double[][] trainingDataSet, double[][] testDataSet)
         {
@@ -35,21 +36,19 @@ namespace MLPProgram.LearningAlgorithms
                     {
                         Program.ForwardPass(_network, _network.dataFileHolder.Data[v], _network.transferFunction);
                         // find SignalErrors for the output layer
-                        double sumError = 0;
                         for (var n = 0; n < numOutputs; n++)
                         {
                             var error = _network.dataFileHolder.Data[v][numInputs + n] - _network.output[_network.numLayers - 1][n];
                             error = Math.Sign(error) * Math.Pow(Math.Abs(error), _errorExponent);
-                            sumError += Math.Abs(error);
                             derivative = CalculateDerivativeForSignalErrorsInOutputLayer(n);
                             _network.signalError[_network.numLayers - 1][n] = error * derivative;
                         }
                         // find SignalErrors for all hidden layers
-                        for (var l = _network.numLayers - 2; l > 0; l--)
+                        for (var l = _network.numLayers- 2; l > 0; l--)
+                        {
                             for (var n = 0; n < _network.layer[l]; n++)
-                            {
-                                _network.signalError[l][n] = CalculateDerivativeForHiddenLayer(l, n) * SumSignalErrorForHiddenLayer(l, n);
-                            }
+                                    _network.signalError[l][n] = CalculateDerivativeForHiddenLayer(l, n) * SumSignalErrorForHiddenLayer(l, n);
+                        }
                         for (var l = _network.numLayers - 1; l > 0; l--)
                             for (var n = 0; n < _network.layer[l]; n++)
                             {
@@ -68,7 +67,6 @@ namespace MLPProgram.LearningAlgorithms
                 }
             }
         }
-
         private double SumSignalErrorForHiddenLayer(int layer, int hiddenLayerSecondDim)
         {
             var sum = 0.0;
@@ -76,14 +74,13 @@ namespace MLPProgram.LearningAlgorithms
                 sum += _network.signalError[layer + 1][w] * _network.weights[layer + 1][w][hiddenLayerSecondDim];
             return sum;
         }
-
-        private double CalculateDerivativeForHiddenLayer(int layer, int hidenLayerSecondDim)
+        private double CalculateDerivativeForHiddenLayer(int layer, int hidenLayeerSecondDim)
         {
             double derivative;
             if (_network.transferFunction.Method.Name.Equals(nameof(SigmoidTransferFunction)))
-                derivative = SigmoidDerivative(_network.output[layer][hidenLayerSecondDim]);
+                derivative = SigmoidDerivative(_network.output[layer][hidenLayeerSecondDim]);
             else
-                derivative = HyperbolicDerivative(_network.output[layer][hidenLayerSecondDim]);
+                derivative = HyperbolicDerivative(_network.output[layer][hidenLayeerSecondDim]);
             return derivative;
         }
 
