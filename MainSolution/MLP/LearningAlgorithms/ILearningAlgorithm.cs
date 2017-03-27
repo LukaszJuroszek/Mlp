@@ -1,4 +1,4 @@
-﻿using MLPProgram.Networks;
+﻿using System;
 
 namespace MLPProgram.LearningAlgorithms
 {

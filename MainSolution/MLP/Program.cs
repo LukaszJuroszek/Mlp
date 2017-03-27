@@ -1,6 +1,4 @@
-﻿using Alea;
-using Alea.Parallel;
-using MLPProgram.LearningAlgorithms;
+﻿using MLPProgram.LearningAlgorithms;
 using MLPProgram.Networks;
 using System;
 using System.Diagnostics;
@@ -11,25 +9,32 @@ namespace MLPProgram
     {
         static void Main(string[] args)
         {
-            var trainingFileName = @"..\..\Datasets\page-blocks_std_sh.txt";
-            var testFile = @"..\..\Datasets\page-blocks_std_sh.txt";
-            var st = new Stopwatch();
-            st.Start();
-            //to memory
-            var trainingDataset = new DataFileHolder(trainingFileName, GradientLearning.SigmoidTransferFunction);
-            st.Stop();
-            Console.WriteLine(st.Elapsed);
-            st.Reset();
-            st.Start();
-            var network = new MLP(trainingDataset);
-            var learningAlgorithm = new Rprop(network);
-            learningAlgorithm.Train(numEpochs: 50, batchSize: 30, learnRate: 0.05, momentum: 0.5);
-            var testDataset = new DataFileHolder(testFile, GradientLearning.SigmoidTransferFunction);
-            var testAccuracy = network.Accuracy(out double mseTrain);
-            st.Stop();
-            Console.WriteLine(st.Elapsed);
-            Console.WriteLine(testAccuracy);
-            Console.WriteLine(mseTrain);
+            var trainingFileName = @"..\..\Datasets\spectfheart_std_sh.txt";
+            var testFile = @"..\..\Datasets\spectfheart_std_sh.txt";
+            do
+            {
+                while (!Console.KeyAvailable)
+                {
+                    var st = new Stopwatch();
+                    st.Reset();
+                    st.Start();
+                    //to memory
+                    var trainingDataset = new DataFileHolder(trainingFileName, TransferFunctions.SigmoidTransferFunction);
+                    //st.Stop();
+                    //Console.WriteLine(st.Elapsed);
+                    //st.Reset();
+                    //st.Start();
+                    var network = new MLP(trainingDataset);
+                    var learningAlgorithm = new Rprop(network);
+                    learningAlgorithm.Train(numEpochs: 50, batchSize: 30, learnRate: 0.05, momentum: 0.5);
+                    var testDataset = new DataFileHolder(testFile, TransferFunctions.SigmoidTransferFunction);
+                    var testAccuracy = network.Accuracy(out double mseTrain);
+                    st.Stop();
+                    Console.WriteLine(st.Elapsed.Milliseconds);
+                    //Console.WriteLine(testAccuracy);
+                    //Console.WriteLine(mseTrain);
+                }
+            } while (Console.ReadKey(true).Key != ConsoleKey.Escape);
         }
         public static void ForwardPass(MLP _network, double[] vector, Func<double, double> transferFunction, int lok = -1)
         {

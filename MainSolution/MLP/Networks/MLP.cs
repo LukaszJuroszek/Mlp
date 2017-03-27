@@ -25,18 +25,16 @@ namespace MLPProgram.Networks
         [GpuParam]
         public int numLayers;
         [GpuParam]
-        public Func<double, double> transferFunction;
-        [GpuParam]
         public bool classification;
         [GpuParam]
         public int numWeights;
+        [GpuParam]
         public DataFileHolder dataFileHolder;
         public MLP(DataFileHolder fileHolder, string weightFile = "")
         {
             dataFileHolder = fileHolder;
-            classification = dataFileHolder.Classification ;
+            classification = dataFileHolder._classification ;
             layer = dataFileHolder.GetLayers();
-            transferFunction = dataFileHolder.TransferFunction ;
             numWeights = 0;
             numLayers = layer.Length;
             weights = new double[numLayers][][];
@@ -79,24 +77,25 @@ namespace MLPProgram.Networks
         }
         public double Accuracy( out double error,  int lok = 0)
         {
+
             double maxValue = -1;
             error = 0.0;
             var classification = false;
-            if (dataFileHolder.Data[0].Length > layer[0] + 1)
+            if (dataFileHolder._data[0].Length > layer[0] + 1)
                 classification = true;
             var numCorrect = 0;
             var maxIndex = -1;
-            for (var v = 0; v < dataFileHolder.Data.Length; v++)
+            for (var v = 0; v < dataFileHolder._data.Length; v++)
             {
-                Program.ForwardPass(this,dataFileHolder.Data[v], transferFunction, lok);
+                Program.ForwardPass(this,dataFileHolder._data[v], dataFileHolder._transferFunction, lok);
                 maxIndex = -1;
                 maxValue = -1.1;
                 for (var n = 0; n < layer[numLayers - 1]; n++)
                 {
                     if (classification)
-                        error += transferFunction(output[numLayers - 1][n] - (2 * dataFileHolder.Data[v][layer[0] + n] - 1));
+                        error += dataFileHolder._transferFunction(output[numLayers - 1][n] - (2 * dataFileHolder._data[v][layer[0] + n] - 1));
                     else
-                        error += Math.Pow(output[numLayers - 1][n] - dataFileHolder.Data[v][layer[0] + n], 2);
+                        error += Math.Pow(output[numLayers - 1][n] - dataFileHolder._data[v][layer[0] + n], 2);
                     if (output[numLayers - 1][n] > maxValue)
                     {
                         maxValue = output[numLayers - 1][n];
@@ -104,11 +103,11 @@ namespace MLPProgram.Networks
                     }
                 }
                 var position = layer[0] + maxIndex;
-                if (dataFileHolder.Data[v][position] == 1)
+                if (dataFileHolder._data[v][position] == 1)
                     numCorrect++;
             }
-            error /= dataFileHolder.Data.Length;
-            return (double)numCorrect / dataFileHolder.Data.Length;
+            error /= dataFileHolder._data.Length;
+            return (double)numCorrect / dataFileHolder._data.Length;
         }
 
         public double[] GetNonSignalErrorTable(double[][] DataSet, ref double accuracy, double errorExponent = 2.0)
@@ -132,7 +131,7 @@ namespace MLPProgram.Networks
                         if (l == numLayers - 1 && !classification)
                             output[l][n] = sum;
                         else
-                            output[l][n] = transferFunction(sum);
+                            output[l][n] = dataFileHolder._transferFunction(sum);
                         if (l == numLayers - 1)
                             error += Math.Pow(Math.Abs(output[l][n] - DataSet[v][layer[0] + n]), errorExponent);
                     }

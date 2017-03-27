@@ -57,6 +57,7 @@
     <Compile Include="LearningAlgorithms\GradientLearning.cs" />
     <Compile Include="LearningAlgorithms\ILearningAlgorithm.cs" />
     <Compile Include="LearningAlgorithms\Rprop.cs" />
+    <Compile Include="LearningAlgorithms\TransferFunctions.cs" />
     <Compile Include="Networks\INetwork.cs" />
     <Compile Include="Networks\MLP.cs" />
     <Compile Include="Program.cs" />
