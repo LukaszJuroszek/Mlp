@@ -1,49 +1,28 @@
-﻿using Alea;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 namespace MLPProgram
 {
-    public struct DataFileHolder
+    public class FileParser
     {
-        [GpuParam]
-        public string _headerLine ;
-        [GpuParam]
-        public int _numberOfInput ;
-        [GpuParam]
-        public int _numberOfOutput ;
-        [GpuParam]
-        public int _numberOFVectors ;
-        [GpuParam]
-        public int _numberOfAttributes ;
-        [GpuParam]
-        public string[] _headers ;
-        [GpuParam]
-        public bool _classification ;
-        [GpuParam]
-        public double[][] _data ;
-        [GpuParam]
-        public Func<double,double> _transferFunction;
-        public DataFileHolder(string fileName, Func<double, double> transferFunction, bool multipleClassColumns = true, bool firstStandardizeRun = false)
+        public string HeaderLine { get; set; }
+        public int NumberOfInput { get; set; }
+        public int NumberOfOutput { get; set; }
+        public int NumberOFVectors { get; set; }
+        public int NumberOfAttributes { get; set; }
+        public string[] Headers { get; set; }
+        public bool Classification { get; set; }
+        public double[][] Data { get; set; }
+        public Func<double,double> TransferFunction{ get; set; }
+        public FileParser(string fileName, Func<double, double> transferFunction, bool multipleClassColumns = true, bool firstStandardizeRun = false)
         {
-            _transferFunction = transferFunction;
-            using (var sr = new StreamReader(fileName))
+            TransferFunction = transferFunction;
+            GetHedersAndCountNoumbersOfVectors(fileName);
+            double[][] result = new double[NumberOFVectors][];
+            for (var w = 0; w < NumberOFVectors; w++)
             {
-                _numberOFVectors=0;
-                _headerLine = sr.ReadLine();
-                _headers = _headerLine.Split(
-                    new string[] { " ", ";" }, StringSplitOptions.RemoveEmptyEntries);
-                _numberOfAttributes = _headers.Length;
-                string theLine;
-                while ((theLine = sr.ReadLine()) != null)
-                    if (theLine.Trim().Length > 4)
-                        _numberOFVectors++;
-            }
-            double[][] result = new double[_numberOFVectors][];
-            for (var w = 0; w < _numberOFVectors; w++)
-            {
-                result[w] = new double[_numberOfAttributes + 2]; //the two additional columns are: outlier coefficiant and vector number              
+                result[w] = new double[NumberOfAttributes + 2]; //the two additional columns are: outlier coefficiant and vector number              
             }
             using (var sr = new StreamReader(fileName))
             {
@@ -56,16 +35,16 @@ namespace MLPProgram
                         string[] s = theLine.Split(
                             new string[] { " ", ";" }, StringSplitOptions.RemoveEmptyEntries);
                         var a = 0;
-                        for (a = 0; a < _numberOfAttributes; a++)
+                        for (a = 0; a < NumberOfAttributes; a++)
                             result[v][a] = double.Parse(s[a], CultureInfo.InvariantCulture);
-                        if (_headers[_headers.Length - 2].ToLower() == "outlier")
+                        if (Headers[Headers.Length - 2].ToLower() == "outlier")
                             result[v][a] = double.Parse(s[s.Length - 2], CultureInfo.InvariantCulture);
-                        else if (_headers[_headers.Length - 1].ToLower() == "outlier")
+                        else if (Headers[Headers.Length - 1].ToLower() == "outlier")
                             result[v][a] = double.Parse(s[s.Length - 1], CultureInfo.InvariantCulture);
                         else
                             result[v][a] = 1;
                         a++;
-                        if (_headers[_headers.Length - 1].ToLower() == "vector")
+                        if (Headers[Headers.Length - 1].ToLower() == "vector")
                             result[v][a] = int.Parse(s[s.Length - 1], CultureInfo.InvariantCulture);
                         else
                             result[v][a] = v;
@@ -73,15 +52,15 @@ namespace MLPProgram
                     }
                 }
             }
-            _numberOfInput = result[1].Length - 3;  //the two additional columns are: outlier coefficiant and vector number
+            NumberOfInput = result[1].Length - 3;  //the two additional columns are: outlier coefficiant and vector number
             var cl = new HashSet<int>();//cl ??
             for (int i = 0; i < result.Length; i++)
                 cl.Add((int)result[i][result[1].Length - 3]);
-            _numberOfOutput = cl.Count;
-            _classification = false;
-            if (_headerLine.ToLower().EndsWith("class") && multipleClassColumns)
+            NumberOfOutput = cl.Count;
+            Classification = false;
+            if (HeaderLine.ToLower().EndsWith("class") && multipleClassColumns)
             {
-                _classification = true;
+                Classification = true;
                 var numCol = result[1].Length - 1 + cl.Count;
                 double[][] dataSet = new double[result.Length][];
                 for (var i = 0; i < result.Length; i++)
@@ -105,30 +84,46 @@ namespace MLPProgram
                     dataSet[v][dataSet[0].Length - 2] = result[v][result[0].Length - 2]; //outlier
                     dataSet[v][dataSet[0].Length - 1] = result[v][result[0].Length - 1]; // v;
                 }
-                _data = dataSet;
+                Data = dataSet;
             }
-            else if (_headerLine.ToLower().EndsWith("class"))
+            else if (HeaderLine.ToLower().EndsWith("class"))
             {
-                _data = result;
+                Data = result;
             }
             else
             {
-                _numberOfOutput = 1;
-                _data = result;
+                NumberOfOutput = 1;
+                Data = result;
             }
         }
+
+        private void GetHedersAndCountNoumbersOfVectors(string fileName)
+        {
+            using (var sr = new StreamReader(fileName))
+            {
+                HeaderLine = sr.ReadLine();
+                Headers = HeaderLine.Split(
+                    new string[] { " ", ";" }, StringSplitOptions.RemoveEmptyEntries);
+                NumberOfAttributes = Headers.Length;
+                string theLine;
+                while ((theLine = sr.ReadLine()) != null)
+                    if (theLine.Trim().Length > 4)
+                        NumberOFVectors++;
+            }
+        }
+
         public int GetNumberOfHidenLayer()
         {
-            return (int)Math.Sqrt(_numberOfInput * _numberOfOutput);
+            return (int)Math.Sqrt(NumberOfInput * NumberOfOutput);
         }
         public int[] GetLayers()
         {
             var ll = new List<int>
             {
-                _numberOfInput
+                NumberOfInput
             };
             ll.AddRange(new int[] { GetNumberOfHidenLayer() });
-            ll.Add(_numberOfOutput);
+            ll.Add(NumberOfOutput);
             int[] layers = ll.ToArray();
             return layers;
         }

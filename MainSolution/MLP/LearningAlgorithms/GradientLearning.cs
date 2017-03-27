@@ -19,9 +19,9 @@ namespace MLPProgram.LearningAlgorithms
         public void Train(int numEpochs = 30, int batchSize = 30, double learnRate = 0.05, double momentum = 0.5)
         {
             var gpu = Gpu.Default;
-            var numInputs = _network.dataFileHolder._numberOfInput;
-            var numOutputs = _network.dataFileHolder._numberOfOutput;
-            var numVectors = _network.dataFileHolder._numberOFVectors;
+            var numInputs = _network.dataAndTransferFunction._numberOfInput;
+            var numOutputs = _network.dataAndTransferFunction._numberOfOutput;
+            var numVectors = _network.dataAndTransferFunction._numberOFVectors;
             var derivative = 0.0;
             if (batchSize > numVectors || this is Rprop)
                 batchSize = numVectors;
@@ -34,11 +34,11 @@ namespace MLPProgram.LearningAlgorithms
                 {
                     for (var b = 0; b < batchSize; b++)
                     {
-                        Program.ForwardPass(_network, _network.dataFileHolder._data[v], _network.dataFileHolder._transferFunction);
+                        Program.ForwardPass(_network, _network.dataAndTransferFunction._data[v], _network.dataAndTransferFunction._transferFunction);
                         // find SignalErrors for the output layer
                         for (var n = 0; n < numOutputs; n++)
                         {
-                            var error = _network.dataFileHolder._data[v][numInputs + n] - _network.output[_network.numLayers - 1][n];
+                            var error = _network.dataAndTransferFunction._data[v][numInputs + n] - _network.output[_network.numLayers - 1][n];
                             error = Math.Sign(error) * Math.Pow(Math.Abs(error), _errorExponent);
                             derivative = CalculateDerivativeForSignalErrorsInOutputLayer(n);
                             _network.signalError[_network.numLayers - 1][n] = error * derivative;
@@ -80,7 +80,7 @@ namespace MLPProgram.LearningAlgorithms
         private double CalculateDerivativeForHiddenLayer(int layer, int hidenLayeerSecondDim)
         {
             double derivative;
-            if (TransferFunctions.IsSigmoidTransferFunction(_network.dataFileHolder._transferFunction))
+            if (TransferFunctions.IsSigmoidTransferFunction(_network.dataAndTransferFunction._transferFunction))
                 derivative = TransferFunctions.SigmoidDerivative(_network.output[layer][hidenLayeerSecondDim]);
             else
                 derivative = TransferFunctions.HyperbolicDerivative(_network.output[layer][hidenLayeerSecondDim]);
@@ -92,7 +92,7 @@ namespace MLPProgram.LearningAlgorithms
             double derivative;
             if (_network.classification)
             {
-                if (TransferFunctions.IsSigmoidTransferFunction(_network.dataFileHolder._transferFunction))
+                if (TransferFunctions.IsSigmoidTransferFunction(_network.dataAndTransferFunction._transferFunction))
                     derivative = TransferFunctions.SigmoidDerivative(_network.output[_network.numLayers - 1][outputSecondDim]);
                 else
                     derivative = TransferFunctions.HyperbolicDerivative(_network.output[_network.numLayers - 1][outputSecondDim]);

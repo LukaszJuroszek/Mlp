@@ -19,15 +19,16 @@ namespace MLPProgram
                     st.Reset();
                     st.Start();
                     //to memory
-                    var trainingDataset = new DataFileHolder(trainingFileName, TransferFunctions.SigmoidTransferFunction);
+                    var trainData = new FileParser(trainingFileName, TransferFunctions.SigmoidTransferFunction);
                     //st.Stop();
                     //Console.WriteLine(st.Elapsed);
                     //st.Reset();
                     //st.Start();
-                    var network = new MLP(trainingDataset);
+                    var data = new BaseDataHolder(trainData);
+                    var network = new MLP(data);
                     var learningAlgorithm = new Rprop(network);
                     learningAlgorithm.Train(numEpochs: 50, batchSize: 30, learnRate: 0.05, momentum: 0.5);
-                    var testDataset = new DataFileHolder(testFile, TransferFunctions.SigmoidTransferFunction);
+                    var testDataset = new FileParser(testFile, TransferFunctions.SigmoidTransferFunction);
                     var testAccuracy = network.Accuracy(out double mseTrain);
                     st.Stop();
                     Console.WriteLine(st.Elapsed.Milliseconds);
