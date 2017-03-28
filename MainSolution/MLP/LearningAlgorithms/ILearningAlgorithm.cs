@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace MLPProgram.LearningAlgorithms
+﻿namespace MLPProgram.LearningAlgorithms
 {
     interface ILearningAlgorithm
     {

@@ -9,7 +9,7 @@ namespace MLPProgram
     {
         static void Main(string[] args)
         {
-            var filePath = @"..\..\Datasets\mortgage_std_sh.txt";
+            var filePath = @"..\..\Datasets\iris_std_sh.txt";
             var st = new Stopwatch();
             var totalMs = TimeSpan.FromMilliseconds(0);
             var trainData = new FileParser(filePath, TransferFunctions.SigmoidTransferFunction);
@@ -18,7 +18,7 @@ namespace MLPProgram
             var network = new MLP(data);
             var learningAlgorithm = new Rprop(network);
             st.Start();
-            for (var i = 0; i < 3; i++)
+            for (var i = 0; i < 1; i++)
             {
                 //to memory
                 //st.Stop();

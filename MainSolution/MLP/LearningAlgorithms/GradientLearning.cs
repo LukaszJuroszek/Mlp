@@ -28,6 +28,7 @@ namespace MLPProgram.LearningAlgorithms
             CreateWeightZeroAndAsingDeltaValue(0.1);
             for (var epoch = 0; epoch < numEpochs; epoch++)
             {
+                Console.WriteLine(epoch);
                 MakeGradientZero();
                 var v = 0;
                 while (v < numVectors)
@@ -36,12 +37,18 @@ namespace MLPProgram.LearningAlgorithms
                     {
                         Program.ForwardPass(_network, _network.baseData._data[v], _network.baseData);
                         // find SignalErrors for the output layer
+                        var error = new double[numOutputs];
+                        gpu.For(0, numOutputs, n =>
+                        {
+                            //for (var n = 0; n < numOutputs; n++)
+                            //{
+                            error[n] = _network.baseData._data[v][numInputs + n] - _network.output[_network.numLayers - 1][n];
+                        });
                         for (var n = 0; n < numOutputs; n++)
                         {
-                            var error = _network.baseData._data[v][numInputs + n] - _network.output[_network.numLayers - 1][n];
-                            error = Math.Sign(error) * Math.Pow(Math.Abs(error), _errorExponent);
+                            error[n] = Math.Sign(error[n]) * Math.Pow(Math.Abs(error[n]), _errorExponent);
                             derivative = CalculateDerivativeForSignalErrorsInOutputLayer(n);
-                            _network.signalError[_network.numLayers - 1][n] = error * derivative;
+                            _network.signalError[_network.numLayers - 1][n] = error[n] * derivative;
                         }
                         // find SignalErrors for all hidden layers
                         for (var l = _network.numLayers - 2; l > 0; l--)

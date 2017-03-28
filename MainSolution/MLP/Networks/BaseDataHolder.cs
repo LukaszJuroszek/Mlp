@@ -1,16 +1,24 @@
-﻿using MLPProgram.LearningAlgorithms;
+﻿using Alea;
+using MLPProgram.LearningAlgorithms;
 using System;
 
 namespace MLPProgram.Networks
 {
     public struct BaseDataHolder
     {
+        [GpuParam]
         public double[][] _data;
+        [GpuParam]
         public int _numberOfInput;
+        [GpuParam]
         public int _numberOfOutput;
+        [GpuParam]
         public int _numberOFVectors;
+        [GpuParam]
         public bool _classification;
+        [GpuParam]
         public int[] _layer;
+        [GpuParam]
         public bool _isSigmoidFunction;
         public BaseDataHolder(double[][] data, int numberOfInput, int numberOfOutput, int numberOFVectors, Func<double, double> transferFunction, bool classification, int[] layer)
         {
