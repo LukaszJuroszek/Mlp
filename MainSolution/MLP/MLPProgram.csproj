@@ -53,10 +53,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="LearningAlgorithms\BP.cs" />
     <Compile Include="LearningAlgorithms\GradientLearning.cs" />
-    <Compile Include="LearningAlgorithms\ILearningAlgorithm.cs" />
-    <Compile Include="LearningAlgorithms\Rprop.cs" />
     <Compile Include="LearningAlgorithms\TransferFunctions.cs" />
     <Compile Include="Networks\BaseDataHolder.cs" />
     <Compile Include="Networks\INetwork.cs" />

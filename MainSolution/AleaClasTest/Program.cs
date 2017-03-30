@@ -1,62 +1,68 @@
 ﻿using Alea;
+using Alea.CSharp;
 using Alea.Parallel;
 using System;
 using System.Diagnostics;
+using System.Linq;
 
 namespace AleaClasTest
 {
     class Program
     {
-        [GpuParam]
-        Continer continer;
-        public Program(Continer continer)
+
+        public static void Kernel<T, TU>(Func<T, T, TU> op, TU[] result, T[] arg1, T[] arg2)
         {
-            this.continer = continer;
+            var start = blockIdx.x * blockDim.x + threadIdx.x;
+            var stride = gridDim.x * blockDim.x;
+            for (var i = start; i < result.Length; i += stride)
+            {
+                result[i] = op(arg1[i], arg2[i]);
+            }
         }
-        public static int _size = 50;
         [GpuManaged]
-        public double[][] Run()
-        {
-            //co._arg1 = continer._arg1;
-            //co._arg2 = continer._arg2;
-            var gpu = Gpu.Default;
-            var result = new double[_size][];
-            for (var i = 0; i < result.Length; i++)
-            {
-                result[i] = new double[result.Length];
-            }
-            var st = new Stopwatch();
-            st.Start();
-            for (var i = 0; i < _size; i++)
-            {
-                gpu.For(1, result.Length-1, x =>
-                {
-                    for (var p = 0; p < result.Length; p++)
-                        continer._data._results[x][p] = continer._data._arg1[x-1][p] + continer._data._arg2[x][p] * 0.57;
-                    //Console.WriteLine(x);
-                });
-                //Console.Write(st.Elapsed);
-                //Console.Write(" ");
-                //st.Reset();
-                //st.Start();
-                //for (int s = 0; s < result.Length; s++)
-                //{
-                //    for (var p = 0; p < result.Length; p++)
-                //        result[s][p] = co._arg1[s][p] + co._arg2[s][p];
-                //}
-                //st.Stop();
-                //Console.WriteLine(st.Elapsed);
-            }
-            st.Stop();
-            Console.WriteLine(st.Elapsed.Milliseconds);
-            return result;
-        }
         static void Main(string[] args)
         {
-            var xx = new ClassWithFieldsForTest(Program._size);
-            var container = new Continer(xx);
-            var p = new Program(container);
-            var x = p.Run();
+            //var size = 10000000;
+            //var arg = Enumerable.Range(1, size).ToArray();
+            //var result = new SampleStruct<int>[size];
+            //var result2 = new SampleStruct<int>[size];
+            //Func<int, int, SampleStruct<int>> add = (x, y) => new SampleStruct<int>
+            //{
+            //    add = x + y,
+            //    multyply = x * y
+            //};
+            //var p = Gpu.Default;
+            //var st = new Stopwatch();
+            //for (var xi = 0; xi < 2000; xi++)
+            //{
+            //    st.Reset();
+            //    st.Start();
+            //    p.Launch(Kernel, new LaunchParam(16, 1), add, result, arg, arg);
+            //         st.Stop();
+            //    Console.Write(st.Elapsed.Milliseconds);
+            //    st.Reset();
+            //    st.Start();
+            //    for (var i = 0; i < size; i++)
+            //    {
+            //        result2[i] = add(arg[i], arg[i]);
+            //    }
+            //    st.Stop();
+            //    Console.Write(" ");
+            //    Console.WriteLine(st.Elapsed.Milliseconds); 
+            //}
+
+            int numberOfSides = 5;
+            for (int i = 0; i < numberOfSides; i++)
+            {
+                double xx =  Math.Sin(2.0 * Math.PI * i / numberOfSides);
+                double yy =  Math.Cos(2.0 * Math.PI * i / numberOfSides);
+                Console.WriteLine($"{xx}={yy}");
+            }
+            
+            //foreach (var item in result)
+            //{
+            //    Console.WriteLine($"{item.add} {item.multyply}");
+            //}
         }
         public void ShowArray(int[][] array)
         {

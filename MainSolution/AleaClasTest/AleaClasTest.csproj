@@ -43,6 +43,9 @@
     <Reference Include="Alea.Parallel, Version=3.0.0.0, Culture=neutral, PublicKeyToken=ba52afc3c2e933d6, processorArchitecture=MSIL">
       <HintPath>..\packages\Alea.3.0.2\lib\net45\Alea.Parallel.dll</HintPath>
     </Reference>
+    <Reference Include="AleaTK, Version=0.9.0.5, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\AleaTK.0.9.0\lib\net40\AleaTK.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
@@ -53,8 +56,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="ClassWithFieldsForTest.cs" />
-    <Compile Include="Continer.cs" />
+    <Compile Include="SampleStruct.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

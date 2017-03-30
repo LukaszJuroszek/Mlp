@@ -16,7 +16,7 @@ namespace MLPProgram
             var testDataset = new FileParser(filePath, TransferFunctions.SigmoidTransferFunction);
             var data = new BaseDataHolder(trainData);
             var network = new MLP(data);
-            var learningAlgorithm = new Rprop(network);
+            var learningAlgorithm = new GradientLearning(network);
             st.Start();
             for (var i = 0; i < 1; i++)
             {
@@ -25,7 +25,7 @@ namespace MLPProgram
                 //Console.WriteLine(st.Elapsed);
                 //st.Reset();
                 //st.Start();
-                learningAlgorithm.Train(numEpochs: 50, batchSize: 30, learnRate: 0.05, momentum: 0.5);
+                learningAlgorithm.Train(numberOFEpochs: 50, batchSize: 30, learnRate: 0.05, momentum: 0.5);
                 var testAccuracy = network.Accuracy(out double mseTrain);
             }
             //Console.WriteLine(testAccuracy);
