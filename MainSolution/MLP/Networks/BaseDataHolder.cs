@@ -6,19 +6,12 @@ namespace MLPProgram.Networks
 {
     public struct BaseDataHolder
     {
-        [GpuParam]
         public double[][] _data;
-        [GpuParam]
         public int _numberOfInput;
-        [GpuParam]
         public int _numberOfOutput;
-        [GpuParam]
         public int _numberOFVectors;
-        [GpuParam]
         public bool _classification;
-        [GpuParam]
         public int[] _layer;
-        [GpuParam]
         public bool _isSigmoidFunction;
         public BaseDataHolder(double[][] data, int numberOfInput, int numberOfOutput, int numberOFVectors, Func<double, double> transferFunction, bool classification, int[] layer)
         {
@@ -44,26 +37,18 @@ namespace MLPProgram.Networks
         {
             double result = 0;
             if (_isSigmoidFunction)
-            {
                 result = TransferFunctions.SigmoidTransferFunction(x);
-            }
             else
-            {
                 result = TransferFunctions.HyperbolicTransferFunction(x);
-            }
             return result;
         }
         public double DerivativeFunction(double x)
         {
             double result = 0;
             if (_isSigmoidFunction)
-            {
                 result = TransferFunctions.SigmoidDerivative(x);
-            }
             else
-            {
                 result = TransferFunctions.HyperbolicDerivative(x);
-            }
             return result;
         }
     }

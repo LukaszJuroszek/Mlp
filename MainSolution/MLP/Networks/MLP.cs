@@ -77,7 +77,6 @@ namespace MLPProgram.Networks
         }
         public double Accuracy(out double error, int lok = 0)
         {
-
             double maxValue = -1;
             error = 0.0;
             var classification = false;

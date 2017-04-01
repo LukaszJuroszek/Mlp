@@ -22,30 +22,30 @@ namespace MLPProgram
             double[][] result = new double[NumberOFVectors][];
             for (var w = 0; w < NumberOFVectors; w++)
             {
-                result[w] = new double[NumberOfAttributes + 2]; //the two additional columns are: outlier coefficiant and vector number              
+                result[w] = new double[NumberOfAttributes + 2];
+                //the two additional columns are: outlier coefficiant and vector number
             }
             using (var sr = new StreamReader(fileName))
             {
-                var theLine = sr.ReadLine();
+                var line = sr.ReadLine();
                 var v = 0;
-                while ((theLine = sr.ReadLine()) != null)
+                while ((line = sr.ReadLine()) != null)
                 {
-                    if (theLine.Trim().Length > 2)
+                    if (line.Trim().Length > 2)
                     {
-                        string[] s = theLine.Split(
-                            new string[] { " ", ";" }, StringSplitOptions.RemoveEmptyEntries);
+                        string[] splitedLines = line.Split(new string[] { " ", ";" }, StringSplitOptions.RemoveEmptyEntries);
                         var a = 0;
                         for (a = 0; a < NumberOfAttributes; a++)
-                            result[v][a] = double.Parse(s[a], CultureInfo.InvariantCulture);
+                            result[v][a] = double.Parse(splitedLines[a], CultureInfo.InvariantCulture);
                         if (Headers[Headers.Length - 2].ToLower() == "outlier")
-                            result[v][a] = double.Parse(s[s.Length - 2], CultureInfo.InvariantCulture);
+                            result[v][a] = double.Parse(splitedLines[splitedLines.Length - 2], CultureInfo.InvariantCulture);
                         else if (Headers[Headers.Length - 1].ToLower() == "outlier")
-                            result[v][a] = double.Parse(s[s.Length - 1], CultureInfo.InvariantCulture);
+                            result[v][a] = double.Parse(splitedLines[splitedLines.Length - 1], CultureInfo.InvariantCulture);
                         else
                             result[v][a] = 1;
                         a++;
                         if (Headers[Headers.Length - 1].ToLower() == "vector")
-                            result[v][a] = int.Parse(s[s.Length - 1], CultureInfo.InvariantCulture);
+                            result[v][a] = int.Parse(splitedLines[splitedLines.Length - 1], CultureInfo.InvariantCulture);
                         else
                             result[v][a] = v;
                         v++;
@@ -55,7 +55,7 @@ namespace MLPProgram
             NumberOfInput = result[1].Length - 3;  //the two additional columns are: outlier coefficiant and vector number
             var cl = new HashSet<int>();//cl ??
             for (int i = 0; i < result.Length; i++)
-                cl.Add((int)result[i][result[1].Length - 3]);
+                cl.Add((int)result[i][NumberOfInput]);
             NumberOfOutput = cl.Count;
             Classification = false;
             if (HeaderLine.ToLower().EndsWith("class") && multipleClassColumns)
@@ -67,13 +67,13 @@ namespace MLPProgram
                     dataSet[i] = new double[numCol];
                 for (var v = 0; v < result.Length; v++)
                 {
-                    for (var a = 0; a < result[1].Length - 3; a++)
+                    for (var a = 0; a < NumberOfInput; a++)
                         dataSet[v][a] = result[v][a];
                     for (var a = result[1].Length - 2; a < result[1].Length; a++) //outlier and vector columns
                         dataSet[v][a] = result[v][a];
-                    var k = (int)result[v][result[1].Length - 3]; //class column
+                    var k = (int)result[v][NumberOfInput]; //class column
                     var m = 0;
-                    for (var a = result[1].Length - 3; a < numCol - 2; a++)
+                    for (var a = NumberOfInput; a < numCol - 2; a++)
                     {
                         m++;
                         if (m == k)
@@ -96,7 +96,6 @@ namespace MLPProgram
                 Data = result;
             }
         }
-
         private void GetHedersAndCountNoumbersOfVectors(string fileName)
         {
             using (var sr = new StreamReader(fileName))
@@ -105,13 +104,12 @@ namespace MLPProgram
                 Headers = HeaderLine.Split(
                     new string[] { " ", ";" }, StringSplitOptions.RemoveEmptyEntries);
                 NumberOfAttributes = Headers.Length;
-                string theLine;
-                while ((theLine = sr.ReadLine()) != null)
-                    if (theLine.Trim().Length > 4)
+                string line;
+                while ((line = sr.ReadLine()) != null)
+                    if (line.Trim().Length > 4)
                         NumberOFVectors++;
             }
         }
-
         public int GetNumberOfHidenLayer()
         {
             return (int)Math.Sqrt(NumberOfInput * NumberOfOutput);
