@@ -31,6 +31,7 @@ namespace AleaClasTest
                 add = x + y,
                 multyply = x * y
             };
+            Func<double, double, double> mlp = (x, y) => x * y;
             var p = Gpu.Default;
             var st = new Stopwatch();
             for (var xi = 0; xi < 2000; xi++)

@@ -18,12 +18,15 @@ namespace MLPProgram.LearningAlgorithms
         }
         public void Train(int numberOfEpochs = 30, int batchSize = 30, double learnRate = 0.05, double momentum = 0.5)
         {
+            Console.WriteLine(_network);
+            Console.WriteLine(_network.baseData);
             if (batchSize > _network.baseData._numberOFVectors || nameof(UpdateWeightsRprop).Contains("Rprop"))
                 batchSize = _network.baseData._numberOFVectors;
             CreateWeightZeroAndAsingDeltaValue(0.1);
+            Console.WriteLine(_network);
+
             for (var epoch = 0; epoch < numberOfEpochs; epoch++)
             {
-
                 MakeGradientZero();
                 var v = 0;// v ?
                 while (v < _network.baseData._numberOFVectors)
@@ -62,14 +65,12 @@ namespace MLPProgram.LearningAlgorithms
                 }
             }
         }
-
         private void Bias(double learnRate, int l, int n)
         {
             _network.weightDiff[l][n][_network.layer[l - 1]] += learnRate * _network.signalError[l][n];
             for (var w = 0; w < _network.layer[l - 1]; w++)
                 _network.weightDiff[l][n][w] += learnRate * _network.signalError[l][n] * _network.output[l - 1][w];
         }
-
         private double SumSignalErrorForHiddenLayer(int layer, int hiddenLayerSecondDim)
         {
             var sum = 0.0;
@@ -103,7 +104,6 @@ namespace MLPProgram.LearningAlgorithms
                         _network.weightDiff[l][n][w] = 0;
                         _network.delta[l][n][w] = deltaValue;
                     }
-
                     //_gpu.Launch(Kernel, new LaunchParam(16, 256), assing, _network.delta[l][n], delta.ToArray());
                     //_gpu.Launch(Kernel, new LaunchParam(16, 256), assing, _network.weightDiff[l][n], wz.ToArray());
                 }

@@ -1,5 +1,7 @@
 ﻿using Alea;
 using System;
+using System.Text;
+
 namespace MLPProgram.Networks
 {
     public struct MLP : INetwork
@@ -30,6 +32,18 @@ namespace MLPProgram.Networks
         public int numWeights;
         [GpuParam]
         public BaseDataHolder baseData;
+        public override string ToString()
+        {
+            var st = new StringBuilder();
+            st.Append($"Weights {numWeights} ");
+            st.Append($"classification {classification} ");
+            st.Append($"LayersCount {numLayers} ");
+            for (var i = 0; i < layer.Length; i++)
+            {
+            st.Append($"l[{i}]={layer[i]} ");
+            }
+            return st.ToString();
+        }
         public MLP(BaseDataHolder data, string weightFile = "")
         {
             baseData = data;

@@ -1,6 +1,7 @@
 ﻿using Alea;
 using MLPProgram.LearningAlgorithms;
 using System;
+using System.Text;
 
 namespace MLPProgram.Networks
 {
@@ -11,8 +12,24 @@ namespace MLPProgram.Networks
         public int _numberOfOutput;
         public int _numberOFVectors;
         public bool _classification;
-        public int[] _layer;
         public bool _isSigmoidFunction;
+        public int[] _layer;
+        public override string ToString()
+        {
+            var st = new StringBuilder();
+            st.Append($"numberOfInput {_numberOfInput} ");
+            st.Append($"numberOfOutput {_numberOfOutput} ");
+            st.Append($"numberOFVector {_numberOFVectors} ");
+            st.AppendLine($"classification {_classification} ");
+            for (var i = 0; i < _data.Length; i++)
+            {
+                for (var pi = 0; pi < _data[i].Length; pi++)
+                {
+                    st.Append($"d[{i},{pi}] {_data[i][pi]:n4}, ");
+                }
+            }
+            return st.ToString();
+        }
         public BaseDataHolder(double[][] data, int numberOfInput, int numberOfOutput, int numberOFVectors, Func<double, double> transferFunction, bool classification, int[] layer)
         {
             _data = data;
