@@ -25,34 +25,30 @@ namespace MLPProgram
                 st.Start();
                 learningAlgorithm.Train(numberOfEpochs: 50, batchSize: 30, learnRate: 0.05, momentum: 0.5);
                 var testAccuracy = network.Accuracy(out double mseTrain);
-            Console.WriteLine(testAccuracy);
-            Console.WriteLine(mseTrain);
+                Console.WriteLine(testAccuracy);
+                Console.WriteLine(mseTrain);
             }
-                st.Stop();
-                Console.WriteLine(st.Elapsed);
+            st.Stop();
+            Console.WriteLine(st.Elapsed);
 
         }
         public static void ForwardPass(MLP network, int indexOftrainingDataSet, int lok = -1)
         {
             //coping trainingData to output[0]
-            for (var i = 0; i < network.output[0].Length; i++)
-                network.output[0][i] = network.baseData._trainingDataSet[indexOftrainingDataSet][i];
+                network.output[0] = network.baseData._trainingDataSet[indexOftrainingDataSet].Take(network.output[0].Length).ToArray();
             //calculate outputs by output[0]...==_trainingDataSet[indexOftrainingDataSet].
             for (var l = 1; l < network.output.Length; l++)
             {
                 for (var n = 0; n < network.output[l].Length; n++)
                 {
-					double sum = 0;
+                    double sum = 0;
                     //l-1 means that we are taking prevouls op.layer...
-                    for (var w = 0; w < network.output[l-1].Length; w++)
+                    for (var w = 0; w < network.output[l - 1].Length; w++)
                     {
                         sum += network.output[l - 1][w] * network.weights[l][n][w];
                     }
                     sum += network.weights[l][n][network.output[l - 1].Length]; //bias
-                    if (l == network.output.Length - 1 && !network.classification)
-                        network.output[l][n] = sum;
-                    else
-                        network.output[l][n] = network.baseData.TransferFunction(sum);
+                    network.output[l][n] = (l == network.output.Length - 1 && !network.classification) ? sum : network.baseData.TransferFunction(sum);
                 }
             }
         }
