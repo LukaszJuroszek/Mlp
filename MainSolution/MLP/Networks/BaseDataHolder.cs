@@ -7,7 +7,7 @@ namespace MLPProgram.Networks
 {
     public struct BaseDataHolder
     {
-        public double[][] _data;
+        public double[][] _trainingDataSet;
         public int _numberOfInput;
         public int _numberOfOutput;
         public int _numberOFVectors;
@@ -21,18 +21,18 @@ namespace MLPProgram.Networks
             st.Append($"numberOfOutput {_numberOfOutput} ");
             st.Append($"numberOFVector {_numberOFVectors} ");
             st.AppendLine($"classification {_classification} ");
-            for (var i = 0; i < _data.Length; i++)
+            for (var i = 0; i < _trainingDataSet.Length; i++)
             {
-                for (var pi = 0; pi < _data[i].Length; pi++)
+                for (var pi = 0; pi < _trainingDataSet[i].Length; pi++)
                 {
-                    st.Append($"d[{i},{pi}] {_data[i][pi]:n4}, ");
+                    st.Append($"d[{i},{pi}] {_trainingDataSet[i][pi]:n4}, ");
                 }
             }
             return st.ToString();
         }
         public BaseDataHolder(double[][] data, int numberOfInput, int numberOfOutput, int numberOFVectors, Func<double, double> transferFunction, bool classification, int[] layer)
         {
-            _data = data;
+            _trainingDataSet = data;
             _layer = layer;
             _numberOfInput = numberOfInput;
             _numberOfOutput = numberOfOutput;
@@ -42,7 +42,7 @@ namespace MLPProgram.Networks
         }
         public BaseDataHolder(FileParser file)
         {
-            _data = file.Data;
+            _trainingDataSet = file.Data;
             _layer = file.GetLayers();
             _numberOfInput = file.NumberOfInput;
             _numberOfOutput = file.NumberOfOutput;

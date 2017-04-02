@@ -40,7 +40,7 @@ namespace MLPProgram.Networks
             st.Append($"LayersCount {numLayers} ");
             for (var i = 0; i < layer.Length; i++)
             {
-            st.Append($"l[{i}]={layer[i]} ");
+                st.Append($"l[{i}]={layer[i]} ");
             }
             return st.ToString();
         }
@@ -94,21 +94,21 @@ namespace MLPProgram.Networks
             double maxValue = -1;
             error = 0.0;
             var classification = false;
-            if (baseData._data[0].Length > layer[0] + 1)
+            if (baseData._trainingDataSet[0].Length > layer[0] + 1)
                 classification = true;
             var numCorrect = 0;
             var maxIndex = -1;
-            for (var v = 0; v < baseData._data.Length; v++)
+            for (var v = 0; v < baseData._trainingDataSet.Length; v++)
             {
-                Program.ForwardPass(this, baseData._data[v], baseData, lok);
+                Program.ForwardPass(this, v, lok);
                 maxIndex = -1;
                 maxValue = -1.1;
                 for (var n = 0; n < layer[numLayers - 1]; n++)
                 {
                     if (classification)
-                        error += baseData.TransferFunction(output[numLayers - 1][n] - (2 * baseData._data[v][layer[0] + n] - 1));
+                        error += baseData.TransferFunction(output[numLayers - 1][n] - (2 * baseData._trainingDataSet[v][layer[0] + n] - 1));
                     else
-                        error += Math.Pow(output[numLayers - 1][n] - baseData._data[v][layer[0] + n], 2);
+                        error += Math.Pow(output[numLayers - 1][n] - baseData._trainingDataSet[v][layer[0] + n], 2);
                     if (output[numLayers - 1][n] > maxValue)
                     {
                         maxValue = output[numLayers - 1][n];
@@ -116,11 +116,11 @@ namespace MLPProgram.Networks
                     }
                 }
                 var position = layer[0] + maxIndex;
-                if (baseData._data[v][position] == 1)
+                if (baseData._trainingDataSet[v][position] == 1)
                     numCorrect++;
             }
-            error /= baseData._data.Length;
-            return (double)numCorrect / baseData._data.Length;
+            error /= baseData._trainingDataSet.Length;
+            return (double)numCorrect / baseData._trainingDataSet.Length;
         }
 
         public double[] GetNonSignalErrorTable(double[][] DataSet, ref double accuracy, double errorExponent = 2.0)

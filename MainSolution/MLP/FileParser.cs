@@ -116,14 +116,7 @@ namespace MLPProgram
         }
         public int[] GetLayers()
         {
-            var ll = new List<int>
-            {
-                NumberOfInput
-            };
-            ll.AddRange(new int[] { GetNumberOfHidenLayer() });
-            ll.Add(NumberOfOutput);
-            int[] layers = ll.ToArray();
-            return layers;
+            return new int[] { NumberOfInput, GetNumberOfHidenLayer(), NumberOfOutput };
         }
     }
 }

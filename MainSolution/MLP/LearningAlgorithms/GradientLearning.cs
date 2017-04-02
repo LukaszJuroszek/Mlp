@@ -1,5 +1,4 @@
 ﻿using Alea;
-using Alea.CSharp;
 using MLPProgram.Networks;
 using System;
 using System.Linq;
@@ -24,7 +23,6 @@ namespace MLPProgram.LearningAlgorithms
                 batchSize = _network.baseData._numberOFVectors;
             CreateWeightZeroAndAsingDeltaValue(0.1);
             Console.WriteLine(_network);
-
             for (var epoch = 0; epoch < numberOfEpochs; epoch++)
             {
                 MakeGradientZero();
@@ -33,11 +31,11 @@ namespace MLPProgram.LearningAlgorithms
                 {
                     for (var b = 0; b < batchSize; b++)
                     {
-                        Program.ForwardPass(_network, _network.baseData._data[v], _network.baseData);
+                        Program.ForwardPass(_network, v);
                         // find SignalErrors for the output layer
                         for (var n = 0; n < _network.baseData._numberOfOutput; n++)
                         {
-                            var error = _network.baseData._data[v][_network.baseData._numberOfInput + n] - _network.output[_network.numLayers - 1][n];
+                            var error = _network.baseData._trainingDataSet[v][_network.baseData._numberOfInput + n] - _network.output[_network.numLayers - 1][n];
                             error = Math.Sign(error) * Math.Pow(Math.Abs(error), _errorExponent);
                             var derivative = CalculateDerivativeForSignalErrorsInOutputLayer(n);
                             _network.signalError[_network.numLayers - 1][n] = error * derivative;
