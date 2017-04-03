@@ -31,6 +31,7 @@ namespace MLPProgram.LearningAlgorithms
                 {
                     for (var b = 0; b < batchSize; b++)
                     {
+                        Console.WriteLine("ForwardPassGradient");
                         Program.ForwardPass(_network, v);
                         // find SignalErrors for the output layer
                         for (var n = 0; n < _network.baseData._numberOfOutput; n++)

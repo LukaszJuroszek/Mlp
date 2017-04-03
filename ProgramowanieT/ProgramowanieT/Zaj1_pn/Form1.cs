@@ -15,9 +15,9 @@ namespace Zaj1_pn
         {
             InitializeComponent();
             //sql, xml
-            //_eventsRepository = new SQLEventRepository();
+            _eventsRepository = new SQLEventRepository();
             //_eventsRepository = new MemoryEventRepository();
-            _eventsRepository = new XMLEventRepository();
+            //_eventsRepository = new XMLEventRepository();
         }
         public void Form1_Load(object sender,EventArgs e)
         {
