@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Collections.Generic;
 
 namespace T4.Model
 {
@@ -19,7 +15,7 @@ namespace T4.Model
         public int Id { get; set; }
         public string Name { get; set; }
         public MemberType MemberType { get; set; }
-        public Team Team { get; set; }
+        public  Team Team { get; set; }
         public virtual ICollection<Project> Projects { get; set; }
         public TeamMeber()
         {

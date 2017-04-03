@@ -10,6 +10,7 @@ namespace T4
     {
         static void InitData(CompanyContext context)
         {
+            //przerobić sql ef program zaj1_pn
             context.Team.Add(new Team
             {
                 Name = "ATH",
@@ -39,7 +40,22 @@ namespace T4
             AppDomain.CurrentDomain.SetData("DataDirectory", dataPath);
             using (var db = new CompanyContext())
             {
+                //InitData(db);
                 db.Database.Log = Console.WriteLine;
+
+                //delete with foregin key witout cascade deleting in company context
+                //var toRemove = new Team { Id = 2 };
+                //db.Entry(toRemove).State = EntityState.Deleted;
+                ////var members = db.TeamMembers.Where(x => x.Team.Id == 1);
+                ////foreach (var item in members)
+                ////{
+                ////    item.Team = null;
+                ////}
+                //db.SaveChanges();
+
+
+
+
                 //delete with select
                 //var toRemove = db.TeamMembers.FirstOrDefault(n => n.Id == 1);
                 //db.TeamMembers.Remove(toRemove);
@@ -48,19 +64,23 @@ namespace T4
                 //var toRemove = new TeamMeber { Id = 2 };
                 //db.TeamMembers.Add(toRemove);
                 //db.TeamMembers.Remove(toRemove);
-                //db.SaveChanges();
+                //db.SaveChanges(); 
+
                 //or
+
                 //var toRemove = new TeamMeber { Id = 2 };
                 //db.Entry(toRemove).State = EntityState.Deleted;
                 //db.SaveChanges();
+
                 //add
-                //InitData(db);
                 //db.Database.CreateIfNotExists();
-                //var members = (from n in db.TeamMembers.Include(n => n.Team) select n);
-                //foreach (var item in members)
-                //{
-                //    Console.WriteLine($"Mebers: {item.Name}, Team: {item.Team.Name}");
-                //}
+                db.Configuration.ProxyCreationEnabled = true;
+                db.Configuration.LazyLoadingEnabled = true;
+                var members = db.TeamMembers;
+                foreach (var item in members)
+                {
+                    Console.WriteLine($"Mebers: {item.Name}, Team: {item.Team.Name}");
+                }
             }
         }
     }
