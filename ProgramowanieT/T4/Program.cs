@@ -6,7 +6,7 @@ using T4.Model;
 
 namespace T4
 {
-    class Program
+   public class Program
     {
         static void InitData(CompanyContext context)
         {
@@ -40,7 +40,7 @@ namespace T4
             AppDomain.CurrentDomain.SetData("DataDirectory", dataPath);
             using (var db = new CompanyContext())
             {
-                //InitData(db);
+                //initdata(db);
                 db.Database.Log = Console.WriteLine;
 
                 //delete with foregin key witout cascade deleting in company context
@@ -74,13 +74,15 @@ namespace T4
 
                 //add
                 //db.Database.CreateIfNotExists();
-                db.Configuration.ProxyCreationEnabled = true;
-                db.Configuration.LazyLoadingEnabled = true;
-                var members = db.TeamMembers;
-                foreach (var item in members)
-                {
-                    Console.WriteLine($"Mebers: {item.Name}, Team: {item.Team.Name}");
-                }
+                //db.Configuration.ProxyCreationEnabled = true;
+                //db.Configuration.LazyLoadingEnabled = false;
+                //https://docs.microsoft.com/en-us/ef/core/querying/related-data
+                ////Lazy loading is not yet supported by EF Core. You can view the lazy loading item on our backlog to track this feature
+                //var members = db.TeamMembers;
+                //foreach (var item in members)
+                //{
+                //    Console.WriteLine($"Mebers: {item.Name}, Team: {item.Team.Name}");
+                //}
             }
         }
     }

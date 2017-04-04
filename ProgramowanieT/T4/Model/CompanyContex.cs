@@ -7,7 +7,8 @@ namespace T4.Model
         public DbSet<Team> Team { get; set; }
         public DbSet<TeamMeber> TeamMembers { get; set; }
         public DbSet<Project> Projects { get; set; }
-        public CompanyContext(){}
+        public CompanyContext()
+        { }
         public static void SetNullTeamMembersOnTeamsDeleted(Database context)
         {
             ////https://social.msdn.microsoft.com/Forums/en-US/a3669916-5fbe-4e8b-8405-fa4c7ed04ffc/where-is-willnullondelete-or-willdefaultondelete?forum=adodotnetentityframework
@@ -19,7 +20,7 @@ namespace T4.Model
         {
             modelBuilder.Entity<TeamMeber>()
                 .HasOptional(tm => tm.Team)
-                .WithMany(t => t.TeamMembers).Map(m=>m.MapKey())
+                .WithMany(t => t.TeamMembers)
                 .WillCascadeOnDelete(false);
             base.OnModelCreating(modelBuilder);
         }

@@ -10,7 +10,7 @@ namespace MLPProgram
     {
         static void Main(string[] args)
         {
-            var filePath = @"..\..\Datasets\testData.txt";
+            var filePath = @"..\..\Datasets\ImageSegmentation_std_sh.txt";
             var st = new Stopwatch();
             var totalMs = TimeSpan.FromMilliseconds(0);
             var testDataset = new FileParser(filePath, TransferFunctions.SigmoidTransferFunction);
@@ -18,24 +18,24 @@ namespace MLPProgram
             var network = new MLP(data);
             var learningAlgorithm = new GradientLearning(network);
             st.Start();
-            for (var i = 0; i < 1; i++)
+            for (var i = 0; i < 10; i++)
             {
                 //to memory
                 st.Reset();
                 st.Start();
                 learningAlgorithm.Train(numberOfEpochs: 50, batchSize: 30, learnRate: 0.05, momentum: 0.5);
+                //Console.WriteLine(testAccuracy);
+                //Console.WriteLine(mseTrain);
                 var testAccuracy = network.Accuracy(out double mseTrain);
-                Console.WriteLine(testAccuracy);
-                Console.WriteLine(mseTrain);
+                st.Stop();
+                Console.WriteLine(st.Elapsed);
             }
-            st.Stop();
-            Console.WriteLine(st.Elapsed);
 
         }
         public static void ForwardPass(MLP network, int indexOftrainingDataSet, int lok = -1)
         {
             //coping trainingData to output[0]
-                network.output[0] = network.baseData._trainingDataSet[indexOftrainingDataSet].Take(network.output[0].Length).ToArray();
+            network.output[0] = network.baseData._trainingDataSet[indexOftrainingDataSet].Take(network.output[0].Length).ToArray();
             //calculate outputs by output[0]...==_trainingDataSet[indexOftrainingDataSet].
             for (var l = 1; l < network.output.Length; l++)
             {

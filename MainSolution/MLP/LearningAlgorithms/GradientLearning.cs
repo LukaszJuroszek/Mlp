@@ -1,4 +1,5 @@
 ﻿using Alea;
+using Alea.CSharp;
 using MLPProgram.Networks;
 using System;
 using System.Linq;
@@ -13,16 +14,20 @@ namespace MLPProgram.LearningAlgorithms
         public GradientLearning(MLP network)
         {
             _network = network;
-            //_gpu = Gpu.Default;
+            _gpu = Gpu.Default;
         }
         public void Train(int numberOfEpochs = 30, int batchSize = 30, double learnRate = 0.05, double momentum = 0.5)
         {
-            Console.WriteLine(_network);
-            Console.WriteLine(_network.baseData);
             if (batchSize > _network.baseData._numberOFVectors || nameof(UpdateWeightsRprop).Contains("Rprop"))
                 batchSize = _network.baseData._numberOFVectors;
+            Func<double, double, int, double> calculateErrorSignal = (x, y, n) =>
+             {
+                 var error = x - y;
+                 error = Math.Sign(error) * Math.Pow(Math.Abs(error), _errorExponent);
+                 var derivative = CalculateDerivativeForSignalErrorsInOutputLayer(n);
+                 return error * derivative;
+             };
             CreateWeightZeroAndAsingDeltaValue(0.1);
-            Console.WriteLine(_network);
             for (var epoch = 0; epoch < numberOfEpochs; epoch++)
             {
                 MakeGradientZero();
@@ -31,29 +36,17 @@ namespace MLPProgram.LearningAlgorithms
                 {
                     for (var b = 0; b < batchSize; b++)
                     {
-                        Console.WriteLine("ForwardPassGradient");
                         Program.ForwardPass(_network, v);
-                        // find SignalErrors for the output layer
+
                         for (var n = 0; n < _network.baseData._numberOfOutput; n++)
-                        {
-                            var error = _network.baseData._trainingDataSet[v][_network.baseData._numberOfInput + n] - _network.output[_network.numLayers - 1][n];
-                            error = Math.Sign(error) * Math.Pow(Math.Abs(error), _errorExponent);
-                            var derivative = CalculateDerivativeForSignalErrorsInOutputLayer(n);
-                            _network.signalError[_network.numLayers - 1][n] = error * derivative;
-                        }
+                            //_gpu.Launch(Kernel, new LaunchParam(16, 256), calculateErrorSignal, _network.signalError[_network.numLayers - 1], _network.baseData._trainingDataSet[v][_network.baseData._numberOfInput + n], _network.output[_network.numLayers - 1])
+                             _network.signalError[_network.numLayers - 1][n] =  CalculateSignalErrors(v, n);
                         for (var l = _network.numLayers - 2; l > 0; l--)
-                        {
                             for (var n = 0; n < _network.layer[l]; n++)
                                 _network.signalError[l][n] = CalculateDerivativeForHiddenLayer(l, n) * SumSignalErrorForHiddenLayer(l, n);
-                        }
                         for (var l = _network.numLayers - 1; l > 0; l--)
-                        {
                             for (var n = 0; n < _network.layer[l]; n++)
-                            {
-                                //bias
                                 Bias(learnRate, l, n);
-                            }
-                        }
                         v++;
                         if (v == _network.baseData._numberOFVectors)
                             break;
@@ -64,6 +57,14 @@ namespace MLPProgram.LearningAlgorithms
                 }
             }
         }
+        private double CalculateSignalErrors(int v, int n)
+        {
+            var error = _network.baseData._trainingDataSet[v][_network.baseData._numberOfInput + n] - _network.output[_network.numLayers - 1][n];
+            error = Math.Sign(error) * Math.Pow(Math.Abs(error), _errorExponent);
+            var derivative = CalculateDerivativeForSignalErrorsInOutputLayer(n);
+            return error * derivative;
+        }
+
         private void Bias(double learnRate, int l, int n)
         {
             _network.weightDiff[l][n][_network.layer[l - 1]] += learnRate * _network.signalError[l][n];
