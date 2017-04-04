@@ -1,4 +1,5 @@
-﻿using MLPProgram.LearningAlgorithms;
+﻿using Alea;
+using MLPProgram.LearningAlgorithms;
 using MLPProgram.Networks;
 using System;
 using System.Diagnostics;
@@ -6,14 +7,14 @@ using System.Linq;
 
 namespace MLPProgram
 {
-    class Program
+    public static class Program
     {
         static void Main(string[] args)
         {
             var filePath = @"..\..\Datasets\ImageSegmentation_std_sh.txt";
             var st = new Stopwatch();
             var totalMs = TimeSpan.FromMilliseconds(0);
-            var testDataset = new FileParser(filePath, TransferFunctions.SigmoidTransferFunction);
+            var testDataset = new FileParser(filePath, BaseDataHolder.SigmoidTransferFunction);
             var data = new BaseDataHolder(testDataset);
             var network = new MLP(data);
             var learningAlgorithm = new GradientLearning(network);
@@ -52,5 +53,6 @@ namespace MLPProgram
                 }
             }
         }
+        
     }
 }

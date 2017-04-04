@@ -8,25 +8,23 @@ namespace MLPProgram.LearningAlgorithms
 {
     public class GradientLearning
     {
+        [GpuParam]
         public double _etaPlus = 1.2, _etaMinus = 0.5, _minDelta = 0.00001, _maxDelta = 10, _errorExponent = 2.0;
+        [GpuParam]
         public MLP _network;
-        private Gpu _gpu;
         public GradientLearning(MLP network)
         {
             _network = network;
-            _gpu = Gpu.Default;
         }
         public void Train(int numberOfEpochs = 30, int batchSize = 30, double learnRate = 0.05, double momentum = 0.5)
         {
             if (batchSize > _network.baseData._numberOFVectors || nameof(UpdateWeightsRprop).Contains("Rprop"))
                 batchSize = _network.baseData._numberOFVectors;
-            Func<double, double, int, double> calculateErrorSignal = (x, y, n) =>
-             {
-                 var error = x - y;
-                 error = Math.Sign(error) * Math.Pow(Math.Abs(error), _errorExponent);
-                 var derivative = CalculateDerivativeForSignalErrorsInOutputLayer(n);
-                 return error * derivative;
-             };
+            var _gpu = Gpu.Default;
+
+            Func<int, double> calculateDerivative = x => CalculateDerivativeForSignalErrorsInOutputLayer(x);
+            Func<double, double, double> calculateError = (x, y) => Sign(x - y) * DeviceFunction.Pow(DeviceFunction.Abs(x - y), _errorExponent);
+            Func<double, double, double> calculateErrorSignal = (x, y) => x * y;
             CreateWeightZeroAndAsingDeltaValue(0.1);
             for (var epoch = 0; epoch < numberOfEpochs; epoch++)
             {
@@ -37,10 +35,14 @@ namespace MLPProgram.LearningAlgorithms
                     for (var b = 0; b < batchSize; b++)
                     {
                         Program.ForwardPass(_network, v);
-
-                        for (var n = 0; n < _network.baseData._numberOfOutput; n++)
-                            //_gpu.Launch(Kernel, new LaunchParam(16, 256), calculateErrorSignal, _network.signalError[_network.numLayers - 1], _network.baseData._trainingDataSet[v][_network.baseData._numberOfInput + n], _network.output[_network.numLayers - 1])
-                             _network.signalError[_network.numLayers - 1][n] =  CalculateSignalErrors(v, n);
+                        var derivatiesTmp = new double[_network.baseData._numberOfOutput];
+                        //var derivatiesRange = Enumerable.Range(0, _network.baseData._numberOfOutput).ToArray();
+                        var se = _network.signalError[_network.numLayers - 1];
+                        var tds = _network.baseData._trainingDataSet[v];
+                        var ou = _network.output[_network.numLayers - 1];
+                        _gpu.Launch(Kernel, new LaunchParam(16, 256), calculateDerivative, derivatiesTmp);
+                        //for (var n = 0; n < _network.baseData._numberOfOutput; n++)
+                        /*_network.signalError[_network.numLayers - 1][n] = CalculateSignalErrors(v, n);*/
                         for (var l = _network.numLayers - 2; l > 0; l--)
                             for (var n = 0; n < _network.layer[l]; n++)
                                 _network.signalError[l][n] = CalculateDerivativeForHiddenLayer(l, n) * SumSignalErrorForHiddenLayer(l, n);
@@ -56,6 +58,10 @@ namespace MLPProgram.LearningAlgorithms
                     MakeGradientZero();
                 }
             }
+        }
+        public static int Sign(double number)
+        {
+            return number > 0 ? 1 : number < 0 ? -1 : 0;
         }
         private double CalculateSignalErrors(int v, int n)
         {
@@ -122,6 +128,15 @@ namespace MLPProgram.LearningAlgorithms
             for (var i = start; i < result.Length; i += stride)
             {
                 result[i] = op(result[i], input[i]);
+            }
+        }
+        public static void Kernel(Func<int, double> op, double[] result)
+        {
+            var start = blockIdx.x * blockDim.x + threadIdx.x;
+            var stride = gridDim.x * blockDim.x;
+            for (var i = start; i < result.Length; i += stride)
+            {
+                result[i] = op(i);
             }
         }
         public double Test(double[][] trainingDataSet, double[][] testDataSet)
