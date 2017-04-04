@@ -1,4 +1,5 @@
 ﻿using Alea;
+using MLPProgram.LearningAlgorithms;
 using System;
 using System.Text;
 
@@ -106,7 +107,7 @@ namespace MLPProgram.Networks
                 for (var n = 0; n < layer[numLayers - 1]; n++)
                 {
                     if (classification)
-                        error += baseData.TransferFunction(output[numLayers - 1][n] - (2 * baseData._trainingDataSet[v][layer[0] + n] - 1));
+                        error += GradientLearning.TransferFunction(this,output[numLayers - 1][n] - (2 * baseData._trainingDataSet[v][layer[0] + n] - 1));
                     else
                         error += Math.Pow(output[numLayers - 1][n] - baseData._trainingDataSet[v][layer[0] + n], 2);
                     if (output[numLayers - 1][n] > maxValue)
@@ -144,7 +145,7 @@ namespace MLPProgram.Networks
                         if (l == numLayers - 1 && !classification)
                             output[l][n] = sum;
                         else
-                            output[l][n] = baseData.TransferFunction(sum);
+                            output[l][n] = GradientLearning.TransferFunction(this,sum);
                         if (l == numLayers - 1)
                             error += Math.Pow(Math.Abs(output[l][n] - DataSet[v][layer[0] + n]), errorExponent);
                     }

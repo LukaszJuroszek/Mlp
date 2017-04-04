@@ -38,7 +38,7 @@ namespace MLPProgram.Networks
             _numberOfOutput = numberOfOutput;
             _numberOFVectors = numberOFVectors;
             _classification = classification;
-            _isSigmoidFunction = IsSigmoidTransferFunction(transferFunction);
+            _isSigmoidFunction = GradientLearning.IsSigmoidTransferFunction(transferFunction);
         }
         public BaseDataHolder(FileParser file)
         {
@@ -48,45 +48,8 @@ namespace MLPProgram.Networks
             _numberOfOutput = file.NumberOfOutput;
             _numberOFVectors = file.NumberOFVectors;
             _classification = file.Classification;
-            _isSigmoidFunction = IsSigmoidTransferFunction(file.TransferFunction);
+            _isSigmoidFunction = GradientLearning.IsSigmoidTransferFunction(file.TransferFunction);
         }
-        public double TransferFunction(double x)
-        {
-            double result = 0;
-            if (_isSigmoidFunction)
-                result = SigmoidTransferFunction(x);
-            else
-                result = HyperbolicTransferFunction(x);
-            return result;
-        }
-        public double DerivativeFunction(double x)
-        {
-            double result = 0;
-            if (_isSigmoidFunction)
-                result = SigmoidDerivative(x);
-            else
-                result = HyperbolicDerivative(x);
-            return result;
-        }
-        public static double HyperbolicTransferFunction(double x)
-        {
-            return DeviceFunction.Tanh(x);
-        }
-        public static double HyperbolicDerivative(double x)
-        {
-            return 1.0 - x * x;
-        }
-        public static double SigmoidTransferFunction(double x)
-        {
-            return 1.0 / (1.0 + DeviceFunction.Exp(-x));
-        }
-        public static double SigmoidDerivative(double x)
-        {
-            return x * (1.0 - x);
-        }
-        public static bool IsSigmoidTransferFunction(Func<double, double> func)
-        {
-            return func.Method.Name.Equals("SigmoidTransferFunction") ? true : false;
-        }
+        
     }
 }

@@ -14,7 +14,7 @@ namespace MLPProgram
             var filePath = @"..\..\Datasets\ImageSegmentation_std_sh.txt";
             var st = new Stopwatch();
             var totalMs = TimeSpan.FromMilliseconds(0);
-            var testDataset = new FileParser(filePath, BaseDataHolder.SigmoidTransferFunction);
+            var testDataset = new FileParser(filePath, GradientLearning.SigmoidTransferFunction);
             var data = new BaseDataHolder(testDataset);
             var network = new MLP(data);
             var learningAlgorithm = new GradientLearning(network);
@@ -49,10 +49,9 @@ namespace MLPProgram
                         sum += network.output[l - 1][w] * network.weights[l][n][w];
                     }
                     sum += network.weights[l][n][network.output[l - 1].Length]; //bias
-                    network.output[l][n] = (l == network.output.Length - 1 && !network.classification) ? sum : network.baseData.TransferFunction(sum);
+                    network.output[l][n] = (l == network.output.Length - 1 && !network.classification) ? sum : GradientLearning.TransferFunction(network, sum);
                 }
             }
         }
-        
     }
 }

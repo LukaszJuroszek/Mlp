@@ -6,14 +6,19 @@ using System.Linq;
 
 namespace MLPProgram.LearningAlgorithms
 {
-    public class GradientLearning
+    public struct GradientLearning
     {
         [GpuParam]
-        public double _etaPlus = 1.2, _etaMinus = 0.5, _minDelta = 0.00001, _maxDelta = 10, _errorExponent = 2.0;
+        public double _etaPlus, _etaMinus, _minDelta , _maxDelta, _errorExponent;
         [GpuParam]
         public MLP _network;
         public GradientLearning(MLP network)
         {
+            _etaPlus = 1.2;
+            _etaMinus = 0.5;
+            _minDelta = 0.00001;
+            _maxDelta = 10;
+            _errorExponent = 2.0;
             _network = network;
         }
         public void Train(int numberOfEpochs = 30, int batchSize = 30, double learnRate = 0.05, double momentum = 0.5)
@@ -21,10 +26,12 @@ namespace MLPProgram.LearningAlgorithms
             if (batchSize > _network.baseData._numberOFVectors || nameof(UpdateWeightsRprop).Contains("Rprop"))
                 batchSize = _network.baseData._numberOFVectors;
             var _gpu = Gpu.Default;
-
-            Func<int, double> calculateDerivative = x => CalculateDerivativeForSignalErrorsInOutputLayer(x);
-            Func<double, double, double> calculateError = (x, y) => Sign(x - y) * DeviceFunction.Pow(DeviceFunction.Abs(x - y), _errorExponent);
+            var lp = new LaunchParam(16, 256);
+            var th = this;
+            Func<int, double> calculateDerivative = x => th.CalculateDerivativeForSignalErrorsInOutputLayer(x);
+            Func<double, double, double> calculateError = (x, y) => Sign(x - y) * DeviceFunction.Pow(DeviceFunction.Abs(x - y), th._errorExponent);
             Func<double, double, double> calculateErrorSignal = (x, y) => x * y;
+            this = th;
             CreateWeightZeroAndAsingDeltaValue(0.1);
             for (var epoch = 0; epoch < numberOfEpochs; epoch++)
             {
@@ -35,12 +42,13 @@ namespace MLPProgram.LearningAlgorithms
                     for (var b = 0; b < batchSize; b++)
                     {
                         Program.ForwardPass(_network, v);
-                        var derivatiesTmp = new double[_network.baseData._numberOfOutput];
+                        double[] derivatiesTmp = Enumerable.Repeat(0.0, _network.baseData._numberOfOutput).ToArray();
+                        var derivatiesTmprange = Enumerable.Range(0, _network.baseData._numberOfOutput).ToArray();
                         //var derivatiesRange = Enumerable.Range(0, _network.baseData._numberOfOutput).ToArray();
                         var se = _network.signalError[_network.numLayers - 1];
                         var tds = _network.baseData._trainingDataSet[v];
                         var ou = _network.output[_network.numLayers - 1];
-                        _gpu.Launch(Kernel, new LaunchParam(16, 256), calculateDerivative, derivatiesTmp);
+                        _gpu.Launch(Kernel, lp, calculateDerivative, derivatiesTmp, derivatiesTmprange);
                         //for (var n = 0; n < _network.baseData._numberOfOutput; n++)
                         /*_network.signalError[_network.numLayers - 1][n] = CalculateSignalErrors(v, n);*/
                         for (var l = _network.numLayers - 2; l > 0; l--)
@@ -86,13 +94,14 @@ namespace MLPProgram.LearningAlgorithms
         }
         private double CalculateDerivativeForHiddenLayer(int layer, int hidenLayeerSecondDim)
         {
-            return _network.baseData.DerivativeFunction(_network.output[layer][hidenLayeerSecondDim]);
+            return DerivativeFunction(_network.output[layer][hidenLayeerSecondDim]);
         }
         private double CalculateDerivativeForSignalErrorsInOutputLayer(int outputSecondDim)
         {
+            Console.WriteLine("working");
             double derivative;
             if (_network.classification)
-                derivative = _network.baseData.DerivativeFunction(_network.output[_network.numLayers - 1][outputSecondDim]);
+                derivative = DerivativeFunction(_network.output[_network.numLayers - 1][outputSecondDim]);
             else
                 derivative = 1.0;
             return derivative;
@@ -130,13 +139,13 @@ namespace MLPProgram.LearningAlgorithms
                 result[i] = op(result[i], input[i]);
             }
         }
-        public static void Kernel(Func<int, double> op, double[] result)
+        public static void Kernel(Func<int, double> op, double[] result, int[] arg1)
         {
             var start = blockIdx.x * blockDim.x + threadIdx.x;
             var stride = gridDim.x * blockDim.x;
             for (var i = start; i < result.Length; i += stride)
             {
-                result[i] = op(i);
+                result[i] = op(arg1[i]);
             }
         }
         public double Test(double[][] trainingDataSet, double[][] testDataSet)
@@ -200,6 +209,44 @@ namespace MLPProgram.LearningAlgorithms
                     }
                 }
             }
+        }
+        public static double TransferFunction(MLP _network, double x)
+        {
+            double result = 0;
+            if (_network.baseData._isSigmoidFunction)
+                result = SigmoidTransferFunction(x);
+            else
+                result = HyperbolicTransferFunction(x);
+            return result;
+        }
+        public double DerivativeFunction(double x)
+        {
+            double result = 0;
+            if (_network.baseData._isSigmoidFunction)
+                result = SigmoidDerivative(x);
+            else
+                result = HyperbolicDerivative(x);
+            return result;
+        }
+        public static double HyperbolicTransferFunction(double x)
+        {
+            return DeviceFunction.Tanh(x);
+        }
+        public static double HyperbolicDerivative(double x)
+        {
+            return 1.0 - x * x;
+        }
+        public static double SigmoidTransferFunction(double x)
+        {
+            return 1.0 / (1.0 + DeviceFunction.Exp(-x));
+        }
+        public static double SigmoidDerivative(double x)
+        {
+            return x * (1.0 - x);
+        }
+        public static bool IsSigmoidTransferFunction(Func<double, double> func)
+        {
+            return func.Method.Name.Equals("SigmoidTransferFunction") ? true : false;
         }
     }
 }
