@@ -1,5 +1,4 @@
-﻿using Alea;
-using MLPProgram.LearningAlgorithms;
+﻿using MLPProgram.LearningAlgorithms;
 using MLPProgram.Networks;
 using System;
 using System.Diagnostics;

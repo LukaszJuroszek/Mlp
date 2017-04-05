@@ -21,13 +21,15 @@ namespace MLPProgram.LearningAlgorithms
             _errorExponent = 2.0;
             _network = network;
         }
-
+        [GpuManaged]
         public MLP Train(int numberOfEpochs = 30, int batchSize = 30, double learnRate = 0.05, double momentum = 0.5)
         {
+            Settings.Instance.Memory.AllowNonBlittableMemoryTransfer = true;
+
             //if (batchSize > _network.baseData._numberOFVectors || nameof(UpdateWeightsRprop).Contains("Rprop"))
-            batchSize = _network.baseData._numberOFVectors;
             var gpu = Gpu.Default;
             var lp = new LaunchParam(16, 256);
+            batchSize = _network.baseData._numberOFVectors;
             var isSigmoidFunction = _network.baseData._isSigmoidFunction;
             var numberOfOutput = _network.baseData._numberOfOutput;
             var numberOfInput = _network.baseData._numberOfInput;
@@ -48,16 +50,38 @@ namespace MLPProgram.LearningAlgorithms
             CreateWeightZeroAndAsingDeltaValue(numberOfLayers, _network.layer, _network.weightDiff, _network.delta, 0.1);
             var delta = gpu.Allocate(_network.delta);
             var weightDiff = gpu.Allocate(_network.weightDiff);
+            var etaPlus = _etaPlus;
+            var etaMinus = _etaMinus;
+            var minDelta = _minDelta;
+            var maxDelta= _maxDelta;
             try
             {
-                for (var epoch = 0; epoch < numberOfEpochs; epoch++)
+                //for (var epoch = 0; epoch < numberOfEpochs; epoch++)
+                //{
+                gpu.For(0, numberOfEpochs, epoch =>
                 {
-                    MakeGradientZero(numberOfLayers, _network.layer, _network.weightDiff);
-                    //for (var v = 0; v < batchSize; v++)
-                    //{
-                    gpu.For(0, batchSize, v =>
+                    //MakeGradientZero(numberOfLayers, layer, weightDiff);
+                    for (var v = 0; v < batchSize; v++)
                     {
+                        MakeGradientZero(numberOfLayers, layer, weightDiff);
+                        //gpu.For(0, batchSize, v =>
+                        //{
                         //Program.ForwardPass(output, trainingDataSet, weights, classification, isSigmoidFunction, v);
+                        for (var i = 0; i < output[0].Length; i++)
+                            output[0][i] = trainingDataSet[v][i];
+                        for (var l = 1; l < output.Length; l++)
+                        {
+                            for (var n = 0; n < output[l].Length; n++)
+                            {
+                                double sum = 0;
+                                for (var w = 0; w < output[l - 1].Length; w++)
+                                {
+                                    sum += output[l - 1][w] * weights[l][n][w];
+                                }
+                                sum += weights[l][n][output[l - 1].Length]; //bias
+                                output[l][n] = (l == output.Length - 1 && !classification) ? sum : TransferFunction(isSigmoidFunction, sum);
+                            }
+                        }
                         for (var l = 0; l < numberOfOutput; l++)
                         {
                             var error = trainingDataSet[v][numberOfInput + l] - output[numberOfLayers - 1][l];
@@ -82,19 +106,15 @@ namespace MLPProgram.LearningAlgorithms
                                     weightDiff[l][n][w] += learnRate * signalError[l][n] * output[l - 1][w];
                             }
                         }
-                        //}
-                    });
+                    }
+                    //});
                     Console.WriteLine("tu4");
-                    //_network.delta = Gpu.CopyToHost(delta);
-                    //_network.prevWeightDiff = Gpu.CopyToHost(prevWeightDiff);
-                    //_network.weightDiff = Gpu.CopyToHost(weightDiff);
-                    //_network.weights = Gpu.CopyToHost(weights);
                     Console.WriteLine("tu5");
-                    UpdateWeightsRprop(_network.layer, numberOfLayers, _network.weights, _network.weightDiff, _network.prevWeightDiff, _network.delta, learnRate,
-                        momentum, _etaPlus, _etaMinus, _minDelta, _maxDelta);
+                    UpdateWeightsRprop(layer, numberOfLayers, weights, weightDiff, prevWeightDiff, delta, learnRate, momentum, etaPlus, etaMinus, minDelta, maxDelta);
                     // zero-out gradients
-                    MakeGradientZero(numberOfLayers, _network.layer, _network.weightDiff);
-                }
+                    MakeGradientZero(numberOfLayers, layer, weightDiff);
+                });
+                //}
             }
             catch (Exception ex)
             {
@@ -102,7 +122,11 @@ namespace MLPProgram.LearningAlgorithms
             }
             finally
             {
-               
+                _network.delta = Gpu.CopyToHost(delta);
+                _network.prevWeightDiff = Gpu.CopyToHost(prevWeightDiff);
+                _network.weightDiff = Gpu.CopyToHost(weightDiff);
+                _network.weights = Gpu.CopyToHost(weights);
+                _network.output = Gpu.CopyToHost(output);
                 Gpu.Free(trainingDataSet);
                 Gpu.Free(output);
                 Gpu.Free(signalError);
