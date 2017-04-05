@@ -24,7 +24,7 @@ namespace MLPProgram.LearningAlgorithms
         [GpuManaged]
         public void Train(MLP _network,int numberOfEpochs = 30, int batchSize = 30, double learnRate = 0.05, double momentum = 0.5)
         {
-            if (batchSize > _network.baseData._numberOFVectors || nameof(UpdateWeightsRprop).Contains("Rprop"))
+            //if (batchSize > _network.baseData._numberOFVectors || nameof(UpdateWeightsRprop).Contains("Rprop"))
                 batchSize = _network.baseData._numberOFVectors;
             var _gpu = Gpu.Default;
             var lp = new LaunchParam(16, 256);
@@ -43,24 +43,24 @@ namespace MLPProgram.LearningAlgorithms
                     for (var b = 0; b < batchSize; b++)
                     {
                         Program.ForwardPass(_network, v);
-                        double[] derivatiesTmp = Enumerable.Repeat(0.0, _network.baseData._numberOfOutput).ToArray();
-                        double[] errorsTmp = Enumerable.Repeat(0.0, _network.baseData._numberOfOutput).ToArray();
-                        var derivatiesTmprange = Enumerable.Range(0, _network.baseData._numberOfOutput).ToArray();
-                        //var derivatiesRange = Enumerable.Range(0, _network.baseData._numberOfOutput).ToArray();
-                        var se = _network.signalError[_network.numLayers - 1];
-                        var tds = _network.baseData._trainingDataSet[v];
-                        var ou = _network.output[_network.numLayers - 1];
-                        //_network.baseData._trainingDataSet[v][_network.baseData._numberOfInput + n] - _network.output[_network.numLayers - 1][n]
-                        var erro1 = _network.baseData._trainingDataSet[v];
-                        var error2= _network.output[_network.numLayers - 1];
-                       var numberOfInp = _network.baseData._numberOfInput;
-                        _gpu.Launch(Kernel, lp, calculateDerivative, derivatiesTmp, derivatiesTmprange);
-                        _gpu.Launch(Kernel, lp, calculateError, errorsTmp, erro1,error2,numberOfInp);
-                        //Console.WriteLine($"{errorsTmp.Count()==derivatiesTmp.Count()} {iteratino++}" );
-                        _gpu.Launch(Kernel, lp, calculateErrorSignal, se, errorsTmp,derivatiesTmp);
-                        _network.signalError[_network.numLayers - 1] = se;
-                        //for (var n = 0; n < _network.baseData._numberOfOutput; n++)
-                        /*_network.signalError[_network.numLayers - 1][n] = CalculateSignalErrors(v, n);*/
+                        //double[] derivatiesTmp = Enumerable.Repeat(0.0, _network.baseData._numberOfOutput).ToArray();
+                        //double[] errorsTmp = Enumerable.Repeat(0.0, _network.baseData._numberOfOutput).ToArray();
+                        //var derivatiesTmprange = Enumerable.Range(0, _network.baseData._numberOfOutput).ToArray();
+                        ////var derivatiesRange = Enumerable.Range(0, _network.baseData._numberOfOutput).ToArray();
+                        //var se = _network.signalError[_network.numLayers - 1];
+                        //var tds = _network.baseData._trainingDataSet[v];
+                        //var ou = _network.output[_network.numLayers - 1];
+                        ////_network.baseData._trainingDataSet[v][_network.baseData._numberOfInput + n] - _network.output[_network.numLayers - 1][n]
+                        //var erro1 = _network.baseData._trainingDataSet[v];
+                        //var error2 = _network.output[_network.numLayers - 1];
+                        //var numberOfInp = _network.baseData._numberOfInput;
+                        //_gpu.Launch(Kernel, lp, calculateDerivative, derivatiesTmp, derivatiesTmprange);
+                        //_gpu.Launch(Kernel, lp, calculateError, errorsTmp, erro1, error2, numberOfInp);
+                        ////Console.WriteLine($"{errorsTmp.Count()==derivatiesTmp.Count()} {iteratino++}" );
+                        //_gpu.Launch(Kernel, lp, calculateErrorSignal, _network.signalError[_network.numLayers - 1], errorsTmp, derivatiesTmp);
+                        //_network.signalError[_network.numLayers - 1] = se;
+                        for (var n = 0; n < _network.baseData._numberOfOutput; n++)
+                            _network.signalError[_network.numLayers - 1][n] = CalculateSignalErrors(v, n);
                         for (var l = _network.numLayers - 2; l > 0; l--)
                             for (var n = 0; n < _network.layer[l]; n++)
                                 _network.signalError[l][n] = CalculateDerivativeForHiddenLayer(l, n) * SumSignalErrorForHiddenLayer(l, n);
