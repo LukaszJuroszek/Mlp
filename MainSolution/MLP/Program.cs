@@ -25,7 +25,7 @@ namespace MLPProgram
                 //to memory
                 st.Reset();
                 st.Start();
-                learningAlgorithm.Train(network,numberOfEpochs: 50, batchSize: 30, learnRate: 0.05, momentum: 0.5);
+                network = learningAlgorithm.Train(numberOfEpochs: 50, batchSize: 30, learnRate: 0.05, momentum: 0.5);
                 var testAccuracy = network.Accuracy(out double mseTrain);
                 Console.WriteLine(testAccuracy);
                 Console.WriteLine(mseTrain);
@@ -36,21 +36,35 @@ namespace MLPProgram
         }
         public static void ForwardPass(MLP network, int indexOftrainingDataSet, int lok = -1)
         {
-            //coping trainingData to output[0]
             network.output[0] = network.baseData._trainingDataSet[indexOftrainingDataSet].Take(network.output[0].Length).ToArray();
-            //calculate outputs by output[0]...==_trainingDataSet[indexOftrainingDataSet].
             for (var l = 1; l < network.output.Length; l++)
             {
                 for (var n = 0; n < network.output[l].Length; n++)
                 {
                     double sum = 0;
-                    //l-1 means that we are taking prevouls op.layer...
                     for (var w = 0; w < network.output[l - 1].Length; w++)
                     {
                         sum += network.output[l - 1][w] * network.weights[l][n][w];
                     }
                     sum += network.weights[l][n][network.output[l - 1].Length]; //bias
                     network.output[l][n] = (l == network.output.Length - 1 && !network.classification) ? sum : GradientLearning.TransferFunction(network, sum);
+                }
+            }
+        }
+        public static void ForwardPass(double[][] output, double[][] trainingDataSet, double[][][] weights, bool classification, bool isSigmoidFunction, int indexOftrainingDataSet, int lok = -1)
+        {
+            output[0] = trainingDataSet[indexOftrainingDataSet].Take(output[0].Length).ToArray();
+            for (var l = 1; l < output.Length; l++)
+            {
+                for (var n = 0; n < output[l].Length; n++)
+                {
+                    double sum = 0;
+                    for (var w = 0; w < output[l - 1].Length; w++)
+                    {
+                        sum += output[l - 1][w] * weights[l][n][w];
+                    }
+                    sum += weights[l][n][output[l - 1].Length]; //bias
+                    output[l][n] = (l == output.Length - 1 && !classification) ? sum : GradientLearning.TransferFunction(isSigmoidFunction, sum);
                 }
             }
         }
