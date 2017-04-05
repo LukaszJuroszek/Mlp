@@ -11,7 +11,7 @@ namespace MLPProgram
     {
         static void Main(string[] args)
         {
-            var filePath = @"..\..\Datasets\ImageSegmentation_std_sh.txt";
+            var filePath = @"..\..\Datasets\ionosphere_std_sh.txt";
             var st = new Stopwatch();
             var totalMs = TimeSpan.FromMilliseconds(0);
             var testDataset = new FileParser(filePath, GradientLearning.SigmoidTransferFunction);
@@ -19,12 +19,12 @@ namespace MLPProgram
             var network = new MLP(data);
             var learningAlgorithm = new GradientLearning(network);
             st.Start();
-            for (var i = 0; i < 10; i++)
+            for (var i = 0; i < 1; i++)
             {
                 //to memory
                 st.Reset();
                 st.Start();
-                learningAlgorithm.Train(numberOfEpochs: 50, batchSize: 30, learnRate: 0.05, momentum: 0.5);
+                learningAlgorithm.Train(network,numberOfEpochs: 50, batchSize: 30, learnRate: 0.05, momentum: 0.5);
                 //Console.WriteLine(testAccuracy);
                 //Console.WriteLine(mseTrain);
                 var testAccuracy = network.Accuracy(out double mseTrain);

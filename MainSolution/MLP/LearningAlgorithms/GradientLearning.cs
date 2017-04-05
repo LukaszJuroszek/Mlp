@@ -21,18 +21,20 @@ namespace MLPProgram.LearningAlgorithms
             _errorExponent = 2.0;
             _network = network;
         }
-        public void Train(int numberOfEpochs = 30, int batchSize = 30, double learnRate = 0.05, double momentum = 0.5)
+        [GpuManaged]
+        public void Train(MLP _network,int numberOfEpochs = 30, int batchSize = 30, double learnRate = 0.05, double momentum = 0.5)
         {
             if (batchSize > _network.baseData._numberOFVectors || nameof(UpdateWeightsRprop).Contains("Rprop"))
                 batchSize = _network.baseData._numberOFVectors;
             var _gpu = Gpu.Default;
             var lp = new LaunchParam(16, 256);
-            var th = this;
-            Func<int, double> calculateDerivative = x => th.CalculateDerivativeForSignalErrorsInOutputLayer(x);
-            Func<double, double, double> calculateError = (x, y) => Sign(x - y) * DeviceFunction.Pow(DeviceFunction.Abs(x - y), th._errorExponent);
+            var op = _network.output;
+            Func <int, double> calculateDerivative = x => op[2][x] * (1.0 - op[2][x]);
+            Func<double, double, double> calculateError = (x, y) => Sign(x - y) * DeviceFunction.Pow(DeviceFunction.Abs(x - y), 2.0);
             Func<double, double, double> calculateErrorSignal = (x, y) => x * y;
-            this = th;
             CreateWeightZeroAndAsingDeltaValue(0.1);
+            var iteratino = 0;
+            Console.WriteLine(numberOfEpochs* _network.baseData._numberOFVectors*batchSize);
             for (var epoch = 0; epoch < numberOfEpochs; epoch++)
             {
                 MakeGradientZero();
@@ -43,12 +45,21 @@ namespace MLPProgram.LearningAlgorithms
                     {
                         Program.ForwardPass(_network, v);
                         double[] derivatiesTmp = Enumerable.Repeat(0.0, _network.baseData._numberOfOutput).ToArray();
+                        double[] errorsTmp = Enumerable.Repeat(0.0, _network.baseData._numberOfOutput).ToArray();
                         var derivatiesTmprange = Enumerable.Range(0, _network.baseData._numberOfOutput).ToArray();
                         //var derivatiesRange = Enumerable.Range(0, _network.baseData._numberOfOutput).ToArray();
                         var se = _network.signalError[_network.numLayers - 1];
                         var tds = _network.baseData._trainingDataSet[v];
                         var ou = _network.output[_network.numLayers - 1];
+                        //_network.baseData._trainingDataSet[v][_network.baseData._numberOfInput + n] - _network.output[_network.numLayers - 1][n]
+                        var erro1 = _network.baseData._trainingDataSet[v];
+                        var error2= _network.output[_network.numLayers - 1];
+                       var numberOfInp = _network.baseData._numberOfInput;
                         _gpu.Launch(Kernel, lp, calculateDerivative, derivatiesTmp, derivatiesTmprange);
+                        _gpu.Launch(Kernel, lp, calculateError, errorsTmp, erro1,error2,numberOfInp);
+                        //Console.WriteLine($"{errorsTmp.Count()==derivatiesTmp.Count()} {iteratino++}" );
+                        _gpu.Launch(Kernel, lp, calculateErrorSignal, se, errorsTmp,derivatiesTmp);
+                        _network.signalError[_network.numLayers - 1] = se;
                         //for (var n = 0; n < _network.baseData._numberOfOutput; n++)
                         /*_network.signalError[_network.numLayers - 1][n] = CalculateSignalErrors(v, n);*/
                         for (var l = _network.numLayers - 2; l > 0; l--)
@@ -98,7 +109,6 @@ namespace MLPProgram.LearningAlgorithms
         }
         private double CalculateDerivativeForSignalErrorsInOutputLayer(int outputSecondDim)
         {
-            Console.WriteLine("working");
             double derivative;
             if (_network.classification)
                 derivative = DerivativeFunction(_network.output[_network.numLayers - 1][outputSecondDim]);
@@ -130,13 +140,22 @@ namespace MLPProgram.LearningAlgorithms
                     for (var w = 0; w <= _network.layer[l - 1]; w++)
                         _network.weightDiff[l][n][w] = 0;
         }
-        public static void Kernel<T>(Func<T, T, T> op, T[] result, T[] input)
+        public static void Kernel<T>(Func<T, T, T> op, T[] result, T[] arg1,T[]arg2,int numOfinputs)
         {
             var start = blockIdx.x * blockDim.x + threadIdx.x;
             var stride = gridDim.x * blockDim.x;
             for (var i = start; i < result.Length; i += stride)
             {
-                result[i] = op(result[i], input[i]);
+                result[i] = op(arg1[numOfinputs+i],arg2[i]);
+            }
+        }
+        public static void Kernel<T>(Func<T, T, T> op, T[] result, T[] arg1, T[] arg2)
+        {
+            var start = blockIdx.x * blockDim.x + threadIdx.x;
+            var stride = gridDim.x * blockDim.x;
+            for (var i = start; i < result.Length; i += stride)
+            {
+                result[i] = op(arg1[i], arg2[i]);
             }
         }
         public static void Kernel(Func<int, double> op, double[] result, int[] arg1)
