@@ -33,7 +33,6 @@ namespace MLPProgram.LearningAlgorithms
             Func<double, double, double> calculateError = (x, y) => Sign(x - y) * DeviceFunction.Pow(DeviceFunction.Abs(x - y), 2.0);
             Func<double, double, double> calculateErrorSignal = (x, y) => x * y;
             CreateWeightZeroAndAsingDeltaValue(0.1);
-            var iteratino = 0;
             Console.WriteLine(numberOfEpochs* _network.baseData._numberOFVectors*batchSize);
             for (var epoch = 0; epoch < numberOfEpochs; epoch++)
             {
