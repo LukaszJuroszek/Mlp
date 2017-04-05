@@ -20,7 +20,7 @@ namespace MLPProgram
             var network = new MLP(data);
             var learningAlgorithm = new GradientLearning(network);
             st.Start();
-            for (var i = 0; i < 10; i++)
+            for (var i = 0; i < 1; i++)
             {
                 //to memory
                 st.Reset();

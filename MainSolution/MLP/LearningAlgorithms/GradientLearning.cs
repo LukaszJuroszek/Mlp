@@ -9,7 +9,7 @@ namespace MLPProgram.LearningAlgorithms
     public struct GradientLearning
     {
         [GpuParam]
-        public double _etaPlus, _etaMinus, _minDelta , _maxDelta, _errorExponent;
+        public double _etaPlus, _etaMinus, _minDelta, _maxDelta, _errorExponent;
         [GpuParam]
         public MLP _network;
         public GradientLearning(MLP network)
@@ -20,61 +20,35 @@ namespace MLPProgram.LearningAlgorithms
             _maxDelta = 10;
             _errorExponent = 2.0;
             _network = network;
+            Settings.Instance.Memory.AllowNonBlittableMemoryTransfer = true;
         }
         [GpuManaged]
-        public void Train(MLP _network,int numberOfEpochs = 30, int batchSize = 30, double learnRate = 0.05, double momentum = 0.5)
+        public void Train( int numberOfEpochs = 30, int batchSize = 30, double learnRate = 0.05, double momentum = 0.5)
         {
             //if (batchSize > _network.baseData._numberOFVectors || nameof(UpdateWeightsRprop).Contains("Rprop"))
-                batchSize = _network.baseData._numberOFVectors;
-            var _gpu = Gpu.Default;
+            batchSize = _network.baseData._numberOFVectors;
+            var gpu = Gpu.Default;
             var lp = new LaunchParam(16, 256);
-            var op = _network.output;
-            Func <int, double> calculateDerivative = x => op[2][x] * (1.0 - op[2][x]);
-            Func<double, double, double> calculateError = (x, y) => Sign(x - y) * DeviceFunction.Pow(DeviceFunction.Abs(x - y), 2.0);
-            Func<double, double, double> calculateErrorSignal = (x, y) => x * y;
+            var network = gpu.Allocate<MLP>(this);
             CreateWeightZeroAndAsingDeltaValue(0.1);
-            Console.WriteLine(numberOfEpochs* _network.baseData._numberOFVectors*batchSize);
             for (var epoch = 0; epoch < numberOfEpochs; epoch++)
             {
                 MakeGradientZero();
-                var v = 0;// v ?
-                while (v < _network.baseData._numberOFVectors)
+                for (var v = 0; v < batchSize; v++)
                 {
-                    for (var b = 0; b < batchSize; b++)
-                    {
-                        Program.ForwardPass(_network, v);
-                        //double[] derivatiesTmp = Enumerable.Repeat(0.0, _network.baseData._numberOfOutput).ToArray();
-                        //double[] errorsTmp = Enumerable.Repeat(0.0, _network.baseData._numberOfOutput).ToArray();
-                        //var derivatiesTmprange = Enumerable.Range(0, _network.baseData._numberOfOutput).ToArray();
-                        ////var derivatiesRange = Enumerable.Range(0, _network.baseData._numberOfOutput).ToArray();
-                        //var se = _network.signalError[_network.numLayers - 1];
-                        //var tds = _network.baseData._trainingDataSet[v];
-                        //var ou = _network.output[_network.numLayers - 1];
-                        ////_network.baseData._trainingDataSet[v][_network.baseData._numberOfInput + n] - _network.output[_network.numLayers - 1][n]
-                        //var erro1 = _network.baseData._trainingDataSet[v];
-                        //var error2 = _network.output[_network.numLayers - 1];
-                        //var numberOfInp = _network.baseData._numberOfInput;
-                        //_gpu.Launch(Kernel, lp, calculateDerivative, derivatiesTmp, derivatiesTmprange);
-                        //_gpu.Launch(Kernel, lp, calculateError, errorsTmp, erro1, error2, numberOfInp);
-                        ////Console.WriteLine($"{errorsTmp.Count()==derivatiesTmp.Count()} {iteratino++}" );
-                        //_gpu.Launch(Kernel, lp, calculateErrorSignal, _network.signalError[_network.numLayers - 1], errorsTmp, derivatiesTmp);
-                        //_network.signalError[_network.numLayers - 1] = se;
-                        for (var n = 0; n < _network.baseData._numberOfOutput; n++)
-                            _network.signalError[_network.numLayers - 1][n] = CalculateSignalErrors(v, n);
-                        for (var l = _network.numLayers - 2; l > 0; l--)
-                            for (var n = 0; n < _network.layer[l]; n++)
-                                _network.signalError[l][n] = CalculateDerivativeForHiddenLayer(l, n) * SumSignalErrorForHiddenLayer(l, n);
-                        for (var l = _network.numLayers - 1; l > 0; l--)
-                            for (var n = 0; n < _network.layer[l]; n++)
-                                Bias(learnRate, l, n);
-                        v++;
-                        if (v == _network.baseData._numberOFVectors)
-                            break;
-                    }
-                    UpdateWeightsRprop(learnRate, momentum, _etaPlus, _etaMinus, _minDelta, _maxDelta);
-                    // zero-out gradients
-                    MakeGradientZero();
+                    Program.ForwardPass(_network, v);
+                    for (var l = 0; l < _network.baseData._numberOfOutput; l++)
+                        _network.signalError[_network.numLayers - 1][l] = CalculateSignalErrors(v, l);
+                    for (var l = _network.numLayers - 2; l > 0; l--)
+                        for (var n = 0; n < _network.layer[l]; n++)
+                            _network.signalError[l][n] = CalculateDerivativeForHiddenLayer(l, n) * SumSignalErrorForHiddenLayer(l, n);
+                    for (var l = _network.numLayers - 1; l > 0; l--)
+                        for (var n = 0; n < _network.layer[l]; n++)
+                            Bias(learnRate, l, n);
                 }
+                UpdateWeightsRprop(learnRate, momentum, _etaPlus, _etaMinus, _minDelta, _maxDelta);
+                // zero-out gradients
+                MakeGradientZero();
             }
         }
         public static int Sign(double number)
@@ -117,9 +91,6 @@ namespace MLPProgram.LearningAlgorithms
         }
         private void CreateWeightZeroAndAsingDeltaValue(double deltaValue)
         {
-            Func<double, double, double> assing = (x, y) => { return y; };
-            var delta = Enumerable.Repeat(deltaValue, _network.delta[1][1].Length);
-            var wz = Enumerable.Repeat(0.0, _network.weightDiff[1][1].Length);
             for (var l = 1; l < _network.numLayers; l++)
                 for (var n = 0; n < _network.layer[l]; n++)
                 {
@@ -128,8 +99,6 @@ namespace MLPProgram.LearningAlgorithms
                         _network.weightDiff[l][n][w] = 0;
                         _network.delta[l][n][w] = deltaValue;
                     }
-                    //_gpu.Launch(Kernel, new LaunchParam(16, 256), assing, _network.delta[l][n], delta.ToArray());
-                    //_gpu.Launch(Kernel, new LaunchParam(16, 256), assing, _network.weightDiff[l][n], wz.ToArray());
                 }
         }
         private void MakeGradientZero()
@@ -138,24 +107,6 @@ namespace MLPProgram.LearningAlgorithms
                 for (var n = 0; n < _network.layer[l]; n++)
                     for (var w = 0; w <= _network.layer[l - 1]; w++)
                         _network.weightDiff[l][n][w] = 0;
-        }
-        public static void Kernel<T>(Func<T, T, T> op, T[] result, T[] arg1,T[]arg2,int numOfinputs)
-        {
-            var start = blockIdx.x * blockDim.x + threadIdx.x;
-            var stride = gridDim.x * blockDim.x;
-            for (var i = start; i < result.Length; i += stride)
-            {
-                result[i] = op(arg1[numOfinputs+i],arg2[i]);
-            }
-        }
-        public static void Kernel<T>(Func<T, T, T> op, T[] result, T[] arg1, T[] arg2)
-        {
-            var start = blockIdx.x * blockDim.x + threadIdx.x;
-            var stride = gridDim.x * blockDim.x;
-            for (var i = start; i < result.Length; i += stride)
-            {
-                result[i] = op(arg1[i], arg2[i]);
-            }
         }
         public static void Kernel(Func<int, double> op, double[] result, int[] arg1)
         {
