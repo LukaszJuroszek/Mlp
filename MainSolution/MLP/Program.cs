@@ -7,7 +7,6 @@ using System.Linq;
 
 namespace MLPProgram
 {
-    [GpuManaged]
     public static class Program
     {
         static void Main(string[] args)

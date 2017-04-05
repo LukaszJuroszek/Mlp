@@ -9,10 +9,9 @@ namespace MLPProgram.LearningAlgorithms
 {
     public struct GradientLearning
     {
-        [GpuParam]
-        public double _etaPlus, _etaMinus, _minDelta, _maxDelta, _errorExponent;
-        [GpuParam]
-        public MLP _network;
+        [GpuParam] public double _etaPlus, _etaMinus, _minDelta, _maxDelta, _errorExponent;
+        [GpuParam] public MLP _network;
+
         public GradientLearning(MLP network)
         {
             _etaPlus = 1.2;
@@ -21,74 +20,96 @@ namespace MLPProgram.LearningAlgorithms
             _maxDelta = 10;
             _errorExponent = 2.0;
             _network = network;
-            Settings.Instance.Memory.AllowNonBlittableMemoryTransfer = true;
         }
-        [GpuManaged]
+
         public MLP Train(int numberOfEpochs = 30, int batchSize = 30, double learnRate = 0.05, double momentum = 0.5)
         {
             //if (batchSize > _network.baseData._numberOFVectors || nameof(UpdateWeightsRprop).Contains("Rprop"))
             batchSize = _network.baseData._numberOFVectors;
             var gpu = Gpu.Default;
             var lp = new LaunchParam(16, 256);
-            var trainingDataSet = _network.baseData._trainingDataSet;
             var isSigmoidFunction = _network.baseData._isSigmoidFunction;
             var numberOfOutput = _network.baseData._numberOfOutput;
             var numberOfInput = _network.baseData._numberOfInput;
-            var output = _network.output;
-            var weights = _network.weights;
             var classification = _network.classification;
-            var signalError = _network.signalError;
-            var weightDiff = _network.weightDiff;
-            var numberOFLayers = _network.numbersOfLayers;
-            var prevWeightDiff = _network.prevWeightDiff;
-            var delta = _network.delta;
-            var layer = _network.layer;
+            var numberOfLayers = _network.numbersOfLayers;
+            _network.delta[0] = new double[][] { new double[] { 0.0 } };
+            _network.weightDiff[0] = new double[][] { new double[] { 0.0 } };
+            _network.prevWeightDiff[0] = new double[][] { new double[] { 0.0 } };
+            _network.weights[0] = new double[][] { new double[] { 0.0 } };
+            _network.signalError[0] = new double[] { 0.0 };
+            var trainingDataSet = gpu.Allocate(_network.baseData._trainingDataSet);
+            var output = gpu.Allocate(_network.output);
+            var signalError = gpu.Allocate(_network.signalError);
+            var prevWeightDiff = gpu.Allocate(_network.prevWeightDiff);
+            var weights = gpu.Allocate(_network.weights);
             var errorExponent = _errorExponent;
-            CreateWeightZeroAndAsingDeltaValue(numberOFLayers, layer, weightDiff, delta, 0.1);
-            for (var epoch = 0; epoch < numberOfEpochs; epoch++)
+            var layer = _network.layer;
+            CreateWeightZeroAndAsingDeltaValue(numberOfLayers, _network.layer, _network.weightDiff, _network.delta, 0.1);
+            var delta = gpu.Allocate(_network.delta);
+            var weightDiff = gpu.Allocate(_network.weightDiff);
+            try
             {
-                MakeGradientZero(numberOFLayers, layer, weightDiff);
-                for (var v = 0; v < batchSize; v++)
+                for (var epoch = 0; epoch < numberOfEpochs; epoch++)
                 {
-                    //gpu.For(0, batchSize, v =>
+                    MakeGradientZero(numberOfLayers, _network.layer, _network.weightDiff);
+                    //for (var v = 0; v < batchSize; v++)
                     //{
-                    Program.ForwardPass(output, trainingDataSet, weights, classification, isSigmoidFunction, v);
-                    for (var l = 0; l < numberOfOutput; l++)
+                    gpu.For(0, batchSize, v =>
                     {
-                        var error = trainingDataSet[v][numberOfInput + l] - output[numberOFLayers - 1][l];
-                        error = Sign(error) * DeviceFunction.Pow(DeviceFunction.Abs(error), errorExponent);
-                        double derivative;
-                        if (classification)
-                            derivative = DerivativeFunction(isSigmoidFunction, output[numberOFLayers - 1][l]);
-                        else
-                            derivative = 1.0;
-                        signalError[numberOFLayers - 1][l] = error * derivative;
-                    }
-
-                    for (var l = numberOFLayers - 2; l > 0; l--)
-                        for (var n = 0; n < layer[l]; n++)
+                        //Program.ForwardPass(output, trainingDataSet, weights, classification, isSigmoidFunction, v);
+                        for (var l = 0; l < numberOfOutput; l++)
                         {
-                            var sum = 0.0;
-                            for (var w = 0; w < layer[l + 1]; w++)
-                                sum += signalError[l + 1][w] * weights[l + 1][w][n];
-                            signalError[l][n] = DerivativeFunction(isSigmoidFunction, output[l][n]) * sum;
+                            var error = trainingDataSet[v][numberOfInput + l] - output[numberOfLayers - 1][l];
+                            error = Sign(error) * DeviceFunction.Pow(DeviceFunction.Abs(error), errorExponent);
+                            var derivative = classification ? DerivativeFunction(isSigmoidFunction, output[numberOfLayers - 1][l]) : 1.0;
+                            signalError[numberOfLayers - 1][l] = error * derivative;
                         }
-
-                    for (var l = numberOFLayers - 1; l > 0; l--)
-                    {
-                        for (var n = 0; n < layer[l]; n++)
+                        for (var l = numberOfLayers - 2; l > 0; l--)
+                            for (var n = 0; n < layer[l]; n++)
+                            {
+                                var sum = 0.0;
+                                for (var w = 0; w < layer[l + 1]; w++)
+                                    sum += signalError[l + 1][w] * weights[l + 1][w][n];
+                                signalError[l][n] = DerivativeFunction(isSigmoidFunction, output[l][n]) * sum;
+                            }
+                        for (var l = numberOfLayers - 1; l > 0; l--)
                         {
-
-                            weightDiff[l][n][layer[l - 1]] += learnRate * signalError[l][n];
-                            for (var w = 0; w < layer[l - 1]; w++)
-                                weightDiff[l][n][w] += learnRate * signalError[l][n] * output[l - 1][w];
+                            for (var n = 0; n < layer[l]; n++)
+                            {
+                                weightDiff[l][n][layer[l - 1]] += learnRate * signalError[l][n];
+                                for (var w = 0; w < layer[l - 1]; w++)
+                                    weightDiff[l][n][w] += learnRate * signalError[l][n] * output[l - 1][w];
+                            }
                         }
-                    }
+                        //}
+                    });
+                    Console.WriteLine("tu4");
+                    //_network.delta = Gpu.CopyToHost(delta);
+                    //_network.prevWeightDiff = Gpu.CopyToHost(prevWeightDiff);
+                    //_network.weightDiff = Gpu.CopyToHost(weightDiff);
+                    //_network.weights = Gpu.CopyToHost(weights);
+                    Console.WriteLine("tu5");
+                    UpdateWeightsRprop(_network.layer, numberOfLayers, _network.weights, _network.weightDiff, _network.prevWeightDiff, _network.delta, learnRate,
+                        momentum, _etaPlus, _etaMinus, _minDelta, _maxDelta);
+                    // zero-out gradients
+                    MakeGradientZero(numberOfLayers, _network.layer, _network.weightDiff);
                 }
-                //});
-                UpdateWeightsRprop(layer, numberOFLayers, weights, weightDiff, prevWeightDiff, delta, learnRate, momentum, _etaPlus, _etaMinus, _minDelta, _maxDelta);
-                // zero-out gradients
-                MakeGradientZero(numberOFLayers, layer, weightDiff);
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+            finally
+            {
+               
+                Gpu.Free(trainingDataSet);
+                Gpu.Free(output);
+                Gpu.Free(signalError);
+                Gpu.Free(prevWeightDiff);
+                Gpu.Free(weights);
+                Gpu.Free(delta);
+                //Gpu.Free(weightDiff);
             }
             return new MLP
             {
@@ -103,13 +124,14 @@ namespace MLPProgram.LearningAlgorithms
                 weights = weights,
                 classification = classification,
                 signalError = signalError,
-                weightDiff = weightDiff,
-                numbersOfLayers = numberOFLayers,
+                weightDiff = _network.weightDiff,
+                numbersOfLayers = numberOfLayers,
                 prevWeightDiff = prevWeightDiff,
                 delta = delta,
-                layer = layer,
+                layer = _network.layer,
             };
         }
+
         public static int Sign(double number)
         {
             return number > 0 ? 1 : number < 0 ? -1 : 0;
@@ -117,17 +139,20 @@ namespace MLPProgram.LearningAlgorithms
 
         private double CalculateSignalErrors(int v, int n)
         {
-            var error = _network.baseData._trainingDataSet[v][_network.baseData._numberOfInput + n] - _network.output[_network.numbersOfLayers - 1][n];
+            var error = _network.baseData._trainingDataSet[v][_network.baseData._numberOfInput + n] -
+                        _network.output[_network.numbersOfLayers - 1][n];
             error = Math.Sign(error) * Math.Pow(Math.Abs(error), _errorExponent);
             var derivative = CalculateDerivativeForSignalErrorsInOutputLayer(n);
             return error * derivative;
         }
+
         private void Bias(double learnRate, int l, int n)
         {
             _network.weightDiff[l][n][_network.layer[l - 1]] += learnRate * _network.signalError[l][n];
             for (var w = 0; w < _network.layer[l - 1]; w++)
                 _network.weightDiff[l][n][w] += learnRate * _network.signalError[l][n] * _network.output[l - 1][w];
         }
+
         private double SumSignalErrorForHiddenLayer(int layer, int hiddenLayerSecondDim)
         {
             var sum = 0.0;
@@ -135,10 +160,12 @@ namespace MLPProgram.LearningAlgorithms
                 sum += _network.signalError[layer + 1][w] * _network.weights[layer + 1][w][hiddenLayerSecondDim];
             return sum;
         }
+
         private double CalculateDerivativeForHiddenLayer(int layer, int hidenLayeerSecondDim)
         {
             return DerivativeFunction(_network.output[layer][hidenLayeerSecondDim]);
         }
+
         private double CalculateDerivativeForSignalErrorsInOutputLayer(int outputSecondDim)
         {
             double derivative;
@@ -148,6 +175,7 @@ namespace MLPProgram.LearningAlgorithms
                 derivative = 1.0;
             return derivative;
         }
+
         private void CreateWeightZeroAndAsingDeltaValue(double deltaValue)
         {
             for (var l = 1; l < _network.numbersOfLayers; l++)
@@ -160,7 +188,9 @@ namespace MLPProgram.LearningAlgorithms
                     }
                 }
         }
-        private static void CreateWeightZeroAndAsingDeltaValue(int numberOFLayers, int[] layer, double[][][] weightDiff, double[][][] delta, double deltaValue)
+
+        private static void CreateWeightZeroAndAsingDeltaValue(int numberOFLayers, int[] layer, double[][][] weightDiff,
+            double[][][] delta, double deltaValue)
         {
             for (var l = 1; l < numberOFLayers; l++)
                 for (var n = 0; n < layer[l]; n++)
@@ -172,6 +202,7 @@ namespace MLPProgram.LearningAlgorithms
                     }
                 }
         }
+
         private void MakeGradientZero()
         {
             for (var l = 1; l < _network.numbersOfLayers; l++)
@@ -179,13 +210,15 @@ namespace MLPProgram.LearningAlgorithms
                     for (var w = 0; w <= _network.layer[l - 1]; w++)
                         _network.weightDiff[l][n][w] = 0;
         }
-        private static void MakeGradientZero(int numberOFLayers, int[] layer, double[][][] weightDiff)
+
+        private static void MakeGradientZero(int numberOfLayers, int[] layer, double[][][] weightDiff)
         {
-            for (var l = 1; l < numberOFLayers; l++)
+            for (var l = 1; l < numberOfLayers; l++)
                 for (var n = 0; n < layer[l]; n++)
                     for (var w = 0; w <= layer[l - 1]; w++)
                         weightDiff[l][n][w] = 0;
         }
+
         public static void Kernel(Func<int, double> op, double[] result, int[] arg1)
         {
             var start = blockIdx.x * blockDim.x + threadIdx.x;
@@ -195,10 +228,12 @@ namespace MLPProgram.LearningAlgorithms
                 result[i] = op(arg1[i]);
             }
         }
+
         public double Test(double[][] trainingDataSet, double[][] testDataSet)
         {
             return _network.Accuracy(out var errorsRMSE, 0);
         }
+
         public static void UpdateWeightsRprop(
             int[] layer,
             int numberOfLayers,
@@ -206,13 +241,13 @@ namespace MLPProgram.LearningAlgorithms
             double[][][] weightDiff,
             double[][][] prevWeightDiff,
             double[][][] delta,
-           double learnRate,
-           double momentum,
-           double etaPlus,
-           double etaMinus,
-           double minDelta,
-           double maxDelta,
-           double inputWeightRegularizationCoef = -1)
+            double learnRate,
+            double momentum,
+            double etaPlus,
+            double etaMinus,
+            double minDelta,
+            double maxDelta,
+            double inputWeightRegularizationCoef = -1)
         {
             for (var l = numberOfLayers - 1; l > 0; l--)
             {
@@ -246,14 +281,15 @@ namespace MLPProgram.LearningAlgorithms
                 }
             }
         }
+
         public void UpdateWeightsBP(
-          double learnRate,
-          double momentum,
-          double etaPlus,
-          double etaMinus,
-          double minDelta,
-          double maxDelta,
-          double inputWeightRegularizationCoef = -1)
+            double learnRate,
+            double momentum,
+            double etaPlus,
+            double etaMinus,
+            double minDelta,
+            double maxDelta,
+            double inputWeightRegularizationCoef = -1)
         {
             for (var l = _network.numbersOfLayers - 1; l > 0; l--)
             {
@@ -261,64 +297,62 @@ namespace MLPProgram.LearningAlgorithms
                 {
                     for (var w = 0; w <= _network.layer[l - 1]; w++)
                     {
-                        _network.weights[l][n][w] += _network.weightDiff[l][n][w] + momentum * _network.prevWeightDiff[l][n][w];
+                        _network.weights[l][n][w] += _network.weightDiff[l][n][w] +
+                                                     momentum * _network.prevWeightDiff[l][n][w];
                         _network.prevWeightDiff[l][n][w] = _network.weightDiff[l][n][w];
                     }
                 }
             }
         }
+
         public static double TransferFunction(MLP _network, double x)
         {
             double result = 0;
-            if (_network.baseData._isSigmoidFunction)
-                result = SigmoidTransferFunction(x);
-            else
-                result = HyperbolicTransferFunction(x);
+            result = _network.baseData._isSigmoidFunction ? SigmoidTransferFunction(x) : HyperbolicTransferFunction(x);
             return result;
         }
+
         public static double TransferFunction(bool isSigmoidFunction, double x)
         {
             double result = 0;
-            if (isSigmoidFunction)
-                result = SigmoidTransferFunction(x);
-            else
-                result = HyperbolicTransferFunction(x);
+            result = isSigmoidFunction ? SigmoidTransferFunction(x) : HyperbolicTransferFunction(x);
             return result;
         }
+
         public double DerivativeFunction(double x)
         {
             double result = 0;
-            if (_network.baseData._isSigmoidFunction)
-                result = SigmoidDerivative(x);
-            else
-                result = HyperbolicDerivative(x);
+            result = _network.baseData._isSigmoidFunction ? SigmoidDerivative(x) : HyperbolicDerivative(x);
             return result;
         }
+
         public static double DerivativeFunction(bool isSigmoidFunction, double x)
         {
             double result = 0;
-            if (isSigmoidFunction)
-                result = SigmoidDerivative(x);
-            else
-                result = HyperbolicDerivative(x);
+            result = isSigmoidFunction ? SigmoidDerivative(x) : HyperbolicDerivative(x);
             return result;
         }
+
         public static double HyperbolicTransferFunction(double x)
         {
             return DeviceFunction.Tanh(x);
         }
+
         public static double HyperbolicDerivative(double x)
         {
             return 1.0 - x * x;
         }
+
         public static double SigmoidTransferFunction(double x)
         {
             return 1.0 / (1.0 + DeviceFunction.Exp(-x));
         }
+
         public static double SigmoidDerivative(double x)
         {
             return x * (1.0 - x);
         }
+
         public static bool IsSigmoidTransferFunction(Func<double, double> func)
         {
             return func.Method.Name.Equals("SigmoidTransferFunction") ? true : false;
