@@ -108,8 +108,6 @@ namespace MLPProgram.LearningAlgorithms
                         }
                     }
                     //});
-                    Console.WriteLine("tu4");
-                    Console.WriteLine("tu5");
                     UpdateWeightsRprop(layer, numberOfLayers, weights, weightDiff, prevWeightDiff, delta, learnRate, momentum, etaPlus, etaMinus, minDelta, maxDelta);
                     // zero-out gradients
                     MakeGradientZero(numberOfLayers, layer, weightDiff);
