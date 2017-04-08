@@ -7,10 +7,6 @@ namespace MLPProgram.Networks
 {
     public struct MLP
     {
-        //public double[] featureImportance;
-        //public int[] featureNumber;
-        //[GpuParam]
-        //public Random rnd;
         [GpuParam]
         public double[][][] weightDiff;
         [GpuParam]
@@ -90,10 +86,10 @@ namespace MLPProgram.Networks
                 }
             }
         }
-        public double Accuracy( out double error, int lok = 0)
+        public double Accuracy(int lok = 0)
         {
             double maxValue = -1;
-            error = 0.0;
+            var error = 0.0;
             var classification = false;
             if (baseData._trainingDataSet[0].Length > layer[0] + 1)
                 classification = true;
@@ -121,6 +117,7 @@ namespace MLPProgram.Networks
                     numCorrect++;
             }
             error /= baseData._trainingDataSet.Length;
+            Console.WriteLine(error);
             return (double)numCorrect / baseData._trainingDataSet.Length;
         }
         public static double Accuracy(MLP mlp, out double error, int lok = 0)

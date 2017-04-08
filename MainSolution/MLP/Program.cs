@@ -12,7 +12,6 @@ namespace MLPProgram
         {
             var filePath = @"..\..\Datasets\ionosphere_std_sh.txt";
             var st = new Stopwatch();
-            var totalMs = TimeSpan.FromMilliseconds(0);
             var testDataset = new FileParser(filePath, GradientLearning.SigmoidTransferFunction);
             var data = new BaseDataHolder(testDataset);
             var network = new MLP(data);
@@ -24,9 +23,8 @@ namespace MLPProgram
                 st.Reset();
                 st.Start();
                 network = learningAlgorithm.Train(numberOfEpochs: 50, batchSize: 30, learnRate: 0.05, momentum: 0.5);
-                var testAccuracy = network.Accuracy(out double mseTrain);
-                Console.WriteLine(testAccuracy);
-                Console.WriteLine(mseTrain);
+                //var testAccuracy = learningAlgorithm.Accuracy();
+                //Console.WriteLine(testAccuracy);
                 st.Stop();
                 Console.WriteLine(st.Elapsed);
             }

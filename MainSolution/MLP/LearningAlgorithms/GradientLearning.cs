@@ -21,11 +21,8 @@ namespace MLPProgram.LearningAlgorithms
             _errorExponent = 2.0;
             _network = network;
         }
-        [GpuManaged]
         public MLP Train(int numberOfEpochs = 30, int batchSize = 30, double learnRate = 0.05, double momentum = 0.5)
         {
-            Settings.Instance.Memory.AllowNonBlittableMemoryTransfer = true;
-
             //if (batchSize > _network.baseData._numberOFVectors || nameof(UpdateWeightsRprop).Contains("Rprop"))
             var gpu = Gpu.Default;
             var lp = new LaunchParam(16, 256);
@@ -41,6 +38,8 @@ namespace MLPProgram.LearningAlgorithms
             _network.weights[0] = new double[][] { new double[] { 0.0 } };
             _network.signalError[0] = new double[] { 0.0 };
             var trainingDataSet = gpu.Allocate(_network.baseData._trainingDataSet);
+            var trainingDataSetLenth = _network.baseData._trainingDataSet.Length;
+            var trainingDataSetLenthAt0 = _network.baseData._trainingDataSet[0].Length;
             var output = gpu.Allocate(_network.output);
             var signalError = gpu.Allocate(_network.signalError);
             var prevWeightDiff = gpu.Allocate(_network.prevWeightDiff);
@@ -53,7 +52,7 @@ namespace MLPProgram.LearningAlgorithms
             var etaPlus = _etaPlus;
             var etaMinus = _etaMinus;
             var minDelta = _minDelta;
-            var maxDelta= _maxDelta;
+            var maxDelta = _maxDelta;
             try
             {
                 //for (var epoch = 0; epoch < numberOfEpochs; epoch++)
@@ -103,7 +102,9 @@ namespace MLPProgram.LearningAlgorithms
                             {
                                 weightDiff[l][n][layer[l - 1]] += learnRate * signalError[l][n];
                                 for (var w = 0; w < layer[l - 1]; w++)
+                                {
                                     weightDiff[l][n][w] += learnRate * signalError[l][n] * output[l - 1][w];
+                                }
                             }
                         }
                     }
@@ -113,6 +114,62 @@ namespace MLPProgram.LearningAlgorithms
                     MakeGradientZero(numberOfLayers, layer, weightDiff);
                 });
                 //}
+                //cout accuracy
+                double maxValue = -1;
+                var errorValue = new double[trainingDataSetLenth];
+                if (trainingDataSetLenthAt0 > layer[0] + 1)
+                    classification = true;
+                var numCorrect = 0;
+                var maxIndex = -1;
+                gpu.For(0, trainingDataSetLenth, v =>
+                {
+                    //    for (var v = 0; v < trainingDataSet.Length; v++)
+                    //{
+                    //Program.ForwardPass(this, v, 0);
+                    for (var i = 0; i < output[0].Length; i++)
+                        output[0][i] = trainingDataSet[v][i];
+                    for (var l = 1; l < output.Length; l++)
+                    {
+                        for (var n = 0; n < output[l].Length; n++)
+                        {
+                            double sum = 0;
+                            for (var w = 0; w < output[l - 1].Length; w++)
+                            {
+                                sum += output[l - 1][w] * weights[l][n][w];
+                            }
+                            sum += weights[l][n][output[l - 1].Length]; //bias
+                            output[l][n] = (l == output.Length - 1 && !classification) ? sum : TransferFunction(isSigmoidFunction, sum);
+                        }
+                    }
+                    maxIndex = -1;
+                    maxValue = -1.1;
+                    for (var n = 0; n < layer[numberOfLayers - 1]; n++)
+                    {
+                        if (classification)
+                        {
+                            errorValue[v] += TransferFunction(isSigmoidFunction, output[numberOfLayers - 1][n] - (2 * trainingDataSet[v][layer[0] + n] - 1));
+                        }
+                        else
+                            errorValue[v] += DeviceFunction.Pow(output[numberOfLayers - 1][n] - trainingDataSet[v][layer[0] + n], 2);
+                        if (output[numberOfLayers - 1][n] > maxValue)
+                        {
+                            maxValue = output[numberOfLayers - 1][n];
+                            maxIndex = n;
+                        }
+                    }
+                    var position = layer[0] + maxIndex;
+                    if (trainingDataSet[v][position] == 1)
+                        numCorrect++;
+                //}
+                });
+                var sumError = gpu.Sum(errorValue);
+                    Console.WriteLine(sumError);
+                gpu.For(0, 1, x =>
+                {
+                    Console.WriteLine(sumError /= trainingDataSetLenth);
+                });
+              
+                //errorValue /= trainingDataSet.Length;
             }
             catch (Exception ex)
             {
@@ -120,18 +177,18 @@ namespace MLPProgram.LearningAlgorithms
             }
             finally
             {
-                _network.delta = Gpu.CopyToHost(delta);
-                _network.prevWeightDiff = Gpu.CopyToHost(prevWeightDiff);
-                _network.weightDiff = Gpu.CopyToHost(weightDiff);
-                _network.weights = Gpu.CopyToHost(weights);
-                _network.output = Gpu.CopyToHost(output);
+                //_network.delta = Gpu.CopyToHost(delta);
+                //_network.prevWeightDiff = Gpu.CopyToHost(prevWeightDiff);
+                //_network.weightDiff = Gpu.CopyToHost(weightDiff);
+                //_network.weights = Gpu.CopyToHost(weights);
+                //_network.output = Gpu.CopyToHost(output);
                 Gpu.Free(trainingDataSet);
                 Gpu.Free(output);
                 Gpu.Free(signalError);
                 Gpu.Free(prevWeightDiff);
                 Gpu.Free(weights);
                 Gpu.Free(delta);
-                //Gpu.Free(weightDiff);
+                Gpu.Free(weightDiff);
             }
             return new MLP
             {
@@ -153,7 +210,6 @@ namespace MLPProgram.LearningAlgorithms
                 layer = _network.layer,
             };
         }
-
         public static int Sign(double number)
         {
             return number > 0 ? 1 : number < 0 ? -1 : 0;
@@ -249,11 +305,6 @@ namespace MLPProgram.LearningAlgorithms
             {
                 result[i] = op(arg1[i]);
             }
-        }
-
-        public double Test(double[][] trainingDataSet, double[][] testDataSet)
-        {
-            return _network.Accuracy(out var errorsRMSE, 0);
         }
 
         public static void UpdateWeightsRprop(
