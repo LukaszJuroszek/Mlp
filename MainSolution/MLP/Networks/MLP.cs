@@ -1,4 +1,5 @@
 ﻿using Alea;
+using Alea.Parallel;
 using MLPProgram.LearningAlgorithms;
 using System;
 using System.Text;
@@ -8,17 +9,8 @@ namespace MLPProgram.Networks
     public struct MLP
     {
         [GpuParam]
-        public double[][][] weightDiff;
-        [GpuParam]
-        public double[][][] prevWeightDiff;
-        [GpuParam]
-        public double[][][] delta;
-        [GpuParam]
-        public double[][][] weights;
-        [GpuParam]
-        public double[][] signalError;
-        [GpuParam]
-        public double[][] output;
+        public double[][][] weightDiff, prevWeightDiff, delta, weights;
+        public double[][] signalError, output;
         [GpuParam]
         public int[] layer;
         [GpuParam]
@@ -153,7 +145,84 @@ namespace MLPProgram.Networks
             error /= mlp.baseData._trainingDataSet.Length;
             return (double)numCorrect / mlp.baseData._trainingDataSet.Length;
         }
+        public double Accuracy()
+        {
+            var network = this;
+            var gpu = Gpu.Default;
+            var isSigmoidFunction = network.baseData._isSigmoidFunction;
+            var classification = network.classification;
+            var numberOfLayers = network.numbersOfLayers;
+            var trainingDataSet = gpu.Allocate(network.baseData._trainingDataSet);
+            var trainingDataSetLenth = network.baseData._trainingDataSet.Length;
+            var trainingDataSetLenthAt0 = network.baseData._trainingDataSet[0].Length;
+            var output = gpu.Allocate(network.output);
+            var weights = gpu.Allocate(network.weights);
+            var layer = network.layer;
 
+            //cout accuracy
+            double maxValue = -1;
+            var errorValue = new double[trainingDataSetLenth];
+            if (trainingDataSetLenthAt0 > layer[0] + 1)
+                classification = true;
+            var numCorrect = new double[trainingDataSetLenth];
+            var maxIndex = -1;
+            try
+            {
+                gpu.For(0, trainingDataSetLenth, v =>
+                      {
+                          //    for (var v = 0; v < trainingDataSet.Length; v++)
+                          //{
+                          //Program.ForwardPass(this, v, 0);
+                          for (var i = 0; i < output[0].Length; i++)
+                              output[0][i] = trainingDataSet[v][i];
+                          for (var l = 1; l < output.Length; l++)
+                          {
+                              for (var n = 0; n < output[l].Length; n++)
+                              {
+                                  double sum = 0;
+                                  for (var w = 0; w < output[l - 1].Length; w++)
+                                  {
+                                      sum += output[l - 1][w] * weights[l][n][w];
+                                  }
+                                  sum += weights[l][n][output[l - 1].Length]; //bias
+                                  output[l][n] = (l == output.Length - 1 && !classification) ? sum : GradientLearning.TransferFunction(isSigmoidFunction, sum);
+                              }
+                          }
+                          maxIndex = -1;
+                          maxValue = -1.1;
+                          for (var n = 0; n < layer[numberOfLayers - 1]; n++)
+                          {
+                              if (classification)
+                              {
+                                  errorValue[v] += GradientLearning.TransferFunction(isSigmoidFunction, output[numberOfLayers - 1][n] - (2 * trainingDataSet[v][layer[0] + n] - 1));
+                              }
+                              else
+                                  errorValue[v] += DeviceFunction.Pow(output[numberOfLayers - 1][n] - trainingDataSet[v][layer[0] + n], 2);
+                              if (output[numberOfLayers - 1][n] > maxValue)
+                              {
+                                  maxValue = output[numberOfLayers - 1][n];
+                                  maxIndex = n;
+                              }
+                          }
+                          if (trainingDataSet[v][layer[0] + maxIndex] == 1)
+                              numCorrect[v]++;
+                          //}
+                      });
+                var sumError = gpu.Sum(errorValue);
+                var sumCorrect = gpu.Sum(numCorrect);
+
+                Console.WriteLine(sumCorrect);
+                Console.WriteLine(sumCorrect / trainingDataSetLenth);
+                return sumCorrect /= trainingDataSetLenth;
+            }
+            finally
+            {
+                Gpu.Free(trainingDataSet);
+                Gpu.Free(output);
+                Gpu.Free(weights);
+            }
+            throw new ArithmeticException("ZeroResult");
+        }
         public double[] GetNonSignalErrorTable(double[][] DataSet, ref double accuracy, double errorExponent = 2.0)
         {
             var numVect = DataSet.Length;

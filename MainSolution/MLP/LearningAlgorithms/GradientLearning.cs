@@ -21,6 +21,7 @@ namespace MLPProgram.LearningAlgorithms
             _errorExponent = 2.0;
             _network = network;
         }
+        [GpuManaged]
         public MLP Train(int numberOfEpochs = 30, int batchSize = 30, double learnRate = 0.05, double momentum = 0.5)
         {
             //if (batchSize > _network.baseData._numberOFVectors || nameof(UpdateWeightsRprop).Contains("Rprop"))
@@ -31,7 +32,6 @@ namespace MLPProgram.LearningAlgorithms
             var numberOfOutput = _network.baseData._numberOfOutput;
             var numberOfInput = _network.baseData._numberOfInput;
             var classification = _network.classification;
-            var numberOfLayers = _network.numbersOfLayers;
             _network.delta[0] = new double[][] { new double[] { 0.0 } };
             _network.weightDiff[0] = new double[][] { new double[] { 0.0 } };
             _network.prevWeightDiff[0] = new double[][] { new double[] { 0.0 } };
@@ -46,13 +46,18 @@ namespace MLPProgram.LearningAlgorithms
             var weights = gpu.Allocate(_network.weights);
             var errorExponent = _errorExponent;
             var layer = _network.layer;
-            CreateWeightZeroAndAsingDeltaValue(numberOfLayers, _network.layer, _network.weightDiff, _network.delta, 0.1);
+            CreateWeightZeroAndAsingDeltaValue(_network.numbersOfLayers, _network.layer, _network.weightDiff, _network.delta, 0.1);
+            var numberOfLayers = _network.numbersOfLayers;
             var delta = gpu.Allocate(_network.delta);
             var weightDiff = gpu.Allocate(_network.weightDiff);
             var etaPlus = _etaPlus;
             var etaMinus = _etaMinus;
             var minDelta = _minDelta;
             var maxDelta = _maxDelta;
+            double maxValue = -1;
+            var maxIndex = -1;
+            var errorValue = new double[trainingDataSetLenth];
+            var numCorrect = new double[trainingDataSetLenth];
             try
             {
                 //for (var epoch = 0; epoch < numberOfEpochs; epoch++)
@@ -62,7 +67,11 @@ namespace MLPProgram.LearningAlgorithms
                     //MakeGradientZero(numberOfLayers, layer, weightDiff);
                     for (var v = 0; v < batchSize; v++)
                     {
-                        MakeGradientZero(numberOfLayers, layer, weightDiff);
+                        //MakeGradientZero(numberOfLayers, layer, weightDiff);
+                        for (var l = 1; l < numberOfLayers; l++)
+                            for (var n = 0; n < layer[l]; n++)
+                                for (var w = 0; w <= layer[l - 1]; w++)
+                                    weightDiff[l][n][w] = 0;
                         //gpu.For(0, batchSize, v =>
                         //{
                         //Program.ForwardPass(output, trainingDataSet, weights, classification, isSigmoidFunction, v);
@@ -72,7 +81,7 @@ namespace MLPProgram.LearningAlgorithms
                         {
                             for (var n = 0; n < output[l].Length; n++)
                             {
-                                double sum = 0;
+                                var sum = 0.0;
                                 for (var w = 0; w < output[l - 1].Length; w++)
                                 {
                                     sum += output[l - 1][w] * weights[l][n][w];
@@ -109,18 +118,49 @@ namespace MLPProgram.LearningAlgorithms
                         }
                     }
                     //});
-                    UpdateWeightsRprop(layer, numberOfLayers, weights, weightDiff, prevWeightDiff, delta, learnRate, momentum, etaPlus, etaMinus, minDelta, maxDelta);
+                    //UpdateWeightsRprop(layer, numberOfLayers, weights, weightDiff, prevWeightDiff, delta, learnRate, momentum, etaPlus, etaMinus, minDelta, maxDelta);
+                    for (var l = numberOfLayers - 1; l > 0; l--)
+                    {
+                        for (var n = 0; n < layer[l]; n++)
+                        {
+                            for (var w = 0; w <= layer[l - 1]; w++)
+                            {
+                                if (-1 <= 0 || weights[l][n][w] != 0)
+                                {
+                                    if (prevWeightDiff[l][n][w] * weightDiff[l][n][w] > 0)
+                                    {
+                                        delta[l][n][w] *= etaPlus;
+                                        if (delta[l][n][w] > maxDelta)
+                                            delta[l][n][w] = maxDelta;
+                                    }
+                                    else if (prevWeightDiff[l][n][w] * weightDiff[l][n][w] < 0)
+                                    {
+                                        delta[l][n][w] *= etaMinus;
+                                        if (delta[l][n][w] < minDelta)
+                                            delta[l][n][w] = minDelta;
+                                    }
+                                    weights[l][n][w] += Sign(weightDiff[l][n][w]) * delta[l][n][w];
+                                    prevWeightDiff[l][n][w] = weightDiff[l][n][w];
+                                }
+                                else
+                                {
+                                    prevWeightDiff[l][n][w] = 0;
+                                    weightDiff[l][n][w] = 0;
+                                }
+                            }
+                        }
+                    }
                     // zero-out gradients
-                    MakeGradientZero(numberOfLayers, layer, weightDiff);
+                    //MakeGradientZero(numberOfLayers, layer, weightDiff);
+                    for (var l = 1; l < numberOfLayers; l++)
+                        for (var n = 0; n < layer[l]; n++)
+                            for (var w = 0; w <= layer[l - 1]; w++)
+                                weightDiff[l][n][w] = 0;
                 });
                 //}
-                //cout accuracy
-                double maxValue = -1;
-                var errorValue = new double[trainingDataSetLenth];
                 if (trainingDataSetLenthAt0 > layer[0] + 1)
                     classification = true;
-                var numCorrect = 0;
-                var maxIndex = -1;
+
                 gpu.For(0, trainingDataSetLenth, v =>
                 {
                     //    for (var v = 0; v < trainingDataSet.Length; v++)
@@ -157,19 +197,17 @@ namespace MLPProgram.LearningAlgorithms
                             maxIndex = n;
                         }
                     }
-                    var position = layer[0] + maxIndex;
-                    if (trainingDataSet[v][position] == 1)
-                        numCorrect++;
-                //}
+                    if (trainingDataSet[v][layer[0] + maxIndex] == 1)
+                        numCorrect[v]++;
+                    //}
                 });
                 var sumError = gpu.Sum(errorValue);
-                    Console.WriteLine(sumError);
-                gpu.For(0, 1, x =>
-                {
-                    Console.WriteLine(sumError /= trainingDataSetLenth);
-                });
-              
-                //errorValue /= trainingDataSet.Length;
+                var sumCorrect = gpu.Sum(numCorrect);
+
+                Console.WriteLine(sumCorrect);
+                Console.WriteLine(sumCorrect / trainingDataSetLenth);
+                //return sumCorrect /= trainingDataSetLenth;
+
             }
             catch (Exception ex)
             {
@@ -194,20 +232,24 @@ namespace MLPProgram.LearningAlgorithms
             {
                 baseData = new BaseDataHolder
                 {
-                    _trainingDataSet = trainingDataSet,
-                    _isSigmoidFunction = isSigmoidFunction,
-                    _numberOfOutput = numberOfOutput,
-                    _numberOfInput = numberOfInput
+                    _trainingDataSet = _network.baseData._trainingDataSet,
+                    _numberOfInput = _network.baseData._numberOfInput,
+                    _numberOfOutput = _network.baseData._numberOfOutput,
+                    _numberOFVectors = _network.baseData._numberOFVectors,
+                    _classification = _network.baseData._classification,
+                    _isSigmoidFunction = _network.baseData._isSigmoidFunction,
+                    _layer = _network.baseData._layer
                 },
-                output = output,
-                weights = weights,
-                classification = classification,
-                signalError = signalError,
-                weightDiff = _network.weightDiff,
-                numbersOfLayers = numberOfLayers,
+                weightDiff = weightDiff,
                 prevWeightDiff = prevWeightDiff,
                 delta = delta,
-                layer = _network.layer,
+                weights = weights,
+                layer = layer,
+                signalError = signalError,
+                output = output,
+                numbersOfLayers = numberOfLayers,
+                classification = classification,
+                numWeights = _network.numWeights,
             };
         }
         public static int Sign(double number)
@@ -328,7 +370,7 @@ namespace MLPProgram.LearningAlgorithms
                 {
                     for (var w = 0; w <= layer[l - 1]; w++)
                     {
-                        if (inputWeightRegularizationCoef <= 0 || weights[l][n][w] != 0)
+                        if (-1 <= 0 || weights[l][n][w] != 0)
                         {
                             if (prevWeightDiff[l][n][w] * weightDiff[l][n][w] > 0)
                             {
