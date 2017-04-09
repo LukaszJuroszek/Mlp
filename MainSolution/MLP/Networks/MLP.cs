@@ -5,7 +5,7 @@ using System.Text;
 
 namespace MLPProgram.Networks
 {
-    public struct MLP : INetwork
+    public struct MLP
     {
         //public double[] featureImportance;
         //public int[] featureNumber;
@@ -31,8 +31,6 @@ namespace MLPProgram.Networks
         public bool classification;
         [GpuParam]
         public int numWeights;
-        [GpuParam]
-        public BaseDataHolder baseData;
         public override string ToString()
         {
             var st = new StringBuilder();
@@ -47,7 +45,6 @@ namespace MLPProgram.Networks
         }
         public MLP(BaseDataHolder data, string weightFile = "")
         {
-            baseData = data;
             classification = data._classification;
             layer = data._layer;
             numWeights = 0;
@@ -90,7 +87,7 @@ namespace MLPProgram.Networks
                 }
             }
         }
-        public double Accuracy(out double error, int lok = 0)
+        public double Accuracy(BaseDataHolder baseData, out double error, int lok = 0)
         {
             double maxValue = -1;
             error = 0.0;
@@ -101,13 +98,16 @@ namespace MLPProgram.Networks
             var maxIndex = -1;
             for (var v = 0; v < baseData._trainingDataSet.Length; v++)
             {
-                Program.ForwardPass(this, v, lok);
+                Program.ForwardPass(this, baseData, v, lok);
                 maxIndex = -1;
                 maxValue = -1.1;
                 for (var n = 0; n < layer[numLayers - 1]; n++)
                 {
                     if (classification)
-                        error += GradientLearning.TransferFunction(this,output[numLayers - 1][n] - (2 * baseData._trainingDataSet[v][layer[0] + n] - 1));
+                    {
+                        var value = output[numLayers - 1][n] - (2 * baseData._trainingDataSet[v][layer[0] + n] - 1);
+                        error += GradientLearning.TransferFunction(baseData, value);
+                    }
                     else
                         error += Math.Pow(output[numLayers - 1][n] - baseData._trainingDataSet[v][layer[0] + n], 2);
                     if (output[numLayers - 1][n] > maxValue)
@@ -145,7 +145,7 @@ namespace MLPProgram.Networks
                         if (l == numLayers - 1 && !classification)
                             output[l][n] = sum;
                         else
-                            output[l][n] = GradientLearning.TransferFunction(this,sum);
+                        //output[l][n] = GradientLearning.TransferFunction(, sum); //todo change transfer function
                         if (l == numLayers - 1)
                             error += Math.Pow(Math.Abs(output[l][n] - DataSet[v][layer[0] + n]), errorExponent);
                     }

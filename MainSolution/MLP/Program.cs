@@ -18,39 +18,36 @@ namespace MLPProgram
             var testDataset = new FileParser(filePath, GradientLearning.SigmoidTransferFunction);
             var data = new BaseDataHolder(testDataset);
             var network = new MLP(data);
-            var learningAlgorithm = new GradientLearning(network);
+            var learningAlgorithm = new GradientLearning(network, data);
             st.Start();
             for (var i = 0; i < 1; i++)
             {
                 //to memory
                 st.Reset();
                 st.Start();
-                learningAlgorithm.Train(numberOfEpochs:50, batchSize: 30, learnRate: 0.05, momentum: 0.5);
-                var testAccuracy = network.Accuracy(out double mseTrain);
+                learningAlgorithm.Train(numberOfEpochs: 50, batchSize: 30, learnRate: 0.05, momentum: 0.5);
+                //learningAlgorithm.TrainOld(numberOfEpochs: 50, batchSize: 30, learnRate: 0.05, momentum: 0.5);
+                var testAccuracy = network.Accuracy(data,out double mseTrain);
                 Console.WriteLine(testAccuracy);
                 Console.WriteLine(mseTrain);
                 st.Stop();
                 Console.WriteLine(st.Elapsed);
             }
-
         }
-        public static void ForwardPass(MLP network, int indexOftrainingDataSet, int lok = -1)
+        public static void ForwardPass(MLP network,BaseDataHolder baseData, int row, int lok = -1)
         {
-            //coping trainingData to output[0]
-            network.output[0] = network.baseData._trainingDataSet[indexOftrainingDataSet].Take(network.output[0].Length).ToArray();
-            //calculate outputs by output[0]...==_trainingDataSet[indexOftrainingDataSet].
+            network.output[0] = baseData._trainingDataSet[row].Take(network.output[0].Length).ToArray();
             for (var l = 1; l < network.output.Length; l++)
             {
                 for (var n = 0; n < network.output[l].Length; n++)
                 {
                     double sum = 0;
-                    //l-1 means that we are taking prevouls op.layer...
                     for (var w = 0; w < network.output[l - 1].Length; w++)
                     {
                         sum += network.output[l - 1][w] * network.weights[l][n][w];
                     }
                     sum += network.weights[l][n][network.output[l - 1].Length]; //bias
-                    network.output[l][n] = (l == network.output.Length - 1 && !network.classification) ? sum : GradientLearning.TransferFunction(network, sum);
+                    network.output[l][n] = (l == network.output.Length - 1 && !network.classification) ? sum : GradientLearning.TransferFunction(baseData, sum);
                 }
             }
         }
