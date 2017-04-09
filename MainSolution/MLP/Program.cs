@@ -25,7 +25,7 @@ namespace MLPProgram
                 //to memory
                 st.Reset();
                 st.Start();
-                learningAlgorithm.Train(network,numberOfEpochs: 50, batchSize: 30, learnRate: 0.05, momentum: 0.5);
+                learningAlgorithm.Train(numberOfEpochs:50, batchSize: 30, learnRate: 0.05, momentum: 0.5);
                 var testAccuracy = network.Accuracy(out double mseTrain);
                 Console.WriteLine(testAccuracy);
                 Console.WriteLine(mseTrain);

@@ -25,11 +25,10 @@ namespace MLPProgram.LearningAlgorithms
         [GpuManaged]
         public void Train( int numberOfEpochs = 30, int batchSize = 30, double learnRate = 0.05, double momentum = 0.5)
         {
-            //if (batchSize > _network.baseData._numberOFVectors || nameof(UpdateWeightsRprop).Contains("Rprop"))
             batchSize = _network.baseData._numberOFVectors;
             var gpu = Gpu.Default;
             var lp = new LaunchParam(16, 256);
-            var network = gpu.Allocate<MLP>(this);
+            //var network = gpu.Allocate<MLP>(this);
             CreateWeightZeroAndAsingDeltaValue(0.1);
             for (var epoch = 0; epoch < numberOfEpochs; epoch++)
             {
