@@ -26,40 +26,44 @@ namespace MLPProgram.Networks
         [GpuParam]
         public int[] layer;
         [GpuParam]
-        public int numLayers;
+        public int numberOfLayer;
         [GpuParam]
         public bool classification;
         [GpuParam]
-        public int numWeights;
+        public int numberOfWeigth;
         public override string ToString()
         {
             var st = new StringBuilder();
-            st.Append($"Weights {numWeights} ");
-            st.Append($"classification {classification} ");
-            st.Append($"LayersCount {numLayers} ");
-            for (var i = 0; i < layer.Length; i++)
-            {
-                st.Append($"l[{i}]={layer[i]} ");
-            }
+            //st.Append($"Weights {numberOfWeigth} ");
+            //st.Append($"classification {classification} ");
+            //st.Append($"LayersCount {numberOfLayer} ");
+                st.AppendLine($"l[{1}]={weights[1][0][1]} ");
+                st.AppendLine($"l[{1}]={weights[1][0][2]} ");
+                st.AppendLine($"l[{1}]={weights[1][1][1]} ");
+                st.AppendLine($"l[{1}]={weights[1][1][2]} ");
+            st.AppendLine($"l[{1}]={output[1][0]} ");
+            st.AppendLine($"l[{1}]={output[1][0]} ");
+            st.AppendLine($"l[{1}]={output[1][1]} ");
+            st.AppendLine($"l[{1}]={output[1][1]} ");
             return st.ToString();
         }
         public MLP(BaseDataHolder data, string weightFile = "")
         {
             classification = data._classification;
             layer = data._layer;
-            numWeights = 0;
-            numLayers = layer.Length;
-            weights = new double[numLayers][][];
-            weightDiff = new double[numLayers][][];
-            delta = new double[numLayers][][];
-            signalError = new double[numLayers][];
-            output = new double[numLayers][];
+            numberOfWeigth = 0;
+            numberOfLayer = layer.Length;
+            weights = new double[numberOfLayer][][];
+            weightDiff = new double[numberOfLayer][][];
+            delta = new double[numberOfLayer][][];
+            signalError = new double[numberOfLayer][];
+            output = new double[numberOfLayer][];
             output[0] = new double[layer[0]];
-            prevWeightDiff = new double[numLayers][][];
+            prevWeightDiff = new double[numberOfLayer][][];
             var rnd = new Random();
             InitMultiDimArray(layer);
             var dw0 = 0.20;
-            for (var l = 1; l < numLayers; l++)
+            for (var l = 1; l < numberOfLayer; l++)
                 for (var n = 0; n < layer[l]; n++)
                     for (var w = 0; w < layer[l - 1] + 1; w++)
                     {
@@ -69,7 +73,7 @@ namespace MLPProgram.Networks
         }
         private void InitMultiDimArray(int[] layer)
         {
-            for (var l = 1; l < numLayers; l++)
+            for (var l = 1; l < numberOfLayer; l++)
             {
                 weights[l] = new double[layer[l]][];
                 weightDiff[l] = new double[layer[l]][];
@@ -83,7 +87,7 @@ namespace MLPProgram.Networks
                     weightDiff[l][n] = new double[layer[l - 1] + 1];
                     prevWeightDiff[l][n] = new double[layer[l - 1] + 1];
                     delta[l][n] = new double[layer[l - 1] + 1];
-                    numWeights++;
+                    numberOfWeigth++;
                 }
             }
         }
@@ -101,18 +105,18 @@ namespace MLPProgram.Networks
                 Program.ForwardPass(this, baseData, v, lok);
                 maxIndex = -1;
                 maxValue = -1.1;
-                for (var n = 0; n < layer[numLayers - 1]; n++)
+                for (var n = 0; n < layer[numberOfLayer - 1]; n++)
                 {
                     if (classification)
                     {
-                        var value = output[numLayers - 1][n] - (2 * baseData._trainingDataSet[v][layer[0] + n] - 1);
+                        var value = output[numberOfLayer - 1][n] - (2 * baseData._trainingDataSet[v][layer[0] + n] - 1);
                         error += GradientLearning.TransferFunction(baseData, value);
                     }
                     else
-                        error += Math.Pow(output[numLayers - 1][n] - baseData._trainingDataSet[v][layer[0] + n], 2);
-                    if (output[numLayers - 1][n] > maxValue)
+                        error += Math.Pow(output[numberOfLayer - 1][n] - baseData._trainingDataSet[v][layer[0] + n], 2);
+                    if (output[numberOfLayer - 1][n] > maxValue)
                     {
-                        maxValue = output[numLayers - 1][n];
+                        maxValue = output[numberOfLayer - 1][n];
                         maxIndex = n;
                     }
                 }
@@ -134,7 +138,7 @@ namespace MLPProgram.Networks
                 error = 0;
                 for (var n = 0; n < layer[0]; n++)
                     output[0][n] = DataSet[v][n];
-                for (var l = 1; l < numLayers; l++)
+                for (var l = 1; l < numberOfLayer; l++)
                 {
                     for (var n = 0; n < layer[l]; n++)
                     {
@@ -142,11 +146,11 @@ namespace MLPProgram.Networks
                         for (var w = 0; w < layer[l - 1]; w++)
                             sum += output[l - 1][w] * weights[l][n][w];
                         sum += weights[l][n][layer[l - 1]];
-                        if (l == numLayers - 1 && !classification)
+                        if (l == numberOfLayer - 1 && !classification)
                             output[l][n] = sum;
                         else
                         //output[l][n] = GradientLearning.TransferFunction(, sum); //todo change transfer function
-                        if (l == numLayers - 1)
+                        if (l == numberOfLayer - 1)
                             error += Math.Pow(Math.Abs(output[l][n] - DataSet[v][layer[0] + n]), errorExponent);
                     }
                 }

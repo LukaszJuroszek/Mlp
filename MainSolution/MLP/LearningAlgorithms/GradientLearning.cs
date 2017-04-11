@@ -8,12 +8,10 @@ namespace MLPProgram.LearningAlgorithms
 {
     public struct GradientLearning
     {
-        [GpuParam]
-        public double _etaPlus, _etaMinus, _minDelta, _maxDelta, _errorExponent;
-        [GpuParam]
-        public MLP _network;
-        [GpuParam]
-        public BaseDataHolder _baseData;
+
+        [GpuParam] public double _etaPlus, _etaMinus, _minDelta, _maxDelta, _errorExponent;
+        [GpuParam] public MLP _network;
+        [GpuParam] public BaseDataHolder _baseData;
         public GradientLearning(MLP network, BaseDataHolder baseData)
         {
             _etaPlus = 1.2;
@@ -39,11 +37,11 @@ namespace MLPProgram.LearningAlgorithms
                     var curentRowToOutput = _baseData._trainingDataSet[row].Take(_network.output[0].Length).ToArray();
                     ForwardPass(_network, _baseData, curentRowToOutput);
                     for (var l = 0; l < _baseData._numberOfOutput; l++)
-                        _network.signalError[_network.numLayers - 1][l] = CalculateSignalErrors(row, l);
-                    for (var l = _network.numLayers - 2; l > 0; l--)
+                        _network.signalError[_network.numberOfLayer - 1][l] = CalculateSignalErrors(row, l);
+                    for (var l = _network.numberOfLayer - 2; l > 0; l--)
                         for (var n = 0; n < _network.layer[l]; n++)
                             _network.signalError[l][n] = CalculateDerivativeForHiddenLayer(l, n) * SumSignalErrorForHiddenLayer(l, n);
-                    for (var l = _network.numLayers - 1; l > 0; l--)
+                    for (var l = _network.numberOfLayer - 1; l > 0; l--)
                         for (var n = 0; n < _network.layer[l]; n++)
                             Bias(learnRate, l, n);
                 }
@@ -68,11 +66,10 @@ namespace MLPProgram.LearningAlgorithms
                     ForwardPass(_network, _baseData, curentRowToOutput);
                     for (var l = 0; l < _baseData._numberOfOutput; l++)
                     {
-                        _network.signalError[_network.numLayers - 1][l] = CalculateSignalErrorsForOutputLayer(
-                            _baseData._trainingDataSet[row][_baseData._numberOfInput + l] - _network.output[_network.numLayers - 1][l], _network.output[_network.numLayers - 1][l], _errorExponent, _network.classification);
-
+                        _network.signalError[_network.numberOfLayer - 1][l] = CalculateSignalErrorsForOutputLayer(
+                            _baseData._trainingDataSet[row][_baseData._numberOfInput + l] - _network.output[_network.numberOfLayer - 1][l], _network.output[_network.numberOfLayer - 1][l], _errorExponent, _network.classification);
                     }
-                    for (var l = _network.numLayers - 2; l > 0; l--)
+                    for (var l = _network.numberOfLayer - 2; l > 0; l--)
                     {
                         for (var n = 0; n < _network.layer[l]; n++)
                         {
@@ -80,13 +77,14 @@ namespace MLPProgram.LearningAlgorithms
                                 * SumSignalErrorForHiddenLayer(_network.layer[l + 1], _network.signalError[l + 1], _network.weights[l + 1], n);
                         }
                     }
-
-                    for (var l = _network.numLayers - 1; l > 0; l--)
+                    for (var l = _network.numberOfLayer - 1; l > 0; l--)
                     {
                         for (var n = 0; n < _network.layer[l]; n++)
                         {
-                            Bias(learnRate, l, n);
-                        }
+                            _network.weightDiff[l][n][_network.layer[l - 1]] += learnRate * _network.signalError[l][n];
+                            for (var w = 0; w < _network.layer[l - 1]; w++)
+                                _network.weightDiff[l][n][w] += learnRate * _network.signalError[l][n] * _network.output[l - 1][w];
+                        } 
                     }
                 }
                 UpdateWeightsRprop(learnRate, momentum, _etaPlus, _etaMinus, _minDelta, _maxDelta);
@@ -117,7 +115,7 @@ namespace MLPProgram.LearningAlgorithms
         }
         private double CalculateSignalErrors(int v, int n)
         {
-            var error = _baseData._trainingDataSet[v][_baseData._numberOfInput + n] - _network.output[_network.numLayers - 1][n];
+            var error = _baseData._trainingDataSet[v][_baseData._numberOfInput + n] - _network.output[_network.numberOfLayer - 1][n];
             error = Math.Sign(error) * Math.Pow(Math.Abs(error), _errorExponent);
             var derivative = CalculateDerivativeForSignalErrorsInOutputLayer(n);
             return error * derivative;
@@ -156,7 +154,7 @@ namespace MLPProgram.LearningAlgorithms
         {
             double derivative;
             if (_network.classification)
-                derivative = DerivativeFunction(_network.output[_network.numLayers - 1][l]);
+                derivative = DerivativeFunction(_network.output[_network.numberOfLayer - 1][l]);
             else
                 derivative = 1.0;
             return derivative;
@@ -167,7 +165,7 @@ namespace MLPProgram.LearningAlgorithms
         }
         private void CreateWeightZeroAndAsingDeltaValue(double deltaValue)
         {
-            for (var l = 1; l < _network.numLayers; l++)
+            for (var l = 1; l < _network.numberOfLayer; l++)
                 for (var n = 0; n < _network.layer[l]; n++)
                 {
                     for (var w = 0; w <= _network.layer[l - 1]; w++)
@@ -179,7 +177,7 @@ namespace MLPProgram.LearningAlgorithms
         }
         private void MakeGradientZero()
         {
-            for (var l = 1; l < _network.numLayers; l++)
+            for (var l = 1; l < _network.numberOfLayer; l++)
                 for (var n = 0; n < _network.layer[l]; n++)
                     for (var w = 0; w <= _network.layer[l - 1]; w++)
                         _network.weightDiff[l][n][w] = 0;
@@ -193,7 +191,7 @@ namespace MLPProgram.LearningAlgorithms
            double maxDelta,
            double inputWeightRegularizationCoef = -1)
         {
-            for (var l = _network.numLayers - 1; l > 0; l--)
+            for (var l = _network.numberOfLayer - 1; l > 0; l--)
                 for (var n = 0; n < _network.layer[l]; n++)
                     for (var w = 0; w <= _network.layer[l - 1]; w++)
                     {
@@ -230,7 +228,7 @@ namespace MLPProgram.LearningAlgorithms
           double maxDelta,
           double inputWeightRegularizationCoef = -1)
         {
-            for (var l = _network.numLayers - 1; l > 0; l--)
+            for (var l = _network.numberOfLayer - 1; l > 0; l--)
             {
                 for (var n = 0; n < _network.layer[l]; n++)
                 {
