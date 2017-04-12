@@ -8,7 +8,6 @@ namespace MLPProgram.LearningAlgorithms
 {
     public struct GradientLearning
     {
-
         [GpuParam] public double _etaPlus, _etaMinus, _minDelta, _maxDelta, _errorExponent;
         [GpuParam] public MLP _network;
         [GpuParam] public BaseDataHolder _baseData;
