@@ -1,5 +1,4 @@
 ﻿using Alea;
-using Alea.CSharp;
 using Alea.Parallel;
 using MLPProgram.Networks;
 using System;
