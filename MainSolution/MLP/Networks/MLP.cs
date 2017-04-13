@@ -48,19 +48,7 @@ namespace MLPProgram.Networks
             output[0] = new double[layer[0]];
             prevWeightDiff = new double[numbersOfLayers][][];
             var rnd = new Random();
-            InitMultiDimArray(layer);
-            var dw0 = 0.20;
-            for (var l = 1; l < numbersOfLayers; l++)
-                for (var n = 0; n < layer[l]; n++)
-                    for (var w = 0; w < layer[l - 1] + 1; w++)
-                    {
-                        weights[l][n][w] = 0.4 * (0.5 - rnd.NextDouble());//create random weigths 
-                        delta[l][n][w] = dw0; //for Rprop
-                    }
-        }
-        private void InitMultiDimArray(int[] layer)
-        {
-            for (var l = 1; l < numbersOfLayers; l++)
+            for (int l = 1; l < numbersOfLayers; l++)
             {
                 weights[l] = new double[layer[l]][];
                 weightDiff[l] = new double[layer[l]][];
@@ -68,7 +56,7 @@ namespace MLPProgram.Networks
                 delta[l] = new double[layer[l]][];
                 signalError[l] = new double[layer[l]];
                 output[l] = new double[layer[l]];
-                for (var n = 0; n < layer[l]; n++)
+                for (int n = 0; n < layer[l]; n++)
                 {
                     weights[l][n] = new double[layer[l - 1] + 1];
                     weightDiff[l][n] = new double[layer[l - 1] + 1];
@@ -77,6 +65,14 @@ namespace MLPProgram.Networks
                     numWeights++;
                 }
             }
+            double dw0 = 0.20;
+            for (int l = 1; l < numbersOfLayers; l++)
+                for (int n = 0; n < layer[l]; n++)
+                    for (int w = 0; w < layer[l - 1] + 1; w++)
+                    {
+                        weights[l][n][w] = 0.4 * (0.5 - rnd.NextDouble());//create random weigths 
+                        delta[l][n][w] = dw0; //for Rprop
+                    }
         }
         public double Accuracy(int lok = 0)
         {

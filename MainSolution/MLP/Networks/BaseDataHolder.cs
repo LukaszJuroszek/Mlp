@@ -46,10 +46,39 @@ namespace MLPProgram.Networks
             _layer = file.GetLayers();
             _numberOfInput = file.NumberOfInput;
             _numberOfOutput = file.NumberOfOutput;
-            _numberOFVectors = file.NumberOFVectors;
+            _numberOFVectors = file.NumberOfInputRow;
             _classification = file.Classification;
             _isSigmoidFunction = GradientLearning.IsSigmoidTransferFunction(file.TransferFunction);
         }
-        
+    }
+    public struct DataHolder
+    {
+        public double[,] _trainingDataSet;
+        public int _numberOfInput;
+        public int _numberOfOutput;
+        public int _numberOFVectors;
+        public bool _classification;
+        public bool _isSigmoidFunction;
+        public int[] _layer;
+        public DataHolder(double[,] data, int numberOfInput, int numberOfOutput, int numberOFVectors, Func<double, double> transferFunction, bool classification, int[] layer)
+        {
+            _trainingDataSet = data;
+            _layer = layer;
+            _numberOfInput = numberOfInput;
+            _numberOfOutput = numberOfOutput;
+            _numberOFVectors = numberOFVectors;
+            _classification = classification;
+            _isSigmoidFunction = GradientLearning.IsSigmoidTransferFunction(transferFunction);
+        }
+        public DataHolder(FileParser file)
+        {
+            _trainingDataSet = file.Data;
+            _layer = file.GetLayers();
+            _numberOfInput = file.NumberOfInput;
+            _numberOfOutput = file.NumberOfOutput;
+            _numberOFVectors = file.NumberOfInputRow;
+            _classification = file.Classification;
+            _isSigmoidFunction = GradientLearning.IsSigmoidTransferFunction(file.TransferFunction);
+        }
     }
 }

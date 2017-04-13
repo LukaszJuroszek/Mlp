@@ -9,7 +9,7 @@ namespace MLPProgram
         public string HeaderLine { get; set; }
         public int NumberOfInput { get; set; }
         public int NumberOfOutput { get; set; }
-        public int NumberOFVectors { get; set; }
+        public int NumberOfInputRow { get; set; }
         public int NumberOfAttributes { get; set; }
         public string[] Headers { get; set; }
         public bool Classification { get; set; }
@@ -19,16 +19,16 @@ namespace MLPProgram
         {
             TransferFunction = transferFunction;
             GetHedersAndCountNoumbersOfVectors(fileName);
-            double[][] result = new double[NumberOFVectors][];
-            for (var w = 0; w < NumberOFVectors; w++)
+            var result = new double[NumberOfInputRow][];
+            for (int w = 0; w < NumberOfInputRow; w++)
             {
                 result[w] = new double[NumberOfAttributes + 2];
                 //the two additional columns are: outlier coefficiant and vector number
             }
             using (var sr = new StreamReader(fileName))
             {
-                var line = sr.ReadLine();
-                var v = 0;
+                string line = sr.ReadLine(); // that will skip header line 
+                int v = 0;
                 while ((line = sr.ReadLine()) != null)
                 {
                     if (line.Trim().Length > 2)
@@ -61,19 +61,19 @@ namespace MLPProgram
             if (HeaderLine.ToLower().EndsWith("class") && multipleClassColumns)
             {
                 Classification = true;
-                var numCol = result[1].Length - 1 + cl.Count;
-                double[][] dataSet = new double[result.Length][];
-                for (var i = 0; i < result.Length; i++)
+                int numCol = result[1].Length - 1 + cl.Count;
+                var dataSet = new double[result.Length][];
+                for (int i = 0; i < result.Length; i++)
                     dataSet[i] = new double[numCol];
                 for (var v = 0; v < result.Length; v++)
                 {
-                    for (var a = 0; a < NumberOfInput; a++)
+                    for (int a = 0; a < NumberOfInput; a++)
                         dataSet[v][a] = result[v][a];
-                    for (var a = result[1].Length - 2; a < result[1].Length; a++) //outlier and vector columns
+                    for (int a = result[1].Length - 2; a < result[1].Length; a++) //outlier and vector columns
                         dataSet[v][a] = result[v][a];
-                    var k = (int)result[v][NumberOfInput]; //class column
-                    var m = 0;
-                    for (var a = NumberOfInput; a < numCol - 2; a++)
+                    int k = (int)result[v][NumberOfInput]; //class column
+                    int m = 0;
+                    for (int a = NumberOfInput; a < numCol - 2; a++)
                     {
                         m++;
                         if (m == k)
@@ -101,13 +101,12 @@ namespace MLPProgram
             using (var sr = new StreamReader(fileName))
             {
                 HeaderLine = sr.ReadLine();
-                Headers = HeaderLine.Split(
-                    new string[] { " ", ";" }, StringSplitOptions.RemoveEmptyEntries);
+                Headers = HeaderLine.Split(new string[] { " ", ";" }, StringSplitOptions.RemoveEmptyEntries);
                 NumberOfAttributes = Headers.Length;
                 string line;
                 while ((line = sr.ReadLine()) != null)
                     if (line.Trim().Length > 4)
-                        NumberOFVectors++;
+                        NumberOfInputRow++;
             }
         }
         public int GetNumberOfHidenLayer()
