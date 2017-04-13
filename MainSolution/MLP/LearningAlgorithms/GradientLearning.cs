@@ -21,7 +21,6 @@ namespace MLPProgram.LearningAlgorithms
             _errorExponent = 2.0;
             _network = network;
         }
-        [GpuManaged]
         public MLP Train(int numberOfEpochs = 30, int batchSize = 30, double learnRate = 0.05, double momentum = 0.5)
         {
             //if (batchSize > _network.baseData._numberOFVectors || nameof(UpdateWeightsRprop).Contains("Rprop"))
@@ -37,19 +36,26 @@ namespace MLPProgram.LearningAlgorithms
             _network.prevWeightDiff[0] = new double[][] { new double[] { 0.0 } };
             _network.weights[0] = new double[][] { new double[] { 0.0 } };
             _network.signalError[0] = new double[] { 0.0 };
-            var trainingDataSet = gpu.Allocate(_network.baseData._trainingDataSet);
             var trainingDataSetLenth = _network.baseData._trainingDataSet.Length;
             var trainingDataSetLenthAt0 = _network.baseData._trainingDataSet[0].Length;
-            var output = gpu.Allocate(_network.output);
-            var signalError = gpu.Allocate(_network.signalError);
-            var prevWeightDiff = gpu.Allocate(_network.prevWeightDiff);
-            var weights = gpu.Allocate(_network.weights);
             var errorExponent = _errorExponent;
             var layer = _network.layer;
             CreateWeightZeroAndAsingDeltaValue(_network.numbersOfLayers, _network.layer, _network.weightDiff, _network.delta, 0.1);
             var numberOfLayers = _network.numbersOfLayers;
             var delta = gpu.Allocate(_network.delta);
             var weightDiff = gpu.Allocate(_network.weightDiff);
+            var weights = gpu.Allocate(_network.weights);
+            var prevWeightDiff = gpu.Allocate(_network.prevWeightDiff);
+            var signalError = gpu.Allocate(_network.signalError);
+            var output = gpu.Allocate(_network.output);
+            var trainingDataSet = gpu.Allocate(_network.baseData._trainingDataSet);
+            Gpu.Copy(_network.delta, delta);
+            Gpu.Copy(_network.weightDiff, weightDiff);
+            Gpu.Copy(_network.weights, weights);
+            Gpu.Copy(_network.prevWeightDiff, prevWeightDiff);
+            Gpu.Copy(_network.output, output);
+            Gpu.Copy(_network.signalError, signalError);
+            Gpu.Copy(_network.baseData._trainingDataSet, trainingDataSet);
             var etaPlus = _etaPlus;
             var etaMinus = _etaMinus;
             var minDelta = _minDelta;
@@ -62,7 +68,7 @@ namespace MLPProgram.LearningAlgorithms
             {
                 //for (var epoch = 0; epoch < numberOfEpochs; epoch++)
                 //{
-                gpu.For(0, numberOfEpochs, epoch =>
+                gpu.For(0, 2, epoch =>
                 {
                     //MakeGradientZero(numberOfLayers, layer, weightDiff);
                     for (var v = 0; v < batchSize; v++)
@@ -215,6 +221,7 @@ namespace MLPProgram.LearningAlgorithms
             }
             finally
             {
+                Gpu.Copy(_network.delta,delta);
                 //_network.delta = Gpu.CopyToHost(delta);
                 //_network.prevWeightDiff = Gpu.CopyToHost(prevWeightDiff);
                 //_network.weightDiff = Gpu.CopyToHost(weightDiff);
