@@ -7,34 +7,35 @@ using System.Linq;
 
 namespace AleaClasTest
 {
-    public class Program
+     struct Program
     {
-        public SampleStruct _field;
-        public Program(SampleStruct sampleStruct)
-        {
-            _field = sampleStruct;
-        }
+        [GpuParam] public SampleStruct _field;
         static void Main(string[] args)
         {
-            int size = 10;
+            int size = 2000;
             var arg = Enumerable.Range(1, size).ToArray();
             var arg2 = Enumerable.Range(1, size).ToArray();
-            var str = new Program(new SampleStruct(size));
+            var str = new Program { _field = new SampleStruct(size) };
             var gpu = Gpu.Default;
+            var st = new Stopwatch();
+            st.Start();
             var array1 = gpu.Allocate(str._field.arg1);
             var array2 = gpu.Allocate(str._field.arg2);
-            var result = gpu.Allocate(new double[size]);
+            var result = gpu.Allocate(new double[size,size]);
+            
+            st.Stop();
+            Console.WriteLine(st.Elapsed);
+            st.Reset();
+            st.Start();
+            var test = new double[size, size];
             gpu.For(0, size, x =>
             {
-                result[x] = array1[x][x][x] + array2[x][x];
-                Console.WriteLine(result[x]);
+                result[x,x] = array1[x,x] + array2[x,x];
+                Console.WriteLine(result[x,x]);
             });
-            var test= new double[size];
+            st.Stop();
+            Console.WriteLine(st.Elapsed);
             Gpu.Copy(result, test);
-            foreach (double item in test)
-            {
-                Console.WriteLine(item);
-            }
         }
         public static void ShowArray(double[][] array)
         {
