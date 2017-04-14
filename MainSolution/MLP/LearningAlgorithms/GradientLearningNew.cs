@@ -1,14 +1,17 @@
-﻿using Alea;
-using MLPProgram.Networks;
+﻿using MLPProgram.Networks;
 using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 
 namespace MLPProgram.LearningAlgorithms
 {
-    public struct GradientLearning
+    public struct GradientLearningNew
     {
         public double _etaPlus, _etaMinus, _minDelta, _maxDelta, _errorExponent;
-        public MLP _network;
-        public GradientLearning(MLP network)
+        public MLPNew _network;
+        public GradientLearningNew(MLPNew network)
         {
             _etaPlus = 1.2;
             _etaMinus = 0.5;
@@ -17,10 +20,10 @@ namespace MLPProgram.LearningAlgorithms
             _errorExponent = 2.0;
             _network = network;
         }
-        public void Train( int numberOfEpochs = 30, int batchSize = 30, double learnRate = 0.05, double momentum = 0.5)
+        public void Train(int numberOfEpochs = 30, int batchSize = 30, double learnRate = 0.05, double momentum = 0.5)
         {
             //if (batchSize > _network.baseData._numberOFVectors || nameof(UpdateWeightsRprop).Contains("Rprop"))
-            batchSize = _network.baseData._numberOFVectors;
+            batchSize = _network.baseData._numberOfInputRow;
             CreateWeightZeroAndAsingDeltaValue(0.1);
             for (int epoch = 0; epoch < numberOfEpochs; epoch++)
             {
@@ -41,10 +44,6 @@ namespace MLPProgram.LearningAlgorithms
                 // zero-out gradients
                 MakeGradientZero();
             }
-        }
-        public static int Sign(double number)
-        {
-            return number > 0 ? 1 : number < 0 ? -1 : 0;
         }
         private double CalculateSignalErrors(int v, int n)
         {
@@ -170,19 +169,10 @@ namespace MLPProgram.LearningAlgorithms
             result = isSigmoidFunction ? SigmoidDerivative(x) : HyperbolicDerivative(x);
             return result;
         }
-        public static double TransferFunction(MLPNew _network, double x)
+        public static double TransferFunction(MLPNew network, double x)
         {
             double result = 0;
-            if (_network.baseData._isSigmoidFunction)
-                result = SigmoidTransferFunction(x);
-            else
-                result = HyperbolicTransferFunction(x);
-            return result;
-        }
-        public static double TransferFunction(MLP _network, double x)
-        {
-            double result = 0;
-            if (_network.baseData._isSigmoidFunction)
+            if (network.baseData._isSigmoidFunction)
                 result = SigmoidTransferFunction(x);
             else
                 result = HyperbolicTransferFunction(x);
@@ -199,7 +189,7 @@ namespace MLPProgram.LearningAlgorithms
         }
         public static double HyperbolicTransferFunction(double x)
         {
-            return DeviceFunction.Tanh(x);
+            return Math.Tanh(x);
         }
         public static double HyperbolicDerivative(double x)
         {
@@ -207,7 +197,7 @@ namespace MLPProgram.LearningAlgorithms
         }
         public static double SigmoidTransferFunction(double x)
         {
-            return 1.0 / (1.0 + DeviceFunction.Exp(-x));
+            return 1.0 / (1.0 + Math.Exp(-x));
         }
         public static double SigmoidDerivative(double x)
         {

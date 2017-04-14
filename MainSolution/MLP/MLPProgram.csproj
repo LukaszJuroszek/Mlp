@@ -56,8 +56,8 @@
   <ItemGroup>
     <Compile Include="FIleParserNew.cs" />
     <Compile Include="LearningAlgorithms\GradientLearning.cs" />
+    <Compile Include="LearningAlgorithms\GradientLearningNew.cs" />
     <Compile Include="Networks\BaseDataHolder.cs" />
-    <Compile Include="Networks\INetwork.cs" />
     <Compile Include="Networks\MLP.cs" />
     <Compile Include="Networks\MLPNew.cs" />
     <Compile Include="Program.cs" />

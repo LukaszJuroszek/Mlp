@@ -19,6 +19,7 @@ namespace MLPProgram
             var network = new MLP(data);
             var networkNew = new MLPNew(dataNew);
             var learningAlgorithm = new GradientLearning(network);
+            var learningAlgorithmNew = new GradientLearningNew(networkNew);
             st.Start();
             for (var i = 0; i < 1; i++)
             {
@@ -26,6 +27,7 @@ namespace MLPProgram
                 st.Reset();
                 st.Start();
                 learningAlgorithm.Train(numberOfEpochs: 50, batchSize: 30, learnRate: 0.05, momentum: 0.5);
+                learningAlgorithmNew.Train(numberOfEpochs: 50, batchSize: 30, learnRate: 0.05, momentum: 0.5);
                 double testAccuracy = network.Accuracy();
                 Console.WriteLine(testAccuracy);
                 st.Stop();
@@ -36,12 +38,12 @@ namespace MLPProgram
         public static void ForwardPass(MLP network, int indexOftrainingDataSet, int lok = -1)
         {
             network.output[0] = network.baseData._trainingDataSet[indexOftrainingDataSet].Take(network.output[0].Length).ToArray();
-            for (var l = 1; l < network.output.Length; l++)
+            for (int l = 1; l < network.output.Length; l++)
             {
-                for (var n = 0; n < network.output[l].Length; n++)
+                for (int n = 0; n < network.output[l].Length; n++)
                 {
                     double sum = 0;
-                    for (var w = 0; w < network.output[l - 1].Length; w++)
+                    for (int w = 0; w < network.output[l - 1].Length; w++)
                     {
                         sum += network.output[l - 1][w] * network.weights[l][n][w];
                     }
@@ -53,12 +55,12 @@ namespace MLPProgram
         public static void ForwardPass(double[][] output, double[][] trainingDataSet, double[][][] weights, bool classification, bool isSigmoidFunction, int indexOftrainingDataSet, int lok = -1)
         {
             output[0] = trainingDataSet[indexOftrainingDataSet].Take(output[0].Length).ToArray();
-            for (var l = 1; l < output.Length; l++)
+            for (int l = 1; l < output.Length; l++)
             {
-                for (var n = 0; n < output[l].Length; n++)
+                for (int n = 0; n < output[l].Length; n++)
                 {
                     double sum = 0;
-                    for (var w = 0; w < output[l - 1].Length; w++)
+                    for (int w = 0; w < output[l - 1].Length; w++)
                     {
                         sum += output[l - 1][w] * weights[l][n][w];
                     }
@@ -67,5 +69,34 @@ namespace MLPProgram
                 }
             }
         }
+        public static void ForwardPass(MLPNew network, int indexOftrainingDataSet, int lok = -1)
+        {
+            for (int i = 0; i < network.networkLayers[0]; i++)
+            {
+                network.output[NetworkLayer.Input][i] = network.baseData._trainingDataSet[indexOftrainingDataSet, i];
+            }
+
+            for (int l = 1; l < network.numbersOfLayers; l++)
+            {
+                var outputItem = network.output.ElementAt(l);
+                var outputItemPrev = network.output.ElementAt(l - 1);
+                var weightsItem = network.weights.ElementAt(l);
+                if (outputItem.Key == NetworkLayer.Output || outputItem.Key == NetworkLayer.Hidden)
+                {
+                    for (int n = 0; n < outputItem.Value.GetLength(0); n++)
+                    {
+                        double sum = 0;
+                        for (int w = 0; w < outputItemPrev.Value.GetLength(0); w++)
+                        {
+                            sum += outputItemPrev.Value[w] * weightsItem.Value[n, w];
+                        }
+                        sum += weightsItem.Value[n, outputItemPrev.Value.Length]; //bias
+                        outputItem.Value[n] = (l == outputItem.Value.Length - 1 && !network.classification) ? sum : GradientLearning.TransferFunction(network, sum);
+
+                    }
+                }
+            }
+        }
     }
+
 }

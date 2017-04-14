@@ -21,7 +21,7 @@ namespace AleaClasTest
             st.Start();
             var array1 = gpu.Allocate(str._field.arg1);
             var array2 = gpu.Allocate(str._field.arg2);
-            var result = gpu.Allocate(new double[size,size]);
+            var result =/* gpu.Allocate(*/new double[size,size]/*)*/;
             
             st.Stop();
             Console.WriteLine(st.Elapsed);
