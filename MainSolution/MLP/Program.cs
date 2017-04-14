@@ -81,19 +81,16 @@ namespace MLPProgram
                 var outputItem = network.output.ElementAt(l);
                 var outputItemPrev = network.output.ElementAt(l - 1);
                 var weightsItem = network.weights.ElementAt(l);
-                if (outputItem.Key == NetworkLayer.Output || outputItem.Key == NetworkLayer.Hidden)
+                for (int n = 0; n < outputItem.Value.GetLength(0); n++)
                 {
-                    for (int n = 0; n < outputItem.Value.GetLength(0); n++)
+                    double sum = 0;
+                    for (int w = 0; w < outputItemPrev.Value.GetLength(0); w++)
                     {
-                        double sum = 0;
-                        for (int w = 0; w < outputItemPrev.Value.GetLength(0); w++)
-                        {
-                            sum += outputItemPrev.Value[w] * weightsItem.Value[n, w];
-                        }
-                        sum += weightsItem.Value[n, outputItemPrev.Value.Length]; //bias
-                        outputItem.Value[n] = (l == outputItem.Value.Length - 1 && !network.classification) ? sum : GradientLearning.TransferFunction(network, sum);
-
+                        sum += outputItemPrev.Value[w] * weightsItem.Value[n, w];
                     }
+                    sum += weightsItem.Value[n, outputItemPrev.Value.Length]; //bias
+                    outputItem.Value[n] = (l == outputItem.Value.Length - 1 && !network.classification) ? sum : GradientLearning.TransferFunction(network, sum);
+
                 }
             }
         }
