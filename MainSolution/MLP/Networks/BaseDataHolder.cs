@@ -70,7 +70,7 @@ namespace MLPProgram.Networks
             _classification = classification;
             _isSigmoidFunction = GradientLearning.IsSigmoidTransferFunction(transferFunction);
         }
-        public DataHolder(FileParser file)
+        public DataHolder(FIleParserNew file)
         {
             _trainingDataSet = file.Data;
             _layer = file.GetLayers();

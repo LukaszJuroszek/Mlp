@@ -8,18 +8,12 @@ namespace MLPProgram.Networks
 {
     public struct MLP
     {
-        [GpuParam]
         public double[][][] weightDiff, prevWeightDiff, delta, weights;
         public double[][] signalError, output;
-        [GpuParam]
         public int[] layer;
-        [GpuParam]
         public int numbersOfLayers;
-        [GpuParam]
         public bool classification;
-        [GpuParam]
         public int numWeights;
-        [GpuParam]
         public BaseDataHolder baseData;
         public override string ToString()
         {

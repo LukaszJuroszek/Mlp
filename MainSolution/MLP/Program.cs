@@ -13,7 +13,9 @@ namespace MLPProgram
             var filePath = @"..\..\Datasets\ionosphere_std_sh.txt";
             var st = new Stopwatch();
             var testDataset = new FileParser(filePath, GradientLearning.SigmoidTransferFunction);
+            var testDatasetNew = new FIleParserNew(filePath, GradientLearning.SigmoidTransferFunction);
             var data = new BaseDataHolder(testDataset);
+            var dataNew = new DataHolder(testDatasetNew);
             var network = new MLP(data);
             var learningAlgorithm = new GradientLearning(network);
             st.Start();
