@@ -1,9 +1,6 @@
-﻿using MLPProgram.Networks;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace MLPProgram.Networks
 {
@@ -15,78 +12,74 @@ namespace MLPProgram.Networks
     }
     public struct MLPNew
     {
-        public double[,,] weightDiff, prevWeightDiff, delta, weights;
-        public Dictionary<NetworkLayer, double[,]> _weightDiff, _prevWeightDiff, _delta, _weights;
-        public double[,] signalError, output;
+        public Dictionary<NetworkLayer, double[,]> weightDiff, prevWeightDiff, delta, weights;
+        public Dictionary<NetworkLayer, double[]> signalError, output;
         public int[] networkLayers;
         public int numbersOfLayers;
         public bool classification;
-        public int numberOfWeights;
         public DataHolder baseData;
         public MLPNew(DataHolder data)
         {
+            var rnd = new Random();
             baseData = data;
             classification = data._classification;
             networkLayers = data._layer;
-            numberOfWeights = 0;
             numbersOfLayers = networkLayers.Length;
-            _weights = CreateLayers(networkLayers);
-            _weightDiff = CreateLayers(networkLayers);
-            _prevWeightDiff = CreateLayers(networkLayers);
-            _delta = CreateLayers(networkLayers);
-
+            weights = Create2DLayers(networkLayers);
+            weightDiff = Create2DLayers(networkLayers);
+            prevWeightDiff = Create2DLayers(networkLayers);
+            delta = Create2DLayers(networkLayers);
+            signalError = Create1DLayers(networkLayers);
+            output = CreateFull1DLayers(networkLayers);
+            double dw0 = 0.20;
+            for (int l = 0; l< numbersOfLayers; l++)
+            {
+                var weightsItem = weights.ElementAt(l);
+                var deltaItem = delta.ElementAt(l);
+                var itemKey = weightsItem.Key;
+                if (itemKey == NetworkLayer.Output || itemKey == NetworkLayer.Hidden)
+                {
+                var weightsItemValue = weightsItem.Value;
+                var deltaItemValue = deltaItem.Value;
+                    for (int n = 0; n < weightsItemValue.GetLength(0); n++)
+                    {
+                        for (int w = 0; w < weightsItemValue.GetLength(1); w++)
+                        {
+                            weightsItemValue[n,w]= 0.4 * (0.5 - rnd.NextDouble());
+                            deltaItemValue[n, w] = dw0;
+                        }
+                    }
+                }
+            }
         }
-
-        private static Dictionary<NetworkLayer, double[,]> CreateLayers(int[] networkLayers)
+        private static Dictionary<NetworkLayer, double[,]> Create2DLayers(int[] networkLayers)
         {
             return new Dictionary<NetworkLayer, double[,]>
             {
                 { NetworkLayer.Input, null },
-                { NetworkLayer.Hidden, new double[networkLayers[(int)NetworkLayer.Hidden], networkLayers[(int)NetworkLayer.Input]] },
-                { NetworkLayer.Output, new double[networkLayers[(int)NetworkLayer.Output], networkLayers[(int)NetworkLayer.Hidden]] }
+                { NetworkLayer.Hidden, new double[networkLayers[(int)NetworkLayer.Hidden], networkLayers[(int)NetworkLayer.Input]+1] },
+                { NetworkLayer.Output, new double[networkLayers[(int)NetworkLayer.Output], networkLayers[(int)NetworkLayer.Hidden]+1] }
             };
         }
-        public MLPNew(DataHolder data, string weightFile = "")
+        private static Dictionary<NetworkLayer, double[]> Create1DLayers(int[] networkLayers)
         {
-            baseData = data;
-            classification = data._classification;
-            networkLayers = data._layer;
-            numberOfWeights = 0;
-            numbersOfLayers = networkLayers.Length;
-            weights = new double[numbersOfLayers, networkLayers[l],];
-            weightDiff = new double[numbersOfLayers,,];
-            delta = new double[numbersOfLayers,,];
-            signalError = new double[numbersOfLayers,];
-            output = new double[numbersOfLayers,];
-            output[0] = new double[networkLayers[0]];
-            prevWeightDiff = new double[numbersOfLayers,,];
-            var rnd = new Random();
-            for (int l = 1; l < numbersOfLayers; l++)
+            return new Dictionary<NetworkLayer, double[]>
             {
-                weights[l] = new double[][];
-                weightDiff[l] = new double[networkLayers[l]][];
-                prevWeightDiff[l] = new double[networkLayers[l]][];
-                delta[l] = new double[networkLayers[l]][];
-                signalError[l] = new double[networkLayers[l]];
-                output[l] = new double[networkLayers[l]];
-                for (int n = 0; n < networkLayers[l]; n++)
-                {
-                    weights[l][n] = new double[networkLayers[l - 1] + 1];
-                    weightDiff[l][n] = new double[networkLayers[l - 1] + 1];
-                    prevWeightDiff[l][n] = new double[networkLayers[l - 1] + 1];
-                    delta[l][n] = new double[networkLayers[l - 1] + 1];
-                    numberOfWeights++;
-                }
-            }
-            //double dw0 = 0.20;
-            //for (int l = 1; l < numbersOfLayers; l++)
-            //    for (int n = 0; n < networkLayers[l]; n++)
-            //        for (int w = 0; w < networkLayers[l - 1] + 1; w++)
-            //        {
-            //            weights[l][n][w] = 0.4 * (0.5 - rnd.NextDouble());//create random weigths 
-            //            delta[l][n][w] = dw0; //for Rprop
-            //        }
+                { NetworkLayer.Input, null },
+                { NetworkLayer.Hidden, new double[networkLayers[(int)NetworkLayer.Hidden]] },
+                { NetworkLayer.Output, new double[networkLayers[(int)NetworkLayer.Output]] }
+            };
         }
+        private static Dictionary<NetworkLayer, double[]> CreateFull1DLayers(int[] networkLayers)
+        {
+            return new Dictionary<NetworkLayer, double[]>
+            {
+                { NetworkLayer.Input, new double[networkLayers[(int)NetworkLayer.Input]] },
+                { NetworkLayer.Hidden, new double[networkLayers[(int)NetworkLayer.Hidden]] },
+                { NetworkLayer.Output, new double[networkLayers[(int)NetworkLayer.Output]] }
+            };
+        }
+
         //public double Accuracy(int lok = 0)
         //{
         //    double maxValue = -1;

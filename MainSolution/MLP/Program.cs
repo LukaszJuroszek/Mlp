@@ -10,13 +10,14 @@ namespace MLPProgram
     {
         static void Main(string[] args)
         {
-            var filePath = @"..\..\Datasets\ionosphere_std_sh.txt";
+            string filePath = @"..\..\Datasets\ionosphere_std_sh.txt";
             var st = new Stopwatch();
             var testDataset = new FileParser(filePath, GradientLearning.SigmoidTransferFunction);
             var testDatasetNew = new FIleParserNew(filePath, GradientLearning.SigmoidTransferFunction);
             var data = new BaseDataHolder(testDataset);
             var dataNew = new DataHolder(testDatasetNew);
             var network = new MLP(data);
+            var networkNew = new MLPNew(dataNew);
             var learningAlgorithm = new GradientLearning(network);
             st.Start();
             for (var i = 0; i < 1; i++)
