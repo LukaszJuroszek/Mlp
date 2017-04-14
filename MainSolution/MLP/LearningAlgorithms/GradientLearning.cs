@@ -1,16 +1,12 @@
 ﻿using Alea;
-using Alea.CSharp;
 using MLPProgram.Networks;
 using System;
-using System.Linq;
 
 namespace MLPProgram.LearningAlgorithms
 {
     public struct GradientLearning
     {
-        [GpuParam]
         public double _etaPlus, _etaMinus, _minDelta, _maxDelta, _errorExponent;
-        [GpuParam]
         public MLP _network;
         public GradientLearning(MLP network)
         {
@@ -20,30 +16,25 @@ namespace MLPProgram.LearningAlgorithms
             _maxDelta = 10;
             _errorExponent = 2.0;
             _network = network;
-            Settings.Instance.Memory.AllowNonBlittableMemoryTransfer = true;
         }
-        [GpuManaged]
         public void Train( int numberOfEpochs = 30, int batchSize = 30, double learnRate = 0.05, double momentum = 0.5)
         {
             //if (batchSize > _network.baseData._numberOFVectors || nameof(UpdateWeightsRprop).Contains("Rprop"))
             batchSize = _network.baseData._numberOFVectors;
-            var gpu = Gpu.Default;
-            var lp = new LaunchParam(16, 256);
-            var network = gpu.Allocate<MLP>(this);
             CreateWeightZeroAndAsingDeltaValue(0.1);
-            for (var epoch = 0; epoch < numberOfEpochs; epoch++)
+            for (int epoch = 0; epoch < numberOfEpochs; epoch++)
             {
                 MakeGradientZero();
-                for (var v = 0; v < batchSize; v++)
+                for (int v = 0; v < batchSize; v++)
                 {
                     Program.ForwardPass(_network, v);
-                    for (var l = 0; l < _network.baseData._numberOfOutput; l++)
-                        _network.signalError[_network.numLayers - 1][l] = CalculateSignalErrors(v, l);
-                    for (var l = _network.numLayers - 2; l > 0; l--)
-                        for (var n = 0; n < _network.layer[l]; n++)
+                    for (int l = 0; l < _network.baseData._numberOfOutput; l++)
+                        _network.signalError[_network.numbersOfLayers - 1][l] = CalculateSignalErrors(v, l);
+                    for (int l = _network.numbersOfLayers - 2; l > 0; l--)
+                        for (int n = 0; n < _network.layer[l]; n++)
                             _network.signalError[l][n] = CalculateDerivativeForHiddenLayer(l, n) * SumSignalErrorForHiddenLayer(l, n);
-                    for (var l = _network.numLayers - 1; l > 0; l--)
-                        for (var n = 0; n < _network.layer[l]; n++)
+                    for (int l = _network.numbersOfLayers - 1; l > 0; l--)
+                        for (int n = 0; n < _network.layer[l]; n++)
                             Bias(learnRate, l, n);
                 }
                 UpdateWeightsRprop(learnRate, momentum, _etaPlus, _etaMinus, _minDelta, _maxDelta);
@@ -57,22 +48,22 @@ namespace MLPProgram.LearningAlgorithms
         }
         private double CalculateSignalErrors(int v, int n)
         {
-            var error = _network.baseData._trainingDataSet[v][_network.baseData._numberOfInput + n] - _network.output[_network.numLayers - 1][n];
+            double error = _network.baseData._trainingDataSet[v][_network.baseData._numberOfInput + n] - _network.output[_network.numbersOfLayers - 1][n];
             error = Math.Sign(error) * Math.Pow(Math.Abs(error), _errorExponent);
-            var derivative = CalculateDerivativeForSignalErrorsInOutputLayer(n);
+            double derivative = CalculateDerivativeForSignalErrorsInOutputLayer(n);
             return error * derivative;
         }
 
         private void Bias(double learnRate, int l, int n)
         {
             _network.weightDiff[l][n][_network.layer[l - 1]] += learnRate * _network.signalError[l][n];
-            for (var w = 0; w < _network.layer[l - 1]; w++)
+            for (int w = 0; w < _network.layer[l - 1]; w++)
                 _network.weightDiff[l][n][w] += learnRate * _network.signalError[l][n] * _network.output[l - 1][w];
         }
         private double SumSignalErrorForHiddenLayer(int layer, int hiddenLayerSecondDim)
         {
-            var sum = 0.0;
-            for (var w = 0; w < _network.layer[layer + 1]; w++)
+            double sum = 0.0;
+            for (int w = 0; w < _network.layer[layer + 1]; w++)
                 sum += _network.signalError[layer + 1][w] * _network.weights[layer + 1][w][hiddenLayerSecondDim];
             return sum;
         }
@@ -84,17 +75,17 @@ namespace MLPProgram.LearningAlgorithms
         {
             double derivative;
             if (_network.classification)
-                derivative = DerivativeFunction(_network.output[_network.numLayers - 1][outputSecondDim]);
+                derivative = DerivativeFunction(_network.output[_network.numbersOfLayers - 1][outputSecondDim]);
             else
                 derivative = 1.0;
             return derivative;
         }
         private void CreateWeightZeroAndAsingDeltaValue(double deltaValue)
         {
-            for (var l = 1; l < _network.numLayers; l++)
-                for (var n = 0; n < _network.layer[l]; n++)
+            for (int l = 1; l < _network.numbersOfLayers; l++)
+                for (int n = 0; n < _network.layer[l]; n++)
                 {
-                    for (var w = 0; w <= _network.layer[l - 1]; w++)
+                    for (int w = 0; w <= _network.layer[l - 1]; w++)
                     {
                         _network.weightDiff[l][n][w] = 0;
                         _network.delta[l][n][w] = deltaValue;
@@ -103,23 +94,10 @@ namespace MLPProgram.LearningAlgorithms
         }
         private void MakeGradientZero()
         {
-            for (var l = 1; l < _network.numLayers; l++)
-                for (var n = 0; n < _network.layer[l]; n++)
-                    for (var w = 0; w <= _network.layer[l - 1]; w++)
+            for (int l = 1; l < _network.numbersOfLayers; l++)
+                for (int n = 0; n < _network.layer[l]; n++)
+                    for (int w = 0; w <= _network.layer[l - 1]; w++)
                         _network.weightDiff[l][n][w] = 0;
-        }
-        public static void Kernel(Func<int, double> op, double[] result, int[] arg1)
-        {
-            var start = blockIdx.x * blockDim.x + threadIdx.x;
-            var stride = gridDim.x * blockDim.x;
-            for (var i = start; i < result.Length; i += stride)
-            {
-                result[i] = op(arg1[i]);
-            }
-        }
-        public double Test(double[][] trainingDataSet, double[][] testDataSet)
-        {
-            return _network.Accuracy(out var errorsRMSE, 0);
         }
         public void UpdateWeightsRprop(
            double learnRate,
@@ -130,7 +108,7 @@ namespace MLPProgram.LearningAlgorithms
            double maxDelta,
            double inputWeightRegularizationCoef = -1)
         {
-            for (var l = _network.numLayers - 1; l > 0; l--)
+            for (var l = _network.numbersOfLayers - 1; l > 0; l--)
                 for (var n = 0; n < _network.layer[l]; n++)
                     for (var w = 0; w <= _network.layer[l - 1]; w++)
                     {
@@ -167,17 +145,30 @@ namespace MLPProgram.LearningAlgorithms
           double maxDelta,
           double inputWeightRegularizationCoef = -1)
         {
-            for (var l = _network.numLayers - 1; l > 0; l--)
+            for (int l = _network.numbersOfLayers - 1; l > 0; l--)
             {
-                for (var n = 0; n < _network.layer[l]; n++)
+                for (int n = 0; n < _network.layer[l]; n++)
                 {
-                    for (var w = 0; w <= _network.layer[l - 1]; w++)
+                    for (int w = 0; w <= _network.layer[l - 1]; w++)
                     {
                         _network.weights[l][n][w] += _network.weightDiff[l][n][w] + momentum * _network.prevWeightDiff[l][n][w];
                         _network.prevWeightDiff[l][n][w] = _network.weightDiff[l][n][w];
                     }
                 }
             }
+        }
+        public static double TransferFunction(bool isSigmoidFunction, double x)
+        {
+            double result = 0;
+            result = isSigmoidFunction ? SigmoidTransferFunction(x) : HyperbolicTransferFunction(x);
+            return result;
+        }
+
+        public static double DerivativeFunction(bool isSigmoidFunction, double x)
+        {
+            double result = 0;
+            result = isSigmoidFunction ? SigmoidDerivative(x) : HyperbolicDerivative(x);
+            return result;
         }
         public static double TransferFunction(MLP _network, double x)
         {
