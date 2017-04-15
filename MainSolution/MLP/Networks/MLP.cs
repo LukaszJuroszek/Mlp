@@ -97,7 +97,7 @@ namespace MLPProgram.Networks
                     numCorrect++;
             }
             error /= baseData._trainingDataSet.Length;
-            Console.WriteLine(error);
+            Console.WriteLine($"error {error}");
             return (double)numCorrect / baseData._trainingDataSet.Length;
         }
         public static double Accuracy(MLP mlp, out double error, int lok = 0)

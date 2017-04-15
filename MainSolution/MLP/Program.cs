@@ -30,6 +30,8 @@ namespace MLPProgram
                 learningAlgorithmNew.Train(numberOfEpochs: 50, batchSize: 30, learnRate: 0.05, momentum: 0.5);
                 double testAccuracy = network.Accuracy();
                 Console.WriteLine(testAccuracy);
+                double testAccuracyNew = networkNew.Accuracy();
+                Console.WriteLine(testAccuracyNew);
                 st.Stop();
                 Console.WriteLine(st.Elapsed);
             }
@@ -73,23 +75,20 @@ namespace MLPProgram
         {
             for (int i = 0; i < network.networkLayers[0]; i++)
             {
-                network.output[NetworkLayer.Input][i] = network.baseData._trainingDataSet[indexOftrainingDataSet, i];
+                var p = network.baseData._trainingDataSet[indexOftrainingDataSet, i];
+                network.output[(int)NetworkLayer.Input][i] = network.baseData._trainingDataSet[indexOftrainingDataSet, i];
             }
-
             for (int l = 1; l < network.numbersOfLayers; l++)
             {
-                var outputItem = network.output.ElementAt(l);
-                var outputItemPrev = network.output.ElementAt(l - 1);
-                var weightsItem = network.weights.ElementAt(l);
-                for (int n = 0; n < outputItem.Value.GetLength(0); n++)
+                for (int n = 0; n < network.output[l].GetLength(0); n++)
                 {
                     double sum = 0;
-                    for (int w = 0; w < outputItemPrev.Value.GetLength(0); w++)
+                    for (int w = 0; w < network.output[l - 1].GetLength(0); w++)
                     {
-                        sum += outputItemPrev.Value[w] * weightsItem.Value[n, w];
+                        sum += network.output[l - 1][w] * network.weights[l][n, w];
                     }
-                    sum += weightsItem.Value[n, outputItemPrev.Value.Length]; //bias
-                    outputItem.Value[n] = (l == outputItem.Value.Length - 1 && !network.classification) ? sum : GradientLearning.TransferFunction(network, sum);
+                    sum += network.weights[l][n, network.output[l - 1].Length]; //bias
+                    network.output[l][n] = (l == network.output[l].Length - 1 && !network.classification) ? sum : GradientLearning.TransferFunction(network, sum);
 
                 }
             }

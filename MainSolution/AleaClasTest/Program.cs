@@ -2,12 +2,18 @@
 using Alea.CSharp;
 using Alea.Parallel;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 
 namespace AleaClasTest
 {
-     struct Program
+    public enum TestEnum
+    {
+        One=0,
+        Second=1
+    }
+    struct Program
     {
         [GpuParam] public SampleStruct _field;
         static void Main(string[] args)
@@ -19,10 +25,19 @@ namespace AleaClasTest
             var gpu = Gpu.Default;
             var st = new Stopwatch();
             st.Start();
-            var array1 = gpu.Allocate(str._field.arg1);
+            var testEnu = new Dictionary<TestEnum, double[,]>
+            {
+                { TestEnum.One, str._field.arg1 },
+                { TestEnum.Second, str._field.arg2 }
+            };
+            var array1 = gpu.Allocate(testEnu.ElementAt(0).Value);
             var array2 = gpu.Allocate(str._field.arg2);
-            var result =/* gpu.Allocate(*/new double[size,size]/*)*/;
-            
+            var result =gpu.Allocate(new double[size, size]);
+            var teste = new double[3][,];
+            teste[0] = str._field.arg1;
+            teste[1] = str._field.arg2;
+            teste[2] = str._field.arg2;
+            var results = gpu.Allocate(teste);
             st.Stop();
             Console.WriteLine(st.Elapsed);
             st.Reset();
@@ -30,12 +45,18 @@ namespace AleaClasTest
             var test = new double[size, size];
             gpu.For(0, size, x =>
             {
-                result[x,x] = array1[x,x] + array2[x,x];
-                Console.WriteLine(result[x,x]);
+                result[x, x] = teste[0][1,1] + array2[x, x];
+                Console.WriteLine(result[x, x]);
             });
             st.Stop();
             Console.WriteLine(st.Elapsed);
             Gpu.Copy(result, test);
+            var temp = new double[3][,];
+            teste[0] = str._field.arg1;
+            teste[1] = str._field.arg2;
+            teste[2] = str._field.arg2;
+            Gpu.Copy(results, temp);
+
         }
         public static void ShowArray(double[][] array)
         {
