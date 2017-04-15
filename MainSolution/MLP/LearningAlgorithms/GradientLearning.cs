@@ -108,9 +108,9 @@ namespace MLPProgram.LearningAlgorithms
            double maxDelta,
            double inputWeightRegularizationCoef = -1)
         {
-            for (var l = _network.numbersOfLayers - 1; l > 0; l--)
-                for (var n = 0; n < _network.layer[l]; n++)
-                    for (var w = 0; w <= _network.layer[l - 1]; w++)
+            for (int l = _network.numbersOfLayers - 1; l > 0; l--)
+                for (int n = 0; n < _network.layer[l]; n++)
+                    for (int w = 0; w <= _network.layer[l - 1]; w++)
                     {
                         if (inputWeightRegularizationCoef <= 0 || _network.weights[l][n][w] != 0)
                         {

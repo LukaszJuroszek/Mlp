@@ -21,15 +21,19 @@ namespace MLPProgram
             var learningAlgorithm = new GradientLearning(network);
             var learningAlgorithmNew = new GradientLearningNew(networkNew);
             st.Start();
-            for (var i = 0; i < 1; i++)
+            for (int i = 0; i < 1; i++)
             {
                 //to memory
                 st.Reset();
                 st.Start();
                 learningAlgorithm.Train(numberOfEpochs: 50, batchSize: 30, learnRate: 0.05, momentum: 0.5);
-                learningAlgorithmNew.Train(numberOfEpochs: 50, batchSize: 30, learnRate: 0.05, momentum: 0.5);
                 double testAccuracy = network.Accuracy();
                 Console.WriteLine(testAccuracy);
+                st.Stop();
+                Console.WriteLine(st.Elapsed);
+                st.Reset();
+                st.Start();
+                learningAlgorithmNew.Train(numberOfEpochs: 50, batchSize: 30, learnRate: 0.05, momentum: 0.5);
                 double testAccuracyNew = networkNew.Accuracy();
                 Console.WriteLine(testAccuracyNew);
                 st.Stop();

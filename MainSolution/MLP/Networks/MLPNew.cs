@@ -46,7 +46,7 @@ namespace MLPProgram.Networks
         private static double[][,] Create2DLayers(int[] networkLayers)
         {
             var result = new double[networkLayers.Length][,];
-            result[(int)NetworkLayer.Input] = null;
+            result[(int)NetworkLayer.Input] = new double[0,0];
             result[(int)NetworkLayer.Hidden] = new double[networkLayers[(int)NetworkLayer.Hidden], networkLayers[(int)NetworkLayer.Input] + 1];
             result[(int)NetworkLayer.Output] = new double[networkLayers[(int)NetworkLayer.Output], networkLayers[(int)NetworkLayer.Hidden] + 1];
             return result;
@@ -54,7 +54,7 @@ namespace MLPProgram.Networks
         private static double[][] Create1DLayers(int[] networkLayers)
         {
             var result = new double[networkLayers.Length][];
-            result[(int)NetworkLayer.Input] = null;
+            result[(int)NetworkLayer.Input] = new double[0];
             result[(int)NetworkLayer.Hidden] = new double[networkLayers[(int)NetworkLayer.Hidden]];
             result[(int)NetworkLayer.Output] = new double[networkLayers[(int)NetworkLayer.Output]];
             return result;
