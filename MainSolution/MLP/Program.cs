@@ -21,36 +21,41 @@ namespace MLPProgram
             var mainNetwork = new MLPNew(dataNew);
             var learningAlgorithm = new GradientLearning(network);
             st.Start();
-            for (int i = 0; i < 1; i++)
-            {
-                //to memory
-                st.Reset();
-                st.Start();
-                learningAlgorithm.Train(numberOfEpochs: 50, batchSize: 30, learnRate: 0.05, momentum: 0.5);
-                double testAccuracy = network.Accuracy();
-                Console.WriteLine(testAccuracy);
-                st.Stop();
-                Console.WriteLine(st.Elapsed);
-            }
-            int dataGroupCount = 2;
-            var newtorkLeaaring = new GradientLearningNew[dataGroupCount];
+            //for (int i = 0; i < 1; i++)
+            //{
+            //    //to memory
+            //    st.Reset();
+            //    st.Start();
+            //    learningAlgorithm.Train(numberOfEpochs: 50, batchSize: 30, learnRate: 0.05, momentum: 0.5);
+            //    double testAccuracy = network.Accuracy();
+            //    Console.WriteLine(testAccuracy);
+            //    st.Stop();
+            //    Console.WriteLine(st.Elapsed);
+            //}
+            int dataGroupCount = 351;
             var splitedDataGroups = DataHolder.GetTrainingDataAsChunks(mainNetwork.baseData._trainingDataSet, dataGroupCount);
-            for (int i = 0; i < newtorkLeaaring.Length; i++)
-            {
-                var net = mainNetwork;
-                net.baseData._trainingDataSet = splitedDataGroups[]
-                newtorkLeaaring[i] = new GradientLearningNew();
-            }
-            for (int i = 1; i < mainNetwork.baseData._numberOfInputRow; i++)
+            var trainingSystems = new TrainingSystem[splitedDataGroups.GetLength(0)];
+            InitLearningSystemsBySplitedData(mainNetwork, splitedDataGroups, ref trainingSystems);
+            for (int i = 0; i < trainingSystems.Length; i++)
             {
                 st.Reset();
                 st.Start();
-                learningAlgorithmNew.Train(numberOfEpochs: 50, batchSize: 30, learnRate: 0.05, momentum: 0.5);
-            }
-            //Console.WriteLine(mainNetwork.Accuracy());
+                trainingSystems[i].TrainByInsideNetwork(numberOfEpochs: 50, batchSize: 30, learnRate: 0.05, momentum: 0.5);
+                Console.WriteLine(trainingSystems[i]._network.CountAccuracyByTrainingData(mainNetwork.baseData._trainingDataSet));
             st.Stop();
             Console.WriteLine(st.Elapsed);
+            }
 
+        }
+        private static void InitLearningSystemsBySplitedData(MLPNew mainNetwork, IEnumerable<double[]>[] splitedDataGroups, ref TrainingSystem[] learningSystems)
+        {
+            for (int i = 0; i < learningSystems.GetLength(0); i++)
+            {
+                var net = mainNetwork;
+                net.baseData._trainingDataSet = splitedDataGroups[i].To2DArray();
+                net.baseData._numberOfInputRow = net.baseData._trainingDataSet.GetLength(0)-1;
+                learningSystems[i] = new TrainingSystem(net);
+            }
         }
         public static void ForwardPass(MLP network, int indexOftrainingDataSet, int lok = -1)
         {
@@ -69,20 +74,23 @@ namespace MLPProgram
                 }
             }
         }
-        public static void ForwardPass(double[][] output, double[][] trainingDataSet, double[][][] weights, bool classification, bool isSigmoidFunction, int indexOftrainingDataSet, int lok = -1)
+        public static void ForwardPass( double[][,]weights, int[] networkLayers,double[][] output,double[,] _trainingDataSet,int numbersOfLayers, bool classification, bool isSigmoidFunction, int indexOftrainingDataSet, int lok = -1)
         {
-            output[0] = trainingDataSet[indexOftrainingDataSet].Take(output[0].Length).ToArray();
-            for (int l = 1; l < output.Length; l++)
+            for (int i = 0; i < networkLayers[0]; i++)
             {
-                for (int n = 0; n < output[l].Length; n++)
+               output[(int)NetworkLayer.Input][i] =_trainingDataSet[indexOftrainingDataSet, i];
+            }
+            for (int l = 1; l < numbersOfLayers; l++)
+            {
+                for (int n = 0; n < output[l].GetLength(0); n++)
                 {
                     double sum = 0;
-                    for (int w = 0; w < output[l - 1].Length; w++)
+                    for (int w = 0; w < output[l - 1].GetLength(0); w++)
                     {
-                        sum += output[l - 1][w] * weights[l][n][w];
+                        sum += output[l - 1][w] * weights[l][n, w];
                     }
-                    sum += weights[l][n][output[l - 1].Length]; //bias
-                    output[l][n] = (l == output.Length - 1 && !classification) ? sum : GradientLearning.TransferFunction(isSigmoidFunction, sum);
+                    sum += weights[l][n, output[l - 1].Length]; //bias
+                    output[l][n] = (l == output[l].Length - 1 && !classification) ? sum : GradientLearning.TransferFunction(isSigmoidFunction, sum);
                 }
             }
         }
@@ -90,7 +98,6 @@ namespace MLPProgram
         {
             for (int i = 0; i < network.networkLayers[0]; i++)
             {
-                var p = network.baseData._trainingDataSet[indexOftrainingDataSet, i];
                 network.output[(int)NetworkLayer.Input][i] = network.baseData._trainingDataSet[indexOftrainingDataSet, i];
             }
             for (int l = 1; l < network.numbersOfLayers; l++)
@@ -104,7 +111,6 @@ namespace MLPProgram
                     }
                     sum += network.weights[l][n, network.output[l - 1].Length]; //bias
                     network.output[l][n] = (l == network.output[l].Length - 1 && !network.classification) ? sum : GradientLearning.TransferFunction(network, sum);
-
                 }
             }
         }
@@ -120,9 +126,9 @@ namespace MLPProgram
             }
             return reslut;
         }
-        public static double[,] To2DArray(this IEnumerable<double[]> source)
+        public static T[,] To2DArray<T>(this IEnumerable<T[]> source)
         {
-            var reslut = new double[source.Count(), source.First().Count()];
+            var reslut = new T[source.Count(), source.First().Count()];
             for (int count = 0; count < source.Count(); count++)
                 for (int r = 0; r < source.First().Count(); r++)
                     reslut[count, r] = source.ToArray()[count][r];

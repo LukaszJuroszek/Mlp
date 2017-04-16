@@ -4,11 +4,11 @@ using System;
 
 namespace MLPProgram.LearningAlgorithms
 {
-    public struct GradientLearningNew
+    public struct TrainingSystem
     {
         public double _etaPlus, _etaMinus, _minDelta, _maxDelta, _errorExponent;
         public MLPNew _network;
-        public GradientLearningNew(MLPNew network)
+        public TrainingSystem(MLPNew network)
         {
             _etaPlus = 1.2;
             _etaMinus = 0.5;
@@ -17,7 +17,7 @@ namespace MLPProgram.LearningAlgorithms
             _errorExponent = 2.0;
             _network = network;
         }
-        public MLPNew Train(int numberOfEpochs = 30, int batchSize = 30, double learnRate = 0.05, double momentum = 0.5)
+        public MLPNew TrainByInsideNetwork(int numberOfEpochs = 30, int batchSize = 30, double learnRate = 0.05, double momentum = 0.5)
         {
             double errorExponent = _errorExponent;
             batchSize = _network.baseData._numberOfInputRow;

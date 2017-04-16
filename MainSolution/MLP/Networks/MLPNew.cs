@@ -67,7 +67,7 @@ namespace MLPProgram.Networks
             result[(int)NetworkLayer.Output] = new double[networkLayers[(int)NetworkLayer.Output]];
             return result;
         }
-        public double Accuracy(double[,] trainingDataSet, int lok = 0)
+        public double CountAccuracyByTrainingData(double[,] trainingDataSet, int lok = 0)
         {
             double maxValue = -1;
             double error = 0.0;
@@ -78,7 +78,7 @@ namespace MLPProgram.Networks
             int maxIndex = -1;
             for (int v = 0; v < trainingDataSet.GetLength(0); v++)
             {
-                Program.ForwardPass(this, v, lok);
+                Program.ForwardPass(weights,networkLayers,output,trainingDataSet,numbersOfLayers,classification,baseData._isSigmoidFunction, v, lok);
                 maxIndex = -1;
                 maxValue = -1.1;
                 for (int n = 0; n < networkLayers[numbersOfLayers - 1]; n++)
