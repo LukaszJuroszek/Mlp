@@ -1,5 +1,4 @@
 ﻿using Alea;
-using Alea.Parallel;
 using MLPProgram.Networks;
 using System;
 
@@ -18,28 +17,21 @@ namespace MLPProgram.LearningAlgorithms
             _errorExponent = 2.0;
             _network = network;
         }
-        public void Train(int numberOfEpochs = 30, int batchSize = 30, double learnRate = 0.05, double momentum = 0.5)
+        public MLPNew Train(int numberOfEpochs = 30, int batchSize = 30, double learnRate = 0.05, double momentum = 0.5)
         {
-            var gp = Gpu.Default;
             double errorExponent = _errorExponent;
             batchSize = _network.baseData._numberOfInputRow;
             CreateWeightZeroAndAsingDeltaValue(_network, 0.1);
             MakeGradientZero(_network);
-            var networks = new MLPNew[batchSize];
-            for (int i = 0; i < batchSize; i++)
-                networks[i] = _network;
             for (int epoch = 0; epoch < numberOfEpochs; epoch++)
             {
-                //for (int i = 0; i < batchSize; i++)
-                MakeGradientZero(_network);
-                //gp.For(0, batchSize, v =>
-                //{
-                for (int v = 0; v < batchSize; v++)
+                for (int batch = 0; batch < batchSize; batch++)
                 {
-                    Program.ForwardPass(_network, v);
+                    MakeGradientZero(_network);
+                    Program.ForwardPass(_network, batch);
                     for (int l = 0; l < _network.baseData._numberOfOutput; l++)
                     {
-                        double error = _network.baseData._trainingDataSet[v, _network.baseData._numberOfInput + l] - _network.output[(int)NetworkLayer.Output][l];
+                        double error = _network.baseData._trainingDataSet[batch, _network.baseData._numberOfInput + l] - _network.output[(int)NetworkLayer.Output][l];
                         error = Sign(error) * DeviceFunction.Pow(DeviceFunction.Abs(error), errorExponent);
                         double derivative = _network.classification ? DerivativeFunction(_network.classification, _network.output[(int)NetworkLayer.Output][l]) : 1.0;
                         _network.signalError[(int)NetworkLayer.Output][l] = error * derivative;
@@ -55,10 +47,32 @@ namespace MLPProgram.LearningAlgorithms
                                 _network.weightDiff[l][n, w] += learnRate * _network.signalError[l][n] * _network.output[l - 1][w];
                         }
                 }
-                //});
-                //for (int i = 0; i < batchSize; i++)
                 UpdateWeightsRprop(_network, learnRate, momentum, _etaPlus, _etaMinus, _minDelta, _maxDelta);
                 MakeGradientZero(_network);
+            }
+            return _network;
+        }
+        public static void AddWeigth(MLPNew first, MLPNew second)
+        {
+            for (int l = 1; l < first.numbersOfLayers; l++)
+            {
+                for (int n = 0; n < first.weights[l].GetLength(0); n++)
+                {
+                    for (int w = 0; w < first.weights[l].GetLength(1); w++)
+                    {
+                        first.weights[l][n, w] += second.weights[l][n, w];
+                    }
+                }
+            }
+        }
+        public static void AddOutput(MLPNew first, MLPNew second)
+        {
+            for (int l = 1; l < first.numbersOfLayers; l++)
+            {
+                for (int n = 0; n < first.output[l].GetLength(0); n++)
+                {
+                    first.output[l][n] += second.output[l][n];
+                }
             }
         }
         public static int Sign(double number)

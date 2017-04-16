@@ -1,6 +1,8 @@
 ﻿using Alea;
 using MLPProgram.LearningAlgorithms;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 
 namespace MLPProgram.Networks
@@ -79,6 +81,13 @@ namespace MLPProgram.Networks
             _numberOfInputRow = file.NumberOfInputRow;
             _classification = file.Classification;
             _isSigmoidFunction = GradientLearning.IsSigmoidTransferFunction(file.TransferFunction);
+        }
+
+        public static IEnumerable<T[]>[] GetTrainingDataAsChunks<T>(T[,] array, int howManyGroup)
+        {
+            var splitedTraingData = Program.SplitList(array.ToJagged2DArray(), howManyGroup);
+            var result = splitedTraingData.Select(x => x.Select(p => p).Where(p => p != null));
+            return result.ToArray();
         }
     }
 }

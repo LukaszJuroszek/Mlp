@@ -1,6 +1,7 @@
 ﻿using MLPProgram.LearningAlgorithms;
 using MLPProgram.Networks;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 
@@ -17,9 +18,8 @@ namespace MLPProgram
             var data = new BaseDataHolder(testDataset);
             var dataNew = new DataHolder(testDatasetNew);
             var network = new MLP(data);
-            var networkNew = new MLPNew(dataNew);
+            var mainNetwork = new MLPNew(dataNew);
             var learningAlgorithm = new GradientLearning(network);
-            var learningAlgorithmNew = new GradientLearningNew(networkNew);
             st.Start();
             for (int i = 0; i < 1; i++)
             {
@@ -31,14 +31,25 @@ namespace MLPProgram
                 Console.WriteLine(testAccuracy);
                 st.Stop();
                 Console.WriteLine(st.Elapsed);
+            }
+            int dataGroupCount = 2;
+            var newtorkLeaaring = new GradientLearningNew[dataGroupCount];
+            var splitedDataGroups = DataHolder.GetTrainingDataAsChunks(mainNetwork.baseData._trainingDataSet, dataGroupCount);
+            for (int i = 0; i < newtorkLeaaring.Length; i++)
+            {
+                var net = mainNetwork;
+                net.baseData._trainingDataSet = splitedDataGroups[]
+                newtorkLeaaring[i] = new GradientLearningNew();
+            }
+            for (int i = 1; i < mainNetwork.baseData._numberOfInputRow; i++)
+            {
                 st.Reset();
                 st.Start();
                 learningAlgorithmNew.Train(numberOfEpochs: 50, batchSize: 30, learnRate: 0.05, momentum: 0.5);
-                double testAccuracyNew = networkNew.Accuracy();
-                Console.WriteLine(testAccuracyNew);
-                st.Stop();
-                Console.WriteLine(st.Elapsed);
             }
+            //Console.WriteLine(mainNetwork.Accuracy());
+            st.Stop();
+            Console.WriteLine(st.Elapsed);
 
         }
         public static void ForwardPass(MLP network, int indexOftrainingDataSet, int lok = -1)
@@ -97,6 +108,33 @@ namespace MLPProgram
                 }
             }
         }
-    }
+        public static T[][] ToJagged2DArray<T>(this T[,] source)
+        {
+            var reslut = new T[source.GetLength(0)][];
 
+            for (int c = 0; c < source.GetLength(0); c++)
+            {
+                reslut[c] = new T[source.GetLength(1)];
+                for (int r = 0; r < source.GetLength(1); r++)
+                    reslut[c][r] = source[c, r];
+            }
+            return reslut;
+        }
+        public static double[,] To2DArray(this IEnumerable<double[]> source)
+        {
+            var reslut = new double[source.Count(), source.First().Count()];
+            for (int count = 0; count < source.Count(); count++)
+                for (int r = 0; r < source.First().Count(); r++)
+                    reslut[count, r] = source.ToArray()[count][r];
+            return reslut;
+        }
+        public static IEnumerable<T[][]> SplitList<T>(T[][] array, int nSize = 30)
+        {
+
+            for (int i = 0; i < array.GetLength(0); i += nSize)
+            {
+                yield return array.Skip(i).Take(Math.Min(nSize, array.GetLength(0) - i)).ToArray();
+            }
+        }
+    }
 }
