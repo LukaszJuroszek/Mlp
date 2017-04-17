@@ -1,4 +1,4 @@
-﻿ using MLPProgram.LearningAlgorithms;
+﻿using MLPProgram.LearningAlgorithms;
 using MLPProgram.Networks;
 using System;
 using System.Collections.Generic;
@@ -18,7 +18,7 @@ namespace MLPProgram
             var data = new BaseDataHolder(testDataset);
             var dataNew = new DataHolder(testDatasetNew);
             var network = new MLP(data);
-            var mainNetwork = new MLPNew(dataNew,network.weights);
+            var mainNetwork = new MLPNew(dataNew, network.weights);
             var learningAlgorithm = new GradientLearning(network);
             st.Start();
             for (int i = 0; i < 1; i++)
@@ -42,8 +42,8 @@ namespace MLPProgram
                 st.Start();
                 trainingSystems[i].TrainByInsideNetwork(numberOfEpochs: 50, batchSize: 30, learnRate: 0.05, momentum: 0.5);
                 Console.WriteLine(trainingSystems[i]._network.CountAccuracyByTrainingData(mainNetwork.baseData._trainingDataSet));
-            st.Stop();
-            Console.WriteLine(st.Elapsed);
+                st.Stop();
+                Console.WriteLine(st.Elapsed);
             }
         }
         private static void InitLearningSystemsBySplitedData(MLPNew mainNetwork, IEnumerable<double[]>[] splitedDataGroups, ref TrainingSystem[] learningSystems)
@@ -52,7 +52,7 @@ namespace MLPProgram
             {
                 var net = mainNetwork;
                 net.baseData._trainingDataSet = splitedDataGroups[i].To2DArray();
-                net.baseData._numberOfInputRow = net.baseData._trainingDataSet.GetLength(0)-1;
+                net.baseData._numberOfInputRow = net.baseData._trainingDataSet.GetLength(0) - 1;
                 learningSystems[i] = new TrainingSystem(net);
             }
         }
@@ -73,11 +73,11 @@ namespace MLPProgram
                 }
             }
         }
-        public static void ForwardPass( double[][,]weights, int[] networkLayers,double[][] output,double[,] _trainingDataSet,int numbersOfLayers, bool classification, bool isSigmoidFunction, int indexOftrainingDataSet, int lok = -1)
+        public static void ForwardPass(double[][,] weights, int[] networkLayers, double[][] output, double[,] _trainingDataSet, int numbersOfLayers, bool classification, bool isSigmoidFunction, int indexOftrainingDataSet, int lok = -1)
         {
             for (int i = 0; i < networkLayers[0]; i++)
             {
-               output[(int)NetworkLayer.Input][i] =_trainingDataSet[indexOftrainingDataSet, i];
+                output[(int)NetworkLayer.Input][i] = _trainingDataSet[indexOftrainingDataSet, i];
             }
             for (int l = 1; l < numbersOfLayers; l++)
             {
@@ -116,7 +116,6 @@ namespace MLPProgram
         public static T[][] ToJagged2DArray<T>(this T[,] source)
         {
             var reslut = new T[source.GetLength(0)][];
-
             for (int c = 0; c < source.GetLength(0); c++)
             {
                 reslut[c] = new T[source.GetLength(1)];

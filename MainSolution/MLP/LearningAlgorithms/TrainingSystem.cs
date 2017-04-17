@@ -30,12 +30,7 @@ namespace MLPProgram.LearningAlgorithms
                     MakeGradientZero(_network);
                     Program.ForwardPass(_network, batch);
                     for (int l = 0; l < _network.baseData._numberOfOutput; l++)
-                    {
-                        double error = _network.baseData._trainingDataSet[batch, _network.baseData._numberOfInput + l] - _network.output[(int)NetworkLayer.Output][l];
-                        error = Math.Sign(error) * Math.Pow(Math.Abs(error), errorExponent);
-                        double derivative = _network.classification ? DerivativeFunction(_network.classification, _network.output[(int)NetworkLayer.Output][l]) : 1.0;
-                        _network.signalError[(int)NetworkLayer.Output][l] = error * derivative;
-                    }
+                        _network.signalError[(int)NetworkLayer.Output][l] = CalculateSignalErrorsForOutputLayer(_network, batch, l, errorExponent);
                     for (int l = _network.numbersOfLayers - 2; l > 0; l--)
                         for (int n = 0; n < _network.networkLayers[l]; n++)
                             _network.signalError[l][n] = DerivativeFunction(_network.classification, _network.output[l][n]) * SumSignalErrorForHiddenLayer(_network, l, n);
@@ -79,7 +74,7 @@ namespace MLPProgram.LearningAlgorithms
         {
             return number > 0 ? 1 : number < 0 ? -1 : 0;
         }
-        private static double CalculateSignalErrors(MLPNew network, int v, int n, double errorExponent)
+        public  static double CalculateSignalErrorsForOutputLayer(MLPNew network, int v, int n, double errorExponent)
         {
             double error = network.baseData._trainingDataSet[v, network.baseData._numberOfInput + n] - network.output[(int)NetworkLayer.Output][n];
             error = Sign(error) * Math.Pow(Math.Abs(error), errorExponent);
@@ -93,21 +88,17 @@ namespace MLPProgram.LearningAlgorithms
                 sum += network.signalError[layer + 1][w] * network.weights[layer + 1][w, hiddenLayerSecondDim];
             return sum;
         }
-        private static void CreateWeightZeroAndAsingDeltaValue(MLPNew network, double deltaValue)
+        public static void CreateWeightZeroAndAsingDeltaValue(MLPNew network, double deltaValue)
         {
             for (int l = 1; l < network.numbersOfLayers; l++)
-            {
                 for (int n = 0; n < network.networkLayers[l]; n++)
-                {
-                    for (int w = 0; w < network.networkLayers[l - 1]; w++)
+                    for (int w = 0; w <= network.networkLayers[l - 1]; w++)
                     {
                         network.weightDiff[l][n, w] = 0;
                         network.delta[l][n, w] = deltaValue;
                     }
-                }
-            }
         }
-        private static void MakeGradientZero(MLPNew network)
+        public static void MakeGradientZero(MLPNew network)
         {
             for (int l = 1; l < network.numbersOfLayers; l++)
                 for (int n = 0; n < network.networkLayers[l]; n++)

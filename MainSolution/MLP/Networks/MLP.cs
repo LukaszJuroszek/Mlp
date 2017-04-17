@@ -19,7 +19,7 @@ namespace MLPProgram.Networks
             st.Append($"Weights {numWeights} ");
             st.Append($"classification {classification} ");
             st.Append($"LayersCount {numbersOfLayers} ");
-            for (var i = 0; i < layer.Length; i++)
+            for (int i = 0; i < layer.Length; i++)
             {
                 st.Append($"l[{i}]={layer[i]} ");
             }
