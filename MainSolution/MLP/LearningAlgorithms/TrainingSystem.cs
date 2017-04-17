@@ -33,19 +33,26 @@ namespace MLPProgram.LearningAlgorithms
                         _network.signalError[(int)NetworkLayer.Output][l] = CalculateSignalErrorsForOutputLayer(_network, batch, l, errorExponent);
                     for (int l = _network.numbersOfLayers - 2; l > 0; l--)
                         for (int n = 0; n < _network.networkLayers[l]; n++)
-                            _network.signalError[l][n] = DerivativeFunction(_network.classification, _network.output[l][n]) * SumSignalErrorForHiddenLayer(_network, l, n);
+                            _network.signalError[l][n] = CalculateSignalErrorFroHiddenLayer(_network, l, n);
                     for (int l = _network.numbersOfLayers - 1; l > 0; l--)
                         for (int n = 0; n < _network.networkLayers[l]; n++)
-                        {
-                            _network.weightDiff[l][n, _network.networkLayers[l - 1]] += learnRate * _network.signalError[l][n];
-                            for (int w = 0; w < _network.networkLayers[l - 1]; w++)
-                                _network.weightDiff[l][n, w] += learnRate * _network.signalError[l][n] * _network.output[l - 1][w];
-                        }
+                            CalculateBias(_network,learnRate, l, n);
                 }
                 UpdateWeightsRprop(_network, learnRate, momentum, _etaPlus, _etaMinus, _minDelta, _maxDelta);
                 MakeGradientZero(_network);
             }
             return _network;
+        }
+
+        public static void CalculateBias(MLPNew network,double learnRate, int l, int n)
+        {
+            network.weightDiff[l][n, network.networkLayers[l - 1]] += learnRate * network.signalError[l][n];
+            for (int w = 0; w < network.networkLayers[l - 1]; w++)
+                network.weightDiff[l][n, w] += learnRate * network.signalError[l][n] * network.output[l - 1][w];
+        }
+        public static double CalculateSignalErrorFroHiddenLayer(MLPNew network, int l, int n)
+        {
+            return DerivativeFunction(network.classification, network.output[l][n]) * SumSignalErrorForHiddenLayer(network, l, n);
         }
         public static void AddWeigth(MLPNew first, MLPNew second)
         {
@@ -74,7 +81,7 @@ namespace MLPProgram.LearningAlgorithms
         {
             return number > 0 ? 1 : number < 0 ? -1 : 0;
         }
-        public  static double CalculateSignalErrorsForOutputLayer(MLPNew network, int v, int n, double errorExponent)
+        public static double CalculateSignalErrorsForOutputLayer(MLPNew network, int v, int n, double errorExponent)
         {
             double error = network.baseData._trainingDataSet[v, network.baseData._numberOfInput + n] - network.output[(int)NetworkLayer.Output][n];
             error = Sign(error) * Math.Pow(Math.Abs(error), errorExponent);

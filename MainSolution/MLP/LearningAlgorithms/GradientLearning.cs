@@ -29,18 +29,22 @@ namespace MLPProgram.LearningAlgorithms
                 {
                     Program.ForwardPass(_network, batch);
                     for (int l = 0; l < _network.baseData._numberOfOutput; l++)
-                        _network.signalError[_network.numbersOfLayers - 1][l] = CalculateSignalErrorsForOutputLayer(_network,batch, l,_errorExponent);
+                        _network.signalError[_network.numbersOfLayers - 1][l] = CalculateSignalErrorsForOutputLayer(_network, batch, l, _errorExponent);
                     for (int l = _network.numbersOfLayers - 2; l > 0; l--)
                         for (int n = 0; n < _network.layer[l]; n++)
-                            _network.signalError[l][n] = CalculateDerivativeForHiddenLayer(l, n) * SumSignalErrorForHiddenLayer(l, n);
+                            _network.signalError[l][n] = CalculateSignalErrorFroHiddenLayer(_network,l, n);
                     for (int l = _network.numbersOfLayers - 1; l > 0; l--)
                         for (int n = 0; n < _network.layer[l]; n++)
-                            Bias(learnRate, l, n);
+                            CalculateBias(_network,learnRate, l, n);
                 }
                 UpdateWeightsRprop(learnRate, momentum, _etaPlus, _etaMinus, _minDelta, _maxDelta);
                 // zero-out gradients
                 MakeGradientZero(_network);
             }
+        }
+        public static double CalculateSignalErrorFroHiddenLayer(MLP netwrok,int l, int n)
+        {
+            return CalculateDerivativeForHiddenLayer(netwrok,l, n) * SumSignalErrorForHiddenLayer(netwrok, l, n);
         }
         public static int Sign(double number)
         {
@@ -60,11 +64,11 @@ namespace MLPProgram.LearningAlgorithms
             double derivative = CalculateDerivativeForSignalErrorsInOutputLayer(network,n);
             return error * derivative;
         }
-        private void Bias(double learnRate, int l, int n)
+        public static void CalculateBias(MLP network,double learnRate, int l, int n)
         {
-            _network.weightDiff[l][n][_network.layer[l - 1]] += learnRate * _network.signalError[l][n];
-            for (int w = 0; w < _network.layer[l - 1]; w++)
-                _network.weightDiff[l][n][w] += learnRate * _network.signalError[l][n] * _network.output[l - 1][w];
+            network.weightDiff[l][n][network.layer[l - 1]] += learnRate * network.signalError[l][n];
+            for (int w = 0; w < network.layer[l - 1]; w++)
+                network.weightDiff[l][n][w] += learnRate * network.signalError[l][n] * network.output[l - 1][w];
         }
         private double SumSignalErrorForHiddenLayer(int layer, int hiddenLayerSecondDim)
         {
@@ -73,9 +77,20 @@ namespace MLPProgram.LearningAlgorithms
                 sum += _network.signalError[layer + 1][w] * _network.weights[layer + 1][w][hiddenLayerSecondDim];
             return sum;
         }
-        private double CalculateDerivativeForHiddenLayer(int layer, int hidenLayeerSecondDim)
+        private static double SumSignalErrorForHiddenLayer(MLP network, int l, int n)
         {
-            return DerivativeFunction(_network.output[layer][hidenLayeerSecondDim]);
+            double sum = 0.0;
+            for (int w = 0; w < network.layer[l + 1]; w++)
+                sum += network.signalError[l + 1][w] * network.weights[l + 1][w][n];
+            return sum;
+        }
+        private double CalculateDerivativeForHiddenLayer(int l, int n)
+        {
+            return DerivativeFunction(_network.output[l][n]);
+        }
+        private static double CalculateDerivativeForHiddenLayer(MLP network,int l, int n)
+        {
+            return DerivativeFunction(network.classification,network.output[l][n]);
         }
         private double CalculateDerivativeForSignalErrorsInOutputLayer(int outputSecondDim)
         {

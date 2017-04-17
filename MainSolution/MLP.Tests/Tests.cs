@@ -13,6 +13,7 @@ namespace MLPTests
     {
         private readonly string _filePath = @"..\..\Datasets\ionosphere_std_sh.txt";
         private readonly double _deltaValue = 0.1;
+        private readonly double _learnRate = 0.05;
         private readonly double _errorExponent = 2.0;
         private readonly ITestOutputHelper _outputHelper;
         public Tests(ITestOutputHelper testOutputHelper)
@@ -118,7 +119,7 @@ namespace MLPTests
             IsTwoMLPNetworksAreEq(net, netNewSecond);
         }
         [Fact]
-        public void AreCreateWeightZeroAndAsingDeltaValueWorkingInMLPs()
+        public void IsTrainingMethodWorkInMLPs()
         {
             var fileParser = new FileParser(_filePath, GradientLearning.SigmoidTransferFunction);
             var fileParserNew = new FIleParserNew(_filePath, GradientLearning.SigmoidTransferFunction);
@@ -126,43 +127,71 @@ namespace MLPTests
             var dataNew = new DataHolder(fileParserNew);
             var net = new MLP(data);
             var netNew = new MLPNew(dataNew, net.weights);
-            GradientLearning.CreateWeightZeroAndAsingDeltaValue(net, _deltaValue);
-            TrainingSystem.CreateWeightZeroAndAsingDeltaValue(netNew, _deltaValue);
-            IsTwoMLPNetworksAreEq(net, netNew);
-
-        }
-        [Fact]
-        public void AreCalculateSignalErrorForOutputLayerWorkingInMLPs()
-        {
-            var fileParser = new FileParser(_filePath, GradientLearning.SigmoidTransferFunction);
-            var fileParserNew = new FIleParserNew(_filePath, GradientLearning.SigmoidTransferFunction);
-            var data = new BaseDataHolder(fileParser);
-            var dataNew = new DataHolder(fileParserNew);
-            var net = new MLP(data);
-            var netNew = new MLPNew(dataNew, net.weights);
-
-            TrainingSystem.CreateWeightZeroAndAsingDeltaValue(netNew, _deltaValue);
-            GradientLearning.CreateWeightZeroAndAsingDeltaValue(net, _deltaValue);
+            AssertThatCreateWeigthZeroAndAsignDeltaValueWorkInTheSameWayInMLPs(net, netNew);
             for (int batch = 0; batch < net.baseData._numberOFVectors; batch++)
             {
                 TrainingSystem.MakeGradientZero(netNew);
                 GradientLearning.MakeGradientZero(net);
                 Program.ForwardPass(netNew, batch);//TrainingSystem
                 Program.ForwardPass(net, batch);//GradientLearning  
-                for (int l = 0; l < net.baseData._numberOfOutput; l++)
-                {
-                    double expected = GradientLearning.CalculateSignalErrorsForOutputLayer(net, batch, l, _errorExponent);
-                    double actual = TrainingSystem.CalculateSignalErrorsForOutputLayer(netNew, batch, l, _errorExponent);
-                    net.signalError[net.numbersOfLayers - 1][l] = expected;
-                    netNew.signalError[(int)NetworkLayer.Output][l] = actual;
-                    Assert.Equal(expected, actual);
-                }
+                AssertSignalErrosInOutputLayer(net, netNew, batch);
+                AssertSignalErrorsInHiddenLayer(net, netNew);
+                AssertBias(net, netNew);
                 IsTwoMLPNetworksAreEq(net, netNew);
             }
         }
-        public  void IsTwoMLPNetworksAreEq(MLP net, MLPNew netNew)
+
+        private void AssertBias(MLP net, MLPNew netNew)
         {
-          
+            for (int l = netNew.numbersOfLayers - 1; l > 0; l--)
+                for (int n = 0; n < netNew.networkLayers[l]; n++)
+                {
+                    GradientLearning.CalculateBias(net, _learnRate, l, n);
+                    TrainingSystem.CalculateBias(netNew, _learnRate, l, n);
+                }
+            IsTwoMLPNetworksAreEq(net, netNew);
+        }
+
+        private void AssertThatCreateWeigthZeroAndAsignDeltaValueWorkInTheSameWayInMLPs(MLP net, MLPNew netNew)
+        {
+            GradientLearning.CreateWeightZeroAndAsingDeltaValue(net, _deltaValue);
+            TrainingSystem.CreateWeightZeroAndAsingDeltaValue(netNew, _deltaValue);
+
+            for (int l = 1; l < netNew.numbersOfLayers; l++)
+                for (int n = 0; n < netNew.networkLayers[l]; n++)
+                    for (int w = 0; w <= netNew.networkLayers[l - 1]; w++)
+                    {
+                       Assert.Equal(net.weightDiff[l][n][w],netNew.weightDiff[l][n, w]);
+                       Assert.Equal(net.delta[l][n][w],netNew.delta[l][n, w]);
+                    }
+            IsTwoMLPNetworksAreEq(net, netNew);
+        }
+        private static void AssertSignalErrorsInHiddenLayer(MLP net, MLPNew netNew)
+        {
+            for (int l = net.numbersOfLayers - 2; l > 0; l--)
+                for (int n = 0; n < net.layer[l]; n++)
+                {
+                    double expected = GradientLearning.CalculateSignalErrorFroHiddenLayer(net, l, n);
+                    double actual = TrainingSystem.CalculateSignalErrorFroHiddenLayer(netNew, l, n);
+                    Assert.Equal(expected, actual);
+                    net.signalError[l][n] = expected;
+                    netNew.signalError[l][n] = actual;
+                }
+        }
+        private void AssertSignalErrosInOutputLayer(MLP net, MLPNew netNew, int batch)
+        {
+            for (int l = 0; l < net.baseData._numberOfOutput; l++)
+            {
+                double expected = GradientLearning.CalculateSignalErrorsForOutputLayer(net, batch, l, _errorExponent);
+                double actual = TrainingSystem.CalculateSignalErrorsForOutputLayer(netNew, batch, l, _errorExponent);
+                net.signalError[net.numbersOfLayers - 1][l] = expected;
+                netNew.signalError[(int)NetworkLayer.Output][l] = actual;
+                Assert.Equal(expected, actual);
+            }
+        }
+        public void IsTwoMLPNetworksAreEq(MLP net, MLPNew netNew)
+        {
+
             for (int l = 1; l < net.delta.GetLength(0); l++)
                 for (int n = 0; n < net.delta[l].GetLength(0); n++)
                     for (int w = 0; w < net.delta[l][n].GetLength(0); w++)
