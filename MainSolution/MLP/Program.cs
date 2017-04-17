@@ -18,20 +18,20 @@ namespace MLPProgram
             var data = new BaseDataHolder(testDataset);
             var dataNew = new DataHolder(testDatasetNew);
             var network = new MLP(data);
-            var mainNetwork = new MLPNew(dataNew);
+            var mainNetwork = new MLPNew(dataNew,network.weights);
             var learningAlgorithm = new GradientLearning(network);
             st.Start();
-            //for (int i = 0; i < 1; i++)
-            //{
-            //    //to memory
-            //    st.Reset();
-            //    st.Start();
-            //    learningAlgorithm.Train(numberOfEpochs: 50, batchSize: 30, learnRate: 0.05, momentum: 0.5);
-            //    double testAccuracy = network.Accuracy();
-            //    Console.WriteLine(testAccuracy);
-            //    st.Stop();
-            //    Console.WriteLine(st.Elapsed);
-            //}
+            for (int i = 0; i < 1; i++)
+            {
+                //to memory
+                st.Reset();
+                st.Start();
+                learningAlgorithm.Train(numberOfEpochs: 50, batchSize: 30, learnRate: 0.05, momentum: 0.5);
+                double testAccuracy = network.Accuracy();
+                Console.WriteLine(testAccuracy);
+                st.Stop();
+                Console.WriteLine(st.Elapsed);
+            }
             int dataGroupCount = 351;
             var splitedDataGroups = DataHolder.GetTrainingDataAsChunks(mainNetwork.baseData._trainingDataSet, dataGroupCount);
             var trainingSystems = new TrainingSystem[splitedDataGroups.GetLength(0)];
@@ -45,7 +45,6 @@ namespace MLPProgram
             st.Stop();
             Console.WriteLine(st.Elapsed);
             }
-
         }
         private static void InitLearningSystemsBySplitedData(MLPNew mainNetwork, IEnumerable<double[]>[] splitedDataGroups, ref TrainingSystem[] learningSystems)
         {

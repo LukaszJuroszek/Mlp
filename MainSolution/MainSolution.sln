@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MLPProgram", "MLP\MLPProgra
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AleaClasTest", "AleaClasTest\AleaClasTest.csproj", "{C69180C9-F91A-4452-81D5-C1B964C9FD16}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MLPTests", "MLP.Tests\MLPTests.csproj", "{CA9F14F7-8BEA-4064-9CB5-36103AB3F6EA}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -20,6 +22,10 @@ Global
 		{C69180C9-F91A-4452-81D5-C1B964C9FD16}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{C69180C9-F91A-4452-81D5-C1B964C9FD16}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C69180C9-F91A-4452-81D5-C1B964C9FD16}.Release|Any CPU.ActiveCfg = Debug|Any CPU
+		{CA9F14F7-8BEA-4064-9CB5-36103AB3F6EA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CA9F14F7-8BEA-4064-9CB5-36103AB3F6EA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CA9F14F7-8BEA-4064-9CB5-36103AB3F6EA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CA9F14F7-8BEA-4064-9CB5-36103AB3F6EA}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

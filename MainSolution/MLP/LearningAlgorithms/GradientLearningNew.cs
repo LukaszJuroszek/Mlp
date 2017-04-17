@@ -32,7 +32,7 @@ namespace MLPProgram.LearningAlgorithms
                     for (int l = 0; l < _network.baseData._numberOfOutput; l++)
                     {
                         double error = _network.baseData._trainingDataSet[batch, _network.baseData._numberOfInput + l] - _network.output[(int)NetworkLayer.Output][l];
-                        error = Sign(error) * DeviceFunction.Pow(DeviceFunction.Abs(error), errorExponent);
+                        error = Math.Sign(error) * Math.Pow(Math.Abs(error), errorExponent);
                         double derivative = _network.classification ? DerivativeFunction(_network.classification, _network.output[(int)NetworkLayer.Output][l]) : 1.0;
                         _network.signalError[(int)NetworkLayer.Output][l] = error * derivative;
                     }
@@ -82,11 +82,10 @@ namespace MLPProgram.LearningAlgorithms
         private static double CalculateSignalErrors(MLPNew network, int v, int n, double errorExponent)
         {
             double error = network.baseData._trainingDataSet[v, network.baseData._numberOfInput + n] - network.output[(int)NetworkLayer.Output][n];
-            error = Sign(error) * DeviceFunction.Pow(DeviceFunction.Abs(error), errorExponent);
+            error = Sign(error) * Math.Pow(Math.Abs(error), errorExponent);
             double derivative = network.classification ? DerivativeFunction(network.classification, network.output[(int)NetworkLayer.Output][n]) : 1.0;
             return error * derivative;
         }
-
         private static double SumSignalErrorForHiddenLayer(MLPNew network, int layer, int hiddenLayerSecondDim)
         {
             double sum = 0.0;
@@ -142,7 +141,7 @@ namespace MLPProgram.LearningAlgorithms
                                 if (network.delta[l][n, w] < minDelta)
                                     network.delta[l][n, w] = minDelta;
                             }
-                            network.weights[l][n, w] += Sign(network.weightDiff[l][n, w]) * network.delta[l][n, w];
+                            network.weights[l][n, w] += Math.Sign(network.weightDiff[l][n, w]) * network.delta[l][n, w];
                             network.prevWeightDiff[l][n, w] = network.weightDiff[l][n, w];
                         }
                         else
@@ -179,7 +178,6 @@ namespace MLPProgram.LearningAlgorithms
             result = isSigmoidFunction ? SigmoidTransferFunction(x) : HyperbolicTransferFunction(x);
             return result;
         }
-
         public static double DerivativeFunction(bool isSigmoidFunction, double x)
         {
             double result = 0;
@@ -201,7 +199,7 @@ namespace MLPProgram.LearningAlgorithms
         }
         public static double HyperbolicTransferFunction(double x)
         {
-            return DeviceFunction.Tanh(x);
+            return Math.Tanh(x);
         }
         public static double HyperbolicDerivative(double x)
         {
@@ -209,7 +207,7 @@ namespace MLPProgram.LearningAlgorithms
         }
         public static double SigmoidTransferFunction(double x)
         {
-            return 1.0 / (1.0 + DeviceFunction.Exp(-x));
+            return 1.0 / (1.0 + Math.Exp(-x));
         }
         public static double SigmoidDerivative(double x)
         {
