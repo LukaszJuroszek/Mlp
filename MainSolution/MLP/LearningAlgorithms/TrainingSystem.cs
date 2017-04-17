@@ -109,7 +109,7 @@ namespace MLPProgram.LearningAlgorithms
         {
             for (int l = 1; l < network.numbersOfLayers; l++)
                 for (int n = 0; n < network.networkLayers[l]; n++)
-                    for (int w = 0; w < network.networkLayers[l - 1]; w++)
+                    for (int w = 0; w <= network.networkLayers[l - 1]; w++)
                         network.weightDiff[l][n, w] = 0;
         }
         public static void UpdateWeightsRprop(MLPNew network,

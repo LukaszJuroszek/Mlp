@@ -149,6 +149,15 @@ namespace MLPTests
                     GradientLearning.CalculateBias(net, _learnRate, l, n);
                     TrainingSystem.CalculateBias(netNew, _learnRate, l, n);
                 }
+            for (int x = 1; x < net.weightDiff.GetLength(0); x++)
+                for (int n = 0; n < net.weightDiff[x].GetLength(0); n++)
+                    for (int w = 0; w < net.weightDiff[x][n].GetLength(0); w++)
+                    {
+                        _outputHelper.WriteLine($"x {x}, n{n} w{w}");
+                        _outputHelper.WriteLine(net.weightDiff[x][n][w].ToString());
+                        _outputHelper.WriteLine(netNew.weightDiff[x][n, w].ToString());
+                        Assert.Equal(net.weightDiff[x][n][w], netNew.weightDiff[x][n, w], 6);
+                    }
             IsTwoMLPNetworksAreEq(net, netNew);
         }
 
@@ -161,8 +170,8 @@ namespace MLPTests
                 for (int n = 0; n < netNew.networkLayers[l]; n++)
                     for (int w = 0; w <= netNew.networkLayers[l - 1]; w++)
                     {
-                       Assert.Equal(net.weightDiff[l][n][w],netNew.weightDiff[l][n, w]);
-                       Assert.Equal(net.delta[l][n][w],netNew.delta[l][n, w]);
+                        Assert.Equal(net.weightDiff[l][n][w], netNew.weightDiff[l][n, w]);
+                        Assert.Equal(net.delta[l][n][w], netNew.delta[l][n, w]);
                     }
             IsTwoMLPNetworksAreEq(net, netNew);
         }
