@@ -10,7 +10,7 @@ using Xunit;
 
 namespace MLPTests
 {
-    public class MLPs
+    public class Tests
     {
         string _filePath = @"..\..\Datasets\ionosphere_std_sh.txt";
         [Fact]
@@ -69,7 +69,41 @@ namespace MLPTests
             //act
             var net = new MLP(data);
             var netNew = new MLPNew(dataNew, net.weights);
-            
+            for (int l = 1 ; l < net.delta.GetLength(0); l++)
+                for (int n = 0; n < net.delta[l].GetLength(0); n++)
+                    for (int w = 0; w < net.delta[l][n].GetLength(0); w++)
+                    {
+                        Assert.Equal(net.delta[l][n][w], netNew.delta[l][n, w],6);
+                        Assert.Equal(net.weightDiff[l][n][w], netNew.weightDiff[l][n, w],6);
+                        Assert.Equal(net.weights[l][n][w], netNew.weights[l][n, w],6);
+                        Assert.Equal(net.prevWeightDiff[l][n][w], netNew.prevWeightDiff[l][n, w],6);
+                    }
+            for (int l =0; l < 1; l++)
+                for (int n = 0; n < net.output[l].GetLength(0); n++)
+                    Assert.Equal(net.output[l][n], netNew.output[l][n]);
+            for (int l =1;l < net.signalError.GetLength(0); l++)
+                for (int n = 0; n < net.signalError[l].GetLength(0); n++)
+                {
+                    Assert.Equal(net.signalError[l][n], netNew.signalError[l][n]);
+                    Assert.Equal(net.output[l][n], netNew.output[l][n]);
+                }
+            for (int i = 0; i < net.layer.GetLength(0); i++)
+                Assert.Equal(net.layer[i], netNew.networkLayers[i]);
+            Assert.Equal(net.numbersOfLayers, netNew.numbersOfLayers);
+        }
+        [Fact]
+        public void IsTwoLearningMethodsCountsInTheSameWay()
+        {
+            //arrange 
+            var fileParser = new FileParser(_filePath, GradientLearning.SigmoidTransferFunction);
+            var fileParserNew = new FIleParserNew(_filePath, GradientLearning.SigmoidTransferFunction);
+            var data = new BaseDataHolder(fileParser);
+            var dataNew = new DataHolder(fileParserNew);
+            var net = new MLP(data);
+            var netNew = new MLPNew(dataNew, net.weights);
+            var learningAlgorithm = new GradientLearning(net);
+            var trainingSystems = new TrainingSystem(netNew);
+
         }
     }
 }
