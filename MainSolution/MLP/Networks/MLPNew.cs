@@ -64,39 +64,39 @@ namespace MLPProgram.Networks
             result[(int)NetworkLayer.Output] = new double[networkLayers[(int)NetworkLayer.Output]];
             return result;
         }
-        public double CountAccuracyByTrainingData(double[,] trainingDataSet, int lok = 0)
+        public static double CountAccuracy(MLPNew netowrk, int lok = 0)
         {
             double maxValue = -1;
             double error = 0.0;
             bool classification = false;
-            if (trainingDataSet.GetLength(0) > networkLayers[0] + 1)
+            if (netowrk.baseData._trainingDataSet.GetLength(0) > netowrk.networkLayers[0] + 1)
                 classification = true;
             int numCorrect = 0;
             int maxIndex = -1;
-            for (int v = 0; v < trainingDataSet.GetLength(0); v++)
+            for (int v = 0; v < netowrk.baseData._trainingDataSet.GetLength(0); v++)
             {
-                Program.ForwardPass(weights, networkLayers, output, trainingDataSet, numbersOfLayers, classification, baseData._isSigmoidFunction, v, lok);
+                Program.ForwardPass(netowrk.weights, netowrk.networkLayers, netowrk.output, netowrk.baseData._trainingDataSet, netowrk.numbersOfLayers, netowrk.classification, netowrk.baseData._isSigmoidFunction, v, lok);
                 maxIndex = -1;
                 maxValue = -1.1;
-                for (int n = 0; n < networkLayers[numbersOfLayers - 1]; n++)
+                for (int n = 0; n < netowrk.networkLayers[netowrk.numbersOfLayers - 1]; n++)
                 {
                     if (classification)
-                        error += GradientLearning.TransferFunction(baseData._isSigmoidFunction, output[numbersOfLayers - 1][n] - (2 * trainingDataSet[v, networkLayers[0] + n] - 1));
+                        error += GradientLearning.TransferFunction(netowrk.baseData._isSigmoidFunction, netowrk.output[netowrk.numbersOfLayers - 1][n] - (2 * netowrk.baseData._trainingDataSet[v, netowrk.networkLayers[0] + n] - 1));
                     else
-                        error += Math.Pow(output[numbersOfLayers - 1][n] - trainingDataSet[v, networkLayers[0] + n], 2);
-                    if (output[numbersOfLayers - 1][n] > maxValue)
+                        error += Math.Pow(netowrk.output[netowrk.numbersOfLayers - 1][n] - netowrk.baseData._trainingDataSet[v, netowrk.networkLayers[0] + n], 2);
+                    if (netowrk.output[netowrk.numbersOfLayers - 1][n] > maxValue)
                     {
-                        maxValue = output[numbersOfLayers - 1][n];
+                        maxValue = netowrk.output[netowrk.numbersOfLayers - 1][n];
                         maxIndex = n;
                     }
                 }
-                int position = networkLayers[0] + maxIndex;
-                if (trainingDataSet[v, position] == 1)
+                int position = netowrk.networkLayers[0] + maxIndex;
+                if (netowrk.baseData._trainingDataSet[v, position] == 1)
                     numCorrect++;
             }
-            error /= trainingDataSet.GetLength(0);
+            error /= netowrk.baseData._trainingDataSet.GetLength(0);
             Console.WriteLine($"error {error}");
-            return (double)numCorrect / trainingDataSet.GetLength(0);
+            return (double)numCorrect / netowrk.baseData._trainingDataSet.GetLength(0);
         }
     }
 }

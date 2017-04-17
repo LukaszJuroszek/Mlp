@@ -22,12 +22,11 @@ namespace MLPProgram.LearningAlgorithms
             double errorExponent = _errorExponent;
             batchSize = _network.baseData._numberOfInputRow;
             CreateWeightZeroAndAsingDeltaValue(_network, 0.1);
-            MakeGradientZero(_network);
             for (int epoch = 0; epoch < numberOfEpochs; epoch++)
             {
+                MakeGradientZero(_network);
                 for (int batch = 0; batch < batchSize; batch++)
                 {
-                    MakeGradientZero(_network);
                     Program.ForwardPass(_network, batch);
                     for (int l = 0; l < _network.baseData._numberOfOutput; l++)
                         _network.signalError[(int)NetworkLayer.Output][l] = CalculateSignalErrorsForOutputLayer(_network, batch, l, errorExponent);
@@ -36,15 +35,14 @@ namespace MLPProgram.LearningAlgorithms
                             _network.signalError[l][n] = CalculateSignalErrorFroHiddenLayer(_network, l, n);
                     for (int l = _network.numbersOfLayers - 1; l > 0; l--)
                         for (int n = 0; n < _network.networkLayers[l]; n++)
-                            CalculateBias(_network,learnRate, l, n);
+                            CalculateBias(_network, learnRate, l, n);
                 }
                 UpdateWeightsRprop(_network, learnRate, momentum, _etaPlus, _etaMinus, _minDelta, _maxDelta);
                 MakeGradientZero(_network);
             }
             return _network;
         }
-
-        public static void CalculateBias(MLPNew network,double learnRate, int l, int n)
+        public static void CalculateBias(MLPNew network, double learnRate, int l, int n)
         {
             network.weightDiff[l][n, network.networkLayers[l - 1]] += learnRate * network.signalError[l][n];
             for (int w = 0; w < network.networkLayers[l - 1]; w++)

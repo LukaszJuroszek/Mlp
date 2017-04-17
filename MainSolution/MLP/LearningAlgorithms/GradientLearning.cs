@@ -37,7 +37,7 @@ namespace MLPProgram.LearningAlgorithms
                         for (int n = 0; n < _network.layer[l]; n++)
                             CalculateBias(_network,learnRate, l, n);
                 }
-                UpdateWeightsRprop(learnRate, momentum, _etaPlus, _etaMinus, _minDelta, _maxDelta);
+                UpdateWeightsRprop(_network,learnRate, momentum, _etaPlus, _etaMinus, _minDelta, _maxDelta);
                 // zero-out gradients
                 MakeGradientZero(_network);
             }
@@ -148,7 +148,8 @@ namespace MLPProgram.LearningAlgorithms
                     for (int w = 0; w <= network.layer[l - 1]; w++)
                         network.weightDiff[l][n][w] = 0;
         }
-        public void UpdateWeightsRprop(
+        public static void UpdateWeightsRprop(
+            MLP network,
            double learnRate,
            double momentum,
            double etaPlus,
@@ -157,31 +158,31 @@ namespace MLPProgram.LearningAlgorithms
            double maxDelta,
            double inputWeightRegularizationCoef = -1)
         {
-            for (int l = _network.numbersOfLayers - 1; l > 0; l--)
-                for (int n = 0; n < _network.layer[l]; n++)
-                    for (int w = 0; w <= _network.layer[l - 1]; w++)
+            for (int l = network.numbersOfLayers - 1; l > 0; l--)
+                for (int n = 0; n < network.layer[l]; n++)
+                    for (int w = 0; w <= network.layer[l - 1]; w++)
                     {
-                        if (inputWeightRegularizationCoef <= 0 || _network.weights[l][n][w] != 0)
+                        if (inputWeightRegularizationCoef <= 0 || network.weights[l][n][w] != 0)
                         {
-                            if (_network.prevWeightDiff[l][n][w] * _network.weightDiff[l][n][w] > 0)
+                            if (network.prevWeightDiff[l][n][w] * network.weightDiff[l][n][w] > 0)
                             {
-                                _network.delta[l][n][w] *= etaPlus;
-                                if (_network.delta[l][n][w] > maxDelta)
-                                    _network.delta[l][n][w] = maxDelta;
+                                network.delta[l][n][w] *= etaPlus;
+                                if (network.delta[l][n][w] > maxDelta)
+                                    network.delta[l][n][w] = maxDelta;
                             }
-                            else if (_network.prevWeightDiff[l][n][w] * _network.weightDiff[l][n][w] < 0)
+                            else if (network.prevWeightDiff[l][n][w] * network.weightDiff[l][n][w] < 0)
                             {
-                                _network.delta[l][n][w] *= etaMinus;
-                                if (_network.delta[l][n][w] < minDelta)
-                                    _network.delta[l][n][w] = minDelta;
+                                network.delta[l][n][w] *= etaMinus;
+                                if (network.delta[l][n][w] < minDelta)
+                                    network.delta[l][n][w] = minDelta;
                             }
-                            _network.weights[l][n][w] += Math.Sign(_network.weightDiff[l][n][w]) * _network.delta[l][n][w];
-                            _network.prevWeightDiff[l][n][w] = _network.weightDiff[l][n][w];
+                            network.weights[l][n][w] += Math.Sign(network.weightDiff[l][n][w]) * network.delta[l][n][w];
+                            network.prevWeightDiff[l][n][w] = network.weightDiff[l][n][w];
                         }
                         else
                         {
-                            _network.prevWeightDiff[l][n][w] = 0;
-                            _network.weightDiff[l][n][w] = 0;
+                            network.prevWeightDiff[l][n][w] = 0;
+                            network.weightDiff[l][n][w] = 0;
                         }
                     }
         }

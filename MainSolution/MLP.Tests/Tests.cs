@@ -14,8 +14,15 @@ namespace MLPTests
         private readonly string _filePath = @"..\..\Datasets\ionosphere_std_sh.txt";
         private readonly double _deltaValue = 0.1;
         private readonly double _learnRate = 0.05;
+        private readonly double _momentum = 0.5;
         private readonly double _errorExponent = 2.0;
+        private readonly double _etaPlus = 1.2;
+        private readonly double _etaMinus = 0.5;
+        private readonly double _minDelta = 0.00001;
+        private readonly double _maxDelta = 10;
         private readonly ITestOutputHelper _outputHelper;
+        private int _numberOfEpochos = 50;
+
         public Tests(ITestOutputHelper testOutputHelper)
         {
             _outputHelper = testOutputHelper;
@@ -128,17 +135,53 @@ namespace MLPTests
             var net = new MLP(data);
             var netNew = new MLPNew(dataNew, net.weights);
             AssertThatCreateWeigthZeroAndAsignDeltaValueWorkInTheSameWayInMLPs(net, netNew);
-            for (int batch = 0; batch < net.baseData._numberOFVectors; batch++)
+            for (int epoch = 0; epoch < _numberOfEpochos; epoch++)
             {
-                TrainingSystem.MakeGradientZero(netNew);
-                GradientLearning.MakeGradientZero(net);
-                Program.ForwardPass(netNew, batch);//TrainingSystem
-                Program.ForwardPass(net, batch);//GradientLearning  
-                AssertSignalErrosInOutputLayer(net, netNew, batch);
-                AssertSignalErrorsInHiddenLayer(net, netNew);
-                AssertBias(net, netNew);
+                AssertThatMakeZeroGradientWorkingInMLPs(net, netNew);
+                for (int batch = 0; batch < net.baseData._numberOFVectors; batch++)
+                {
+                    AssertThatForwardPassWorkingInMLPs(net, netNew, batch);
+                    AssertSignalErrosInOutputLayer(net, netNew, batch);
+                    AssertSignalErrorsInHiddenLayer(net, netNew);
+                    AssertBias(net, netNew);
+                }
+                AssertThatUpgradeWeithsWorkingInMLPs(net, netNew);
+                AssertThatMakeZeroGradientWorkingInMLPs(net, netNew);
                 IsTwoMLPNetworksAreEq(net, netNew);
+
             }
+            AssertOfAccuracy(net, netNew);
+            IsTwoMLPNetworksAreEq(net, netNew);
+
+
+        }
+        public void AssertOfAccuracy(MLP net, MLPNew netNew)
+        {
+            
+            double result = MLP.CountAccuracy(net);
+            double resultNew = MLPNew.CountAccuracy(netNew);
+            _outputHelper.WriteLine(resultNew.ToString());
+            _outputHelper.WriteLine(result.ToString());
+            Assert.Equal(result, resultNew, 7);
+
+        }
+        private void AssertThatUpgradeWeithsWorkingInMLPs(MLP net, MLPNew netNew)
+        {
+            GradientLearning.UpdateWeightsRprop(net, _learnRate, _momentum, _etaPlus, _etaMinus, _minDelta, _maxDelta);
+            TrainingSystem.UpdateWeightsRprop(netNew, _learnRate, _momentum, _etaPlus, _etaMinus, _minDelta, _maxDelta);
+        }
+
+        private void AssertThatForwardPassWorkingInMLPs(MLP net, MLPNew netNew, int batch)
+        {
+            Program.ForwardPass(netNew, batch);//TrainingSystem
+            Program.ForwardPass(net, batch);//GradientLearning  
+
+        }
+
+        private void AssertThatMakeZeroGradientWorkingInMLPs(MLP net, MLPNew netNew)
+        {
+            TrainingSystem.MakeGradientZero(netNew);
+            GradientLearning.MakeGradientZero(net);
         }
 
         private void AssertBias(MLP net, MLPNew netNew)
@@ -149,16 +192,6 @@ namespace MLPTests
                     GradientLearning.CalculateBias(net, _learnRate, l, n);
                     TrainingSystem.CalculateBias(netNew, _learnRate, l, n);
                 }
-            for (int x = 1; x < net.weightDiff.GetLength(0); x++)
-                for (int n = 0; n < net.weightDiff[x].GetLength(0); n++)
-                    for (int w = 0; w < net.weightDiff[x][n].GetLength(0); w++)
-                    {
-                        _outputHelper.WriteLine($"x {x}, n{n} w{w}");
-                        _outputHelper.WriteLine(net.weightDiff[x][n][w].ToString());
-                        _outputHelper.WriteLine(netNew.weightDiff[x][n, w].ToString());
-                        Assert.Equal(net.weightDiff[x][n][w], netNew.weightDiff[x][n, w], 6);
-                    }
-            IsTwoMLPNetworksAreEq(net, netNew);
         }
 
         private void AssertThatCreateWeigthZeroAndAsignDeltaValueWorkInTheSameWayInMLPs(MLP net, MLPNew netNew)
@@ -173,7 +206,6 @@ namespace MLPTests
                         Assert.Equal(net.weightDiff[l][n][w], netNew.weightDiff[l][n, w]);
                         Assert.Equal(net.delta[l][n][w], netNew.delta[l][n, w]);
                     }
-            IsTwoMLPNetworksAreEq(net, netNew);
         }
         private static void AssertSignalErrorsInHiddenLayer(MLP net, MLPNew netNew)
         {

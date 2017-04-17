@@ -27,7 +27,7 @@ namespace MLPProgram
                 st.Reset();
                 st.Start();
                 learningAlgorithm.Train(numberOfEpochs: 50, batchSize: 30, learnRate: 0.05, momentum: 0.5);
-                double testAccuracy = network.Accuracy();
+                double testAccuracy = MLP.CountAccuracy(network);
                 Console.WriteLine(testAccuracy);
                 st.Stop();
                 Console.WriteLine(st.Elapsed);
@@ -41,7 +41,8 @@ namespace MLPProgram
                 st.Reset();
                 st.Start();
                 trainingSystems[i].TrainByInsideNetwork(numberOfEpochs: 50, batchSize: 30, learnRate: 0.05, momentum: 0.5);
-                Console.WriteLine(trainingSystems[i]._network.CountAccuracyByTrainingData(mainNetwork.baseData._trainingDataSet));
+                double testAccuracy = MLPNew.CountAccuracy(trainingSystems[i]._network);
+                Console.WriteLine($"{testAccuracy:N9}");
                 st.Stop();
                 Console.WriteLine(st.Elapsed);
             }
@@ -52,7 +53,7 @@ namespace MLPProgram
             {
                 var net = mainNetwork;
                 net.baseData._trainingDataSet = splitedDataGroups[i].To2DArray();
-                net.baseData._numberOfInputRow = net.baseData._trainingDataSet.GetLength(0) - 1;
+                net.baseData._numberOfInputRow = net.baseData._trainingDataSet.GetLength(0);
                 learningSystems[i] = new TrainingSystem(net);
             }
         }

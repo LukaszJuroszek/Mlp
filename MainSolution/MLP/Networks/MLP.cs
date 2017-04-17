@@ -66,39 +66,39 @@ namespace MLPProgram.Networks
                         delta[l][n][w] = dw0; //for Rprop
                     }
         }
-        public double Accuracy(int lok = 0)
+        public static double CountAccuracy(MLP network, int lok = 0)
         {
             double maxValue = -1;
             double error = 0.0;
             bool classification = false;
-            if (baseData._trainingDataSet[0].Length > layer[0] + 1)
+            if (network.baseData._trainingDataSet[0].Length > network.layer[0] + 1)
                 classification = true;
             int numCorrect = 0;
             int maxIndex = -1;
-            for (int v = 0; v < baseData._trainingDataSet.Length; v++)
+            for (int v = 0; v < network.baseData._trainingDataSet.Length; v++)
             {
-                Program.ForwardPass(this, v, lok);
+                Program.ForwardPass(network, v, lok);
                 maxIndex = -1;
                 maxValue = -1.1;
-                for (int n = 0; n < layer[numbersOfLayers - 1]; n++)
+                for (int n = 0; n < network.layer[network.numbersOfLayers - 1]; n++)
                 {
                     if (classification)
-                        error += GradientLearning.TransferFunction(this, output[numbersOfLayers - 1][n] - (2 * baseData._trainingDataSet[v][layer[0] + n] - 1));
+                        error += GradientLearning.TransferFunction(network, network.output[network.numbersOfLayers - 1][n] - (2 * network.baseData._trainingDataSet[v][network.layer[0] + n] - 1));
                     else
-                        error += Math.Pow(output[numbersOfLayers - 1][n] - baseData._trainingDataSet[v][layer[0] + n], 2);
-                    if (output[numbersOfLayers - 1][n] > maxValue)
+                        error += Math.Pow(network.output[network.numbersOfLayers - 1][n] - network.baseData._trainingDataSet[v][network.layer[0] + n], 2);
+                    if (network.output[network.numbersOfLayers - 1][n] > maxValue)
                     {
-                        maxValue = output[numbersOfLayers - 1][n];
+                        maxValue = network.output[network.numbersOfLayers - 1][n];
                         maxIndex = n;
                     }
                 }
-                int position = layer[0] + maxIndex;
-                if (baseData._trainingDataSet[v][position] == 1)
+                int position = network.layer[0] + maxIndex;
+                if (network.baseData._trainingDataSet[v][position] == 1)
                     numCorrect++;
             }
-            error /= baseData._trainingDataSet.Length;
+            error /= network.baseData._trainingDataSet.GetLength(0);
             Console.WriteLine($"error {error}");
-            return (double)numCorrect / baseData._trainingDataSet.Length;
+            return (double)numCorrect / network.baseData._trainingDataSet.GetLength(0);
         }
         public static double Accuracy(MLP mlp, out double error, int lok = 0)
         {
