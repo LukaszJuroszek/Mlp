@@ -21,7 +21,8 @@ namespace MLPTests
         private readonly double _minDelta = 0.00001;
         private readonly double _maxDelta = 10;
         private readonly ITestOutputHelper _outputHelper;
-        private int _numberOfEpochos = 50;
+        private readonly int _numberOfEpochos =50;
+        private readonly int _accu = 7;
 
         public Tests(ITestOutputHelper testOutputHelper)
         {
@@ -148,21 +149,16 @@ namespace MLPTests
                 AssertThatUpgradeWeithsWorkingInMLPs(net, netNew);
                 AssertThatMakeZeroGradientWorkingInMLPs(net, netNew);
                 IsTwoMLPNetworksAreEq(net, netNew);
-
             }
             AssertOfAccuracy(net, netNew);
             IsTwoMLPNetworksAreEq(net, netNew);
-
-
         }
         public void AssertOfAccuracy(MLP net, MLPNew netNew)
         {
-            
+
             double result = MLP.CountAccuracy(net);
             double resultNew = MLPNew.CountAccuracy(netNew);
-            _outputHelper.WriteLine(resultNew.ToString());
-            _outputHelper.WriteLine(result.ToString());
-            Assert.Equal(result, resultNew, 7);
+            Assert.Equal(result, resultNew, _accu);
 
         }
         private void AssertThatUpgradeWeithsWorkingInMLPs(MLP net, MLPNew netNew)
@@ -170,20 +166,17 @@ namespace MLPTests
             GradientLearning.UpdateWeightsRprop(net, _learnRate, _momentum, _etaPlus, _etaMinus, _minDelta, _maxDelta);
             TrainingSystem.UpdateWeightsRprop(netNew, _learnRate, _momentum, _etaPlus, _etaMinus, _minDelta, _maxDelta);
         }
-
         private void AssertThatForwardPassWorkingInMLPs(MLP net, MLPNew netNew, int batch)
         {
             Program.ForwardPass(netNew, batch);//TrainingSystem
             Program.ForwardPass(net, batch);//GradientLearning  
 
         }
-
         private void AssertThatMakeZeroGradientWorkingInMLPs(MLP net, MLPNew netNew)
         {
             TrainingSystem.MakeGradientZero(netNew);
             GradientLearning.MakeGradientZero(net);
         }
-
         private void AssertBias(MLP net, MLPNew netNew)
         {
             for (int l = netNew.numbersOfLayers - 1; l > 0; l--)
@@ -193,7 +186,6 @@ namespace MLPTests
                     TrainingSystem.CalculateBias(netNew, _learnRate, l, n);
                 }
         }
-
         private void AssertThatCreateWeigthZeroAndAsignDeltaValueWorkInTheSameWayInMLPs(MLP net, MLPNew netNew)
         {
             GradientLearning.CreateWeightZeroAndAsingDeltaValue(net, _deltaValue);
@@ -207,14 +199,14 @@ namespace MLPTests
                         Assert.Equal(net.delta[l][n][w], netNew.delta[l][n, w]);
                     }
         }
-        private static void AssertSignalErrorsInHiddenLayer(MLP net, MLPNew netNew)
+        private  void AssertSignalErrorsInHiddenLayer(MLP net, MLPNew netNew)
         {
             for (int l = net.numbersOfLayers - 2; l > 0; l--)
                 for (int n = 0; n < net.layer[l]; n++)
                 {
                     double expected = GradientLearning.CalculateSignalErrorFroHiddenLayer(net, l, n);
                     double actual = TrainingSystem.CalculateSignalErrorFroHiddenLayer(netNew, l, n);
-                    Assert.Equal(expected, actual);
+                    Assert.Equal(expected, actual,_accu);
                     net.signalError[l][n] = expected;
                     netNew.signalError[l][n] = actual;
                 }
@@ -227,29 +219,30 @@ namespace MLPTests
                 double actual = TrainingSystem.CalculateSignalErrorsForOutputLayer(netNew, batch, l, _errorExponent);
                 net.signalError[net.numbersOfLayers - 1][l] = expected;
                 netNew.signalError[(int)NetworkLayer.Output][l] = actual;
-                Assert.Equal(expected, actual);
+                _outputHelper.WriteLine(expected.ToString());
+                _outputHelper.WriteLine(actual.ToString());
+                Assert.Equal(expected, actual, _accu);
             }
         }
         public void IsTwoMLPNetworksAreEq(MLP net, MLPNew netNew)
         {
-
             for (int l = 1; l < net.delta.GetLength(0); l++)
                 for (int n = 0; n < net.delta[l].GetLength(0); n++)
                     for (int w = 0; w < net.delta[l][n].GetLength(0); w++)
                     {
-                        Assert.Equal(net.delta[l][n][w], netNew.delta[l][n, w]);
-                        Assert.Equal(net.weightDiff[l][n][w], netNew.weightDiff[l][n, w], 6);
-                        Assert.Equal(net.weights[l][n][w], netNew.weights[l][n, w], 6);
-                        Assert.Equal(net.prevWeightDiff[l][n][w], netNew.prevWeightDiff[l][n, w], 6);
+                        Assert.Equal(net.delta[l][n][w], netNew.delta[l][n, w], _accu);
+                        Assert.Equal(net.weightDiff[l][n][w], netNew.weightDiff[l][n, w], _accu);
+                        Assert.Equal(net.weights[l][n][w], netNew.weights[l][n, w], _accu);
+                        Assert.Equal(net.prevWeightDiff[l][n][w], netNew.prevWeightDiff[l][n, w], _accu);
                     }
             for (int l = 0; l < 1; l++)
                 for (int n = 0; n < net.output[l].GetLength(0); n++)
-                    Assert.Equal(net.output[l][n], netNew.output[l][n]);
+                    Assert.Equal(net.output[l][n], netNew.output[l][n], _accu);
             for (int l = 1; l < net.signalError.GetLength(0); l++)
                 for (int n = 0; n < net.signalError[l].GetLength(0); n++)
                 {
-                    Assert.Equal(net.signalError[l][n], netNew.signalError[l][n]);
-                    Assert.Equal(net.output[l][n], netNew.output[l][n]);
+                    Assert.Equal(net.signalError[l][n], netNew.signalError[l][n],_accu);
+                    Assert.Equal(net.output[l][n], netNew.output[l][n], _accu);
                 }
             for (int i = 0; i < net.layer.GetLength(0); i++)
                 Assert.Equal(net.layer[i], netNew.networkLayers[i]);

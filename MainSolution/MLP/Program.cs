@@ -1,4 +1,6 @@
-﻿using MLPProgram.LearningAlgorithms;
+﻿using Alea;
+using Alea.Parallel;
+using MLPProgram.LearningAlgorithms;
 using MLPProgram.Networks;
 using System;
 using System.Collections.Generic;
@@ -32,20 +34,30 @@ namespace MLPProgram
                 st.Stop();
                 Console.WriteLine(st.Elapsed);
             }
-            int dataGroupCount = 351;
-            var splitedDataGroups = DataHolder.GetTrainingDataAsChunks(mainNetwork.baseData._trainingDataSet, dataGroupCount);
+            var trainingSystems = GenerateTrainingSystems(mainNetwork, 10);
+            Console.WriteLine(trainingSystems.IsReadOnly);
+            var test = Gpu.Default.Allocate(trainingSystems);
+            //for (int i = 0; i < trainingSystems.Length; i++)
+            //{
+            Gpu.Default.For(0, test.Length, i =>
+             {  
+                 //st.Reset();
+                 //st.Start();
+                 test[i].TrainByInsideNetwork(numberOfEpochs: 50, batchSize: 30, learnRate: 0.05, momentum: 0.5);
+                 //double testAccuracy = MLPNew.CountAccuracy(trainingSystems[i]._network);
+                 //Console.WriteLine($"{testAccuracy:N9}");
+                 //st.Stop();
+                 //Console.WriteLine(st.Elapsed);
+             }); 
+            //}
+        }
+
+        private static TrainingSystem[] GenerateTrainingSystems(MLPNew mainNetwork, int trainDataInOneNetwork)
+        {
+            var splitedDataGroups = DataHolder.GetTrainingDataAsChunks(mainNetwork.baseData._trainingDataSet, trainDataInOneNetwork);
             var trainingSystems = new TrainingSystem[splitedDataGroups.GetLength(0)];
             InitLearningSystemsBySplitedData(mainNetwork, splitedDataGroups, ref trainingSystems);
-            for (int i = 0; i < trainingSystems.Length; i++)
-            {
-                st.Reset();
-                st.Start();
-                trainingSystems[i].TrainByInsideNetwork(numberOfEpochs: 50, batchSize: 30, learnRate: 0.05, momentum: 0.5);
-                double testAccuracy = MLPNew.CountAccuracy(trainingSystems[i]._network);
-                Console.WriteLine($"{testAccuracy:N9}");
-                st.Stop();
-                Console.WriteLine(st.Elapsed);
-            }
+            return trainingSystems;
         }
         private static void InitLearningSystemsBySplitedData(MLPNew mainNetwork, IEnumerable<double[]>[] splitedDataGroups, ref TrainingSystem[] learningSystems)
         {

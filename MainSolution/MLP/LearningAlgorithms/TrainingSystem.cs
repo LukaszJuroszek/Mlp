@@ -1,4 +1,5 @@
 ﻿using Alea;
+using Alea.Parallel;
 using MLPProgram.Networks;
 using System;
 
@@ -20,25 +21,24 @@ namespace MLPProgram.LearningAlgorithms
         public MLPNew TrainByInsideNetwork(int numberOfEpochs = 30, int batchSize = 30, double learnRate = 0.05, double momentum = 0.5)
         {
             double errorExponent = _errorExponent;
-            batchSize = _network.baseData._numberOfInputRow;
-            CreateWeightZeroAndAsingDeltaValue(_network, 0.1);
+            //CreateWeightZeroAndAsingDeltaValue(_network, 0.1);
             for (int epoch = 0; epoch < numberOfEpochs; epoch++)
             {
-                MakeGradientZero(_network);
-                for (int batch = 0; batch < batchSize; batch++)
+                //MakeGradientZero(_network);
+                for (int batch = 0; batch < _network.baseData._numberOfInputRow; batch++)
                 {
-                    Program.ForwardPass(_network, batch);
-                    for (int l = 0; l < _network.baseData._numberOfOutput; l++)
-                        _network.signalError[(int)NetworkLayer.Output][l] = CalculateSignalErrorsForOutputLayer(_network, batch, l, errorExponent);
-                    for (int l = _network.numbersOfLayers - 2; l > 0; l--)
-                        for (int n = 0; n < _network.networkLayers[l]; n++)
-                            _network.signalError[l][n] = CalculateSignalErrorFroHiddenLayer(_network, l, n);
-                    for (int l = _network.numbersOfLayers - 1; l > 0; l--)
-                        for (int n = 0; n < _network.networkLayers[l]; n++)
-                            CalculateBias(_network, learnRate, l, n);
+                    //Program.ForwardPass(_network, batch);
+                    //for (int l = 0; l < _network.baseData._numberOfOutput; l++)
+                    //    _network.signalError[(int)NetworkLayer.Output][l] = CalculateSignalErrorsForOutputLayer(_network, batch, l, errorExponent);
+                    //for (int l = _network.numbersOfLayers - 2; l > 0; l--)
+                    //    for (int n = 0; n < _network.networkLayers[l]; n++)
+                    //        _network.signalError[l][n] = CalculateSignalErrorFroHiddenLayer(_network, l, n);
+                    //for (int l = _network.numbersOfLayers - 1; l > 0; l--)
+                    //    for (int n = 0; n < _network.networkLayers[l]; n++)
+                    //        CalculateBias(_network, learnRate, l, n);
                 }
-                UpdateWeightsRprop(_network, learnRate, momentum, _etaPlus, _etaMinus, _minDelta, _maxDelta);
-                MakeGradientZero(_network);
+                //UpdateWeightsRprop(_network, learnRate, momentum, _etaPlus, _etaMinus, _minDelta, _maxDelta);
+                //MakeGradientZero(_network);
             }
             return _network;
         }
@@ -82,7 +82,7 @@ namespace MLPProgram.LearningAlgorithms
         public static double CalculateSignalErrorsForOutputLayer(MLPNew network, int v, int n, double errorExponent)
         {
             double error = network.baseData._trainingDataSet[v, network.baseData._numberOfInput + n] - network.output[(int)NetworkLayer.Output][n];
-            error = Sign(error) * Math.Pow(Math.Abs(error), errorExponent);
+            error = Sign(error) * DeviceFunction.Pow(DeviceFunction.Abs(error), errorExponent);
             double derivative = network.classification ? DerivativeFunction(network.classification, network.output[(int)NetworkLayer.Output][n]) : 1.0;
             return error * derivative;
         }
@@ -137,7 +137,7 @@ namespace MLPProgram.LearningAlgorithms
                                 if (network.delta[l][n, w] < minDelta)
                                     network.delta[l][n, w] = minDelta;
                             }
-                            network.weights[l][n, w] += Math.Sign(network.weightDiff[l][n, w]) * network.delta[l][n, w];
+                            network.weights[l][n, w] += Sign(network.weightDiff[l][n, w]) * network.delta[l][n, w];
                             network.prevWeightDiff[l][n, w] = network.weightDiff[l][n, w];
                         }
                         else
@@ -203,7 +203,7 @@ namespace MLPProgram.LearningAlgorithms
         }
         public static double SigmoidTransferFunction(double x)
         {
-            return 1.0 / (1.0 + Math.Exp(-x));
+            return 1.0 / (1.0 + DeviceFunction.Exp(-x));
         }
         public static double SigmoidDerivative(double x)
         {

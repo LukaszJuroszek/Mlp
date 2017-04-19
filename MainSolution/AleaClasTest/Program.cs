@@ -8,6 +8,14 @@ using System.Linq;
 
 namespace AleaClasTest
 {
+    struct BoolTest
+    {
+        bool _boolValue;
+        public BoolTest(bool boolValue)
+        {
+            _boolValue = boolValue;
+        }
+    }
     public enum TestEnum
     {
         One=0,
@@ -18,11 +26,16 @@ namespace AleaClasTest
         [GpuParam] public SampleStruct _field;
         static void Main(string[] args)
         {
+
+            var testOfBools = new BoolTest[2];
+            testOfBools[0] = new BoolTest(true);
+            testOfBools[1] = new BoolTest(false);
             int size = 2000;
             var arg = Enumerable.Range(1, size).ToArray();
             var arg2 = Enumerable.Range(1, size).ToArray();
             var str = new Program { _field = new SampleStruct(size) };
             var gpu = Gpu.Default;
+            var allocatedBool = gpu.Allocate(testOfBools);
             var st = new Stopwatch();
             st.Start();
             var testEnu = new Dictionary<TestEnum, double[,]>

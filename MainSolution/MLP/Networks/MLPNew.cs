@@ -1,4 +1,5 @@
-﻿using MLPProgram.LearningAlgorithms;
+﻿using Alea;
+using MLPProgram.LearningAlgorithms;
 using System;
 
 namespace MLPProgram.Networks
@@ -83,7 +84,7 @@ namespace MLPProgram.Networks
                     if (classification)
                         error += GradientLearning.TransferFunction(netowrk.baseData._isSigmoidFunction, netowrk.output[netowrk.numbersOfLayers - 1][n] - (2 * netowrk.baseData._trainingDataSet[v, netowrk.networkLayers[0] + n] - 1));
                     else
-                        error += Math.Pow(netowrk.output[netowrk.numbersOfLayers - 1][n] - netowrk.baseData._trainingDataSet[v, netowrk.networkLayers[0] + n], 2);
+                        error += DeviceFunction.Pow(netowrk.output[netowrk.numbersOfLayers - 1][n] - netowrk.baseData._trainingDataSet[v, netowrk.networkLayers[0] + n], 2);
                     if (netowrk.output[netowrk.numbersOfLayers - 1][n] > maxValue)
                     {
                         maxValue = netowrk.output[netowrk.numbersOfLayers - 1][n];
@@ -95,7 +96,7 @@ namespace MLPProgram.Networks
                     numCorrect++;
             }
             error /= netowrk.baseData._trainingDataSet.GetLength(0);
-            Console.WriteLine($"error {error}");
+            Console.WriteLine($"error {error:n5}");
             return (double)numCorrect / netowrk.baseData._trainingDataSet.GetLength(0);
         }
     }
