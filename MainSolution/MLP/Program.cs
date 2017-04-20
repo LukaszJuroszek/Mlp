@@ -39,7 +39,7 @@ namespace MLPProgram
             {
                 st.Reset();
                 st.Start();
-                trainingSystems[i].TrainByInsideNetwork(numberOfEpochs: 1, batchSize: 30, learnRate: 0.05, momentum: 0.5);
+                trainingSystems[i].TrainByInsideNetwork(numberOfEpochs: 50, batchSize: 30, learnRate: 0.05, momentum: 0.5);
                 double testAccuracy = MLPNew.CountAccuracy(trainingSystems[i]._network);
                 Console.WriteLine($"{testAccuracy:N9}");
                 st.Stop();

@@ -41,7 +41,6 @@ namespace MLPProgram.LearningAlgorithms
             }
             return _network;
         }
-        [GpuManaged]
         public static void CalculateBias(MLPNew network, double learnRate, int l)
         {
             for (int n = 0; n < network.networkLayers[l]; n++)
