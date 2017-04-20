@@ -124,7 +124,7 @@ namespace MLPTests
             IsTwoMLPNetworksAreEq(net, netNewSecond);
         }
         [Fact]
-        public void IsTrainingMethodWorkInMLPs()
+        public void IsTrainingMethodWorkInMLPsOldStyle()
         {
             var fileParser = new FileParser(_filePath, GradientLearning.SigmoidTransferFunction);
             var fileParserNew = new FIleParserNew(_filePath, GradientLearning.SigmoidTransferFunction);
@@ -135,21 +135,50 @@ namespace MLPTests
             AssertThatCreateWeigthZeroAndAsignDeltaValueWorkInTheSameWayInMLPs(net, netNew);
             for (int epoch = 0; epoch < _numberOfEpochos; epoch++)
             {
-                AssertThatMakeZeroGradientWorkingInMLPs(net, netNew);
+                ActThatMakeZeroGradientWorkingInMLPs(net, netNew);
                 for (int batch = 0; batch < net.baseData._numberOFVectors; batch++)
                 {
-                    AssertThatForwardPassWorkingInMLPs(net, netNew, batch);
+                    ActForwardPassWorkingInMLPs(net, netNew, batch);
                     AssertSignalErrosInOutputLayer(net, netNew, batch);
                     AssertSignalErrorsInHiddenLayer(net, netNew);
-                    AssertBias(net, netNew);
+                    ActBias(net, netNew);
                 }
-                AssertThatUpgradeWeithsWorkingInMLPs(net, netNew);
-                AssertThatMakeZeroGradientWorkingInMLPs(net, netNew);
+                ActUpgradeWeithsWorkingInMLPs(net, netNew);
+                ActThatMakeZeroGradientWorkingInMLPs(net, netNew);
                 IsTwoMLPNetworksAreEq(net, netNew);
             }
             AssertOfAccuracy(net, netNew);
             IsTwoMLPNetworksAreEq(net, netNew);
         }
+        [Fact]
+        public void IsTrainingMethodWorkInMLPsNewStyle()
+        {
+            var fileParser = new FileParser(_filePath, GradientLearning.SigmoidTransferFunction);
+            var fileParserNew = new FIleParserNew(_filePath, GradientLearning.SigmoidTransferFunction);
+            var data = new BaseDataHolder(fileParser);
+            var dataNew = new DataHolder(fileParserNew);
+            var net = new MLP(data);
+            var netNew = new MLPNew(dataNew, net.weights);
+            AssertThatCreateWeigthZeroAndAsignDeltaValueWorkInTheSameWayInMLPs(net, netNew);
+            for (int epoch = 0; epoch < _numberOfEpochos; epoch++)
+            {
+                ActThatMakeZeroGradientWorkingInMLPs(net, netNew);
+                AssertCalculateForRowsAndVectorWorkInMLPs(net, netNew);
+                ActUpgradeWeithsWorkingInMLPs(net, netNew);
+                ActThatMakeZeroGradientWorkingInMLPs(net, netNew);
+                IsTwoMLPNetworksAreEq(net, netNew);
+            }
+            AssertOfAccuracy(net, netNew);
+            IsTwoMLPNetworksAreEq(net, netNew);
+        }
+
+        private void AssertCalculateForRowsAndVectorWorkInMLPs(MLP net, MLPNew netNew)
+        {
+            GradientLearning.CalculateForAllVectors(net, _errorExponent, _learnRate);
+            TrainingSystem.CalculateForAllRow(netNew, _errorExponent, _learnRate);
+            IsTwoMLPNetworksAreEq(net, netNew);
+        }
+
         public void AssertOfAccuracy(MLP net, MLPNew netNew)
         {
 
@@ -158,30 +187,30 @@ namespace MLPTests
             Assert.Equal(result, resultNew, _accu);
 
         }
-        private void AssertThatUpgradeWeithsWorkingInMLPs(MLP net, MLPNew netNew)
+        private void ActUpgradeWeithsWorkingInMLPs(MLP net, MLPNew netNew)
         {
             GradientLearning.UpdateWeightsRprop(net, _learnRate, _momentum, _etaPlus, _etaMinus, _minDelta, _maxDelta);
             TrainingSystem.UpdateWeightsRprop(netNew, _learnRate, _momentum, _etaPlus, _etaMinus, _minDelta, _maxDelta);
         }
-        private void AssertThatForwardPassWorkingInMLPs(MLP net, MLPNew netNew, int batch)
+        private void ActForwardPassWorkingInMLPs(MLP net, MLPNew netNew, int batch)
         {
             Program.ForwardPass(netNew, batch);//TrainingSystem
             Program.ForwardPass(net, batch);//GradientLearning  
 
         }
-        private void AssertThatMakeZeroGradientWorkingInMLPs(MLP net, MLPNew netNew)
+        private void ActThatMakeZeroGradientWorkingInMLPs(MLP net, MLPNew netNew)
         {
             TrainingSystem.MakeGradientZero(netNew);
             GradientLearning.MakeGradientZero(net);
         }
-        private void AssertBias(MLP net, MLPNew netNew)
+        private void ActBias(MLP net, MLPNew netNew)
         {
             for (int l = netNew.numbersOfLayers - 1; l > 0; l--)
                 for (int n = 0; n < netNew.networkLayers[l]; n++)
                 {
                     GradientLearning.CalculateBias(net, _learnRate, l, n);
-                    TrainingSystem.CalculateBias(netNew, _learnRate, l, n);
                 }
+            TrainingSystem.CalculateBias(netNew, _learnRate);
         }
         private void AssertThatCreateWeigthZeroAndAsignDeltaValueWorkInTheSameWayInMLPs(MLP net, MLPNew netNew)
         {

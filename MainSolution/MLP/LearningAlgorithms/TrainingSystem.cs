@@ -22,33 +22,48 @@ namespace MLPProgram.LearningAlgorithms
         {
             double errorExponent = _errorExponent;
             CreateWeightZeroAndAsingDeltaValue(_network, 0.1);
+            var net = _network;
+            var etaPlus = _etaPlus;
+            var etaMinus = _etaMinus;
+            var minDelta = _minDelta;
+            var maxDelta = _maxDelta;
             for (int epoch = 0; epoch < numberOfEpochs; epoch++)
             {
-                MakeGradientZero(_network);
-                for (int batch = 0; batch < _network.baseData._numberOfInputRow; batch++)
-                {
-                    Program.ForwardPass(_network, batch);
-                    for (int l = 0; l < _network.baseData._numberOfOutput; l++)
-                        _network.signalError[(int)NetworkLayer.Output][l] = CalculateSignalErrorsForOutputLayer(_network, batch, l, errorExponent);
-                    for (int l = _network.numbersOfLayers - 2; l > 0; l--)
-                        for (int n = 0; n < _network.networkLayers[l]; n++)
-                            _network.signalError[l][n] = CalculateSignalErrorFroHiddenLayer(_network, l, n);
-                    for (int l = _network.numbersOfLayers - 1; l > 0; l--)
-                        CalculateBias(_network, learnRate, l);
-                }
-                UpdateWeightsRprop(_network, learnRate, momentum, _etaPlus, _etaMinus, _minDelta, _maxDelta);
-                MakeGradientZero(_network);
+                MakeGradientZero(net);
+                CalculateForAllRow(net, errorExponent, learnRate);
+                UpdateWeightsRprop(net, learnRate, momentum, etaPlus, _etaMinus, _minDelta, _maxDelta);
+                MakeGradientZero(net);
             }
+            _network = net;
             return _network;
         }
-        public static void CalculateBias(MLPNew network, double learnRate, int l)
+
+        public static void CalculateForAllRow(MLPNew network, double errorExponent, double learnRate)
         {
-            for (int n = 0; n < network.networkLayers[l]; n++)
+            Gpu.Default.For(0, network.baseData._numberOfInputRow, batch =>
             {
-                network.weightDiff[l][n, network.networkLayers[l - 1]] = network.weightDiff[l][n, network.networkLayers[l - 1]] + (learnRate * network.signalError[l][n]);
-                for (int w = 0; w < network.networkLayers[l - 1]; w++)
-                    network.weightDiff[l][n, w] = network.weightDiff[l][n, w] + (learnRate * network.signalError[l][n] * network.output[l - 1][w]);
-            }
+                //    for (int batch = 0; batch < network.baseData._numberOfInputRow; batch++)
+                //{
+                Program.ForwardPass(network, batch);
+                for (int l = 0; l < network.baseData._numberOfOutput; l++)
+                    network.signalError[(int)NetworkLayer.Output][l] = CalculateSignalErrorsForOutputLayer(network, batch, l, errorExponent);
+                for (int l = network.numbersOfLayers - 2; l > 0; l--)
+                    for (int n = 0; n < network.networkLayers[l]; n++)
+                        network.signalError[l][n] = CalculateSignalErrorFroHiddenLayer(network, l, n);
+                CalculateBias(network, learnRate);
+            //}
+            });
+        }
+
+        public static void CalculateBias(MLPNew network, double learnRate)
+        {
+            for (int l = network.numbersOfLayers - 1; l > 0; l--)
+                for (int n = 0; n < network.networkLayers[l]; n++)
+                {
+                    network.weightDiff[l][n, network.networkLayers[l - 1]] = network.weightDiff[l][n, network.networkLayers[l - 1]] + (learnRate * network.signalError[l][n]);
+                    for (int w = 0; w < network.networkLayers[l - 1]; w++)
+                        network.weightDiff[l][n, w] = network.weightDiff[l][n, w] + (learnRate * network.signalError[l][n] * network.output[l - 1][w]);
+                }
         }
         public static double CalculateSignalErrorFroHiddenLayer(MLPNew network, int l, int n)
         {
@@ -122,6 +137,7 @@ namespace MLPProgram.LearningAlgorithms
            double inputWeightRegularizationCoef = -1)
         {
             for (int l = network.numbersOfLayers - 1; l > 0; l--)
+            {
                 for (int n = 0; n < network.networkLayers[l]; n++)
                     for (int w = 0; w <= network.networkLayers[l - 1]; w++)
                     {
@@ -129,17 +145,17 @@ namespace MLPProgram.LearningAlgorithms
                         {
                             if (network.prevWeightDiff[l][n, w] * network.weightDiff[l][n, w] > 0)
                             {
-                                network.delta[l][n, w] *= etaPlus;
+                                network.delta[l][n, w] = network.delta[l][n, w] * etaPlus;
                                 if (network.delta[l][n, w] > maxDelta)
                                     network.delta[l][n, w] = maxDelta;
                             }
                             else if (network.prevWeightDiff[l][n, w] * network.weightDiff[l][n, w] < 0)
                             {
-                                network.delta[l][n, w] *= etaMinus;
+                                network.delta[l][n, w] = network.delta[l][n, w] * etaMinus;
                                 if (network.delta[l][n, w] < minDelta)
                                     network.delta[l][n, w] = minDelta;
                             }
-                            network.weights[l][n, w] += Sign(network.weightDiff[l][n, w]) * network.delta[l][n, w];
+                            network.weights[l][n, w] = network.weights[l][n, w] + (Sign(network.weightDiff[l][n, w]) * network.delta[l][n, w]);
                             network.prevWeightDiff[l][n, w] = network.weightDiff[l][n, w];
                         }
                         else
@@ -148,6 +164,7 @@ namespace MLPProgram.LearningAlgorithms
                             network.weightDiff[l][n, w] = 0;
                         }
                     }
+            }
         }
         //public void UpdateWeightsBP(
         //  double learnRate,
