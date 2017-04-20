@@ -13,7 +13,7 @@ namespace MLPProgram
         public int NumberOfInputRow { get; set; }
         public int NumberOfAttributes { get; set; }
         public string[] Headers { get; set; }
-        public bool Classification { get; set; }
+        public byte Classification { get; set; }
         public double[,] Data { get; set; }
         public Func<double, double> TransferFunction { get; set; }
         public FIleParserNew(string fileName, Func<double, double> transferFunction, bool multipleClassColumns = true, bool firstStandardizeRun = false)
@@ -54,13 +54,13 @@ namespace MLPProgram
             for (int i = 0; i < result.GetLength(1); i++)
                 cl.Add((int)result[i, NumberOfInput]);
             NumberOfOutput = cl.Count;
-            Classification = false;
+            Classification = 0;
             if (HeaderLine.ToLower().EndsWith("class") && multipleClassColumns)
             {
-                Classification = true;
+                Classification = 1;
                 int numCol = result.GetLength(1)-1 + cl.Count;
                 var dataSet = new double[result.GetLength(0), numCol];
-                for (var v = 0; v < result.GetLength(0); v++)
+                for (int v = 0; v < result.GetLength(0); v++)
                 {
                     for (int a = 0; a < NumberOfInput; a++)
                         dataSet[v, a] = result[v, a];

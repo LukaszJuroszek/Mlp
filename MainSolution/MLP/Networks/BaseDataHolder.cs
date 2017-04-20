@@ -59,10 +59,10 @@ namespace MLPProgram.Networks
         public int _numberOfInput;
         public int _numberOfOutput;
         public int _numberOfInputRow;
-        public bool _classification;
-        public bool _isSigmoidFunction;
+        public byte _classification;
+        public byte _isSigmoidFunction;
         public int[] _layer;
-        public DataHolder(double[,] data, int numberOfInput, int numberOfOutput, int numberOFVectors, Func<double, double> transferFunction, bool classification, int[] layer)
+        public DataHolder(double[,] data, int numberOfInput, int numberOfOutput, int numberOFVectors, Func<double, double> transferFunction, byte classification, int[] layer)
         {
             _trainingDataSet = data;
             _layer = layer;
@@ -70,7 +70,7 @@ namespace MLPProgram.Networks
             _numberOfOutput = numberOfOutput;
             _numberOfInputRow = numberOFVectors;
             _classification = classification;
-            _isSigmoidFunction = GradientLearning.IsSigmoidTransferFunction(transferFunction);
+            _isSigmoidFunction = GradientLearning.IsSigmoidTransferFunctionByte(transferFunction);
         }
         public DataHolder(FIleParserNew file)
         {
@@ -80,7 +80,7 @@ namespace MLPProgram.Networks
             _numberOfOutput = file.NumberOfOutput;
             _numberOfInputRow = file.NumberOfInputRow;
             _classification = file.Classification;
-            _isSigmoidFunction = GradientLearning.IsSigmoidTransferFunction(file.TransferFunction);
+            _isSigmoidFunction = GradientLearning.IsSigmoidTransferFunctionByte(file.TransferFunction);
         }
 
         public static IEnumerable<T[]>[] GetTrainingDataAsChunks<T>(T[,] array, int howManyGroup)

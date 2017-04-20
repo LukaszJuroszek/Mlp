@@ -1,9 +1,6 @@
 ﻿using MLPProgram;
 using MLPProgram.LearningAlgorithms;
 using MLPProgram.Networks;
-using System;
-using System.Diagnostics;
-using System.Linq;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -21,7 +18,7 @@ namespace MLPTests
         private readonly double _minDelta = 0.00001;
         private readonly double _maxDelta = 10;
         private readonly ITestOutputHelper _outputHelper;
-        private readonly int _numberOfEpochos =50;
+        private readonly int _numberOfEpochos = 50;
         private readonly int _accu = 7;
 
         public Tests(ITestOutputHelper testOutputHelper)
@@ -33,7 +30,7 @@ namespace MLPTests
         {
             var fileParser = new FileParser(_filePath, GradientLearning.SigmoidTransferFunction);
             var fileParserNew = new FIleParserNew(_filePath, GradientLearning.SigmoidTransferFunction);
-            Assert.Equal(fileParser.Classification, fileParserNew.Classification);
+            Assert.Equal(fileParser.Classification, fileParserNew.Classification == 1);
             Assert.Equal(fileParser.HeaderLine, fileParserNew.HeaderLine);
             Assert.Equal(fileParser.NumberOfAttributes, fileParserNew.NumberOfAttributes);
             Assert.Equal(fileParser.NumberOfInput, fileParserNew.NumberOfInput);
@@ -56,8 +53,8 @@ namespace MLPTests
             var fileParserNew = new FIleParserNew(_filePath, GradientLearning.SigmoidTransferFunction);
             var data = new BaseDataHolder(fileParser);
             var dataNew = new DataHolder(fileParserNew);
-            Assert.Equal(data._classification, dataNew._classification);
-            Assert.Equal(data._isSigmoidFunction, dataNew._isSigmoidFunction);
+            Assert.Equal(data._classification, dataNew._classification == 1);
+            Assert.Equal(data._isSigmoidFunction, dataNew._isSigmoidFunction == 1);
             Assert.Equal(data._layer, dataNew._layer);
             Assert.Equal(data._numberOfInput, dataNew._numberOfInput);
             Assert.Equal(data._numberOfOutput, dataNew._numberOfOutput);
@@ -199,14 +196,14 @@ namespace MLPTests
                         Assert.Equal(net.delta[l][n][w], netNew.delta[l][n, w]);
                     }
         }
-        private  void AssertSignalErrorsInHiddenLayer(MLP net, MLPNew netNew)
+        private void AssertSignalErrorsInHiddenLayer(MLP net, MLPNew netNew)
         {
             for (int l = net.numbersOfLayers - 2; l > 0; l--)
                 for (int n = 0; n < net.layer[l]; n++)
                 {
                     double expected = GradientLearning.CalculateSignalErrorFroHiddenLayer(net, l, n);
                     double actual = TrainingSystem.CalculateSignalErrorFroHiddenLayer(netNew, l, n);
-                    Assert.Equal(expected, actual,_accu);
+                    Assert.Equal(expected, actual, _accu);
                     net.signalError[l][n] = expected;
                     netNew.signalError[l][n] = actual;
                 }
@@ -241,7 +238,7 @@ namespace MLPTests
             for (int l = 1; l < net.signalError.GetLength(0); l++)
                 for (int n = 0; n < net.signalError[l].GetLength(0); n++)
                 {
-                    Assert.Equal(net.signalError[l][n], netNew.signalError[l][n],_accu);
+                    Assert.Equal(net.signalError[l][n], netNew.signalError[l][n], _accu);
                     Assert.Equal(net.output[l][n], netNew.output[l][n], _accu);
                 }
             for (int i = 0; i < net.layer.GetLength(0); i++)

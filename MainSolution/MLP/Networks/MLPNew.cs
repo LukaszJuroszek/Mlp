@@ -16,7 +16,7 @@ namespace MLPProgram.Networks
         public double[][] signalError, output;
         public int[] networkLayers;
         public int numbersOfLayers;
-        public bool classification;
+        public byte classification;
         public DataHolder baseData;
         public MLPNew(DataHolder data,double[][][] NonRandomWeigths)
         {

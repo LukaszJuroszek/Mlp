@@ -21,7 +21,7 @@ namespace MLPProgram.LearningAlgorithms
         {
             //if (batchSize > _network.baseData._numberOFVectors || nameof(UpdateWeightsRprop).Contains("Rprop"))
             batchSize = _network.baseData._numberOFVectors;
-            CreateWeightZeroAndAsingDeltaValue(_network,0.1);
+            CreateWeightZeroAndAsingDeltaValue(_network, 0.1);
             for (int epoch = 0; epoch < numberOfEpochs; epoch++)
             {
                 MakeGradientZero(_network);
@@ -32,39 +32,39 @@ namespace MLPProgram.LearningAlgorithms
                         _network.signalError[_network.numbersOfLayers - 1][l] = CalculateSignalErrorsForOutputLayer(_network, batch, l, _errorExponent);
                     for (int l = _network.numbersOfLayers - 2; l > 0; l--)
                         for (int n = 0; n < _network.layer[l]; n++)
-                            _network.signalError[l][n] = CalculateSignalErrorFroHiddenLayer(_network,l, n);
+                            _network.signalError[l][n] = CalculateSignalErrorFroHiddenLayer(_network, l, n);
                     for (int l = _network.numbersOfLayers - 1; l > 0; l--)
                         for (int n = 0; n < _network.layer[l]; n++)
-                            CalculateBias(_network,learnRate, l, n);
+                            CalculateBias(_network, learnRate, l, n);
                 }
-                UpdateWeightsRprop(_network,learnRate, momentum, _etaPlus, _etaMinus, _minDelta, _maxDelta);
+                UpdateWeightsRprop(_network, learnRate, momentum, _etaPlus, _etaMinus, _minDelta, _maxDelta);
                 // zero-out gradients
                 MakeGradientZero(_network);
             }
         }
-        public static double CalculateSignalErrorFroHiddenLayer(MLP netwrok,int l, int n)
+        public static double CalculateSignalErrorFroHiddenLayer(MLP netwrok, int l, int n)
         {
-            return CalculateDerivativeForHiddenLayer(netwrok,l, n) * SumSignalErrorForHiddenLayer(netwrok, l, n);
+            return CalculateDerivativeForHiddenLayer(netwrok, l, n) * SumSignalErrorForHiddenLayer(netwrok, l, n);
         }
         public static int Sign(double number)
         {
             return number > 0 ? 1 : number < 0 ? -1 : 0;
         }
-        private  double CalculateSignalErrors(int v, int n)
+        private double CalculateSignalErrors(int v, int n)
         {
             double error = _network.baseData._trainingDataSet[v][_network.baseData._numberOfInput + n] - _network.output[_network.numbersOfLayers - 1][n];
             error = Math.Sign(error) * Math.Pow(Math.Abs(error), _errorExponent);
             double derivative = CalculateDerivativeForSignalErrorsInOutputLayer(n);
             return error * derivative;
         }
-        public static double CalculateSignalErrorsForOutputLayer(MLP network,int v, int n, double errorExponent)
+        public static double CalculateSignalErrorsForOutputLayer(MLP network, int v, int n, double errorExponent)
         {
             double error = network.baseData._trainingDataSet[v][network.baseData._numberOfInput + n] - network.output[network.numbersOfLayers - 1][n];
             error = Math.Sign(error) * Math.Pow(Math.Abs(error), errorExponent);
-            double derivative = CalculateDerivativeForSignalErrorsInOutputLayer(network,n);
+            double derivative = CalculateDerivativeForSignalErrorsInOutputLayer(network, n);
             return error * derivative;
         }
-        public static void CalculateBias(MLP network,double learnRate, int l, int n)
+        public static void CalculateBias(MLP network, double learnRate, int l, int n)
         {
             network.weightDiff[l][n][network.layer[l - 1]] += learnRate * network.signalError[l][n];
             for (int w = 0; w < network.layer[l - 1]; w++)
@@ -88,9 +88,9 @@ namespace MLPProgram.LearningAlgorithms
         {
             return DerivativeFunction(_network.output[l][n]);
         }
-        private static double CalculateDerivativeForHiddenLayer(MLP network,int l, int n)
+        private static double CalculateDerivativeForHiddenLayer(MLP network, int l, int n)
         {
-            return DerivativeFunction(network.classification,network.output[l][n]);
+            return DerivativeFunction(network.classification, network.output[l][n]);
         }
         private double CalculateDerivativeForSignalErrorsInOutputLayer(int outputSecondDim)
         {
@@ -101,11 +101,11 @@ namespace MLPProgram.LearningAlgorithms
                 derivative = 1.0;
             return derivative;
         }
-        private static double CalculateDerivativeForSignalErrorsInOutputLayer(MLP network,int n)
+        private static double CalculateDerivativeForSignalErrorsInOutputLayer(MLP network, int n)
         {
             double derivative;
             if (network.classification)
-                derivative = DerivativeFunction(network.classification,network.output[network.numbersOfLayers - 1][n]);
+                derivative = DerivativeFunction(network.classification, network.output[network.numbersOfLayers - 1][n]);
             else
                 derivative = 1.0;
             return derivative;
@@ -213,6 +213,12 @@ namespace MLPProgram.LearningAlgorithms
             result = isSigmoidFunction ? SigmoidTransferFunction(x) : HyperbolicTransferFunction(x);
             return result;
         }
+        public static double TransferFunction(byte isSigmoidFunction, double x)
+        {
+            double result = 0;
+            result = isSigmoidFunction == 1 ? SigmoidTransferFunction(x) : HyperbolicTransferFunction(x);
+            return result;
+        }
 
         public static double DerivativeFunction(bool isSigmoidFunction, double x)
         {
@@ -223,7 +229,7 @@ namespace MLPProgram.LearningAlgorithms
         public static double TransferFunction(MLPNew _network, double x)
         {
             double result = 0;
-            if (_network.baseData._isSigmoidFunction)
+            if (_network.baseData._isSigmoidFunction == 1)
                 result = SigmoidTransferFunction(x);
             else
                 result = HyperbolicTransferFunction(x);
@@ -266,6 +272,10 @@ namespace MLPProgram.LearningAlgorithms
         public static bool IsSigmoidTransferFunction(Func<double, double> func)
         {
             return func.Method.Name.Equals("SigmoidTransferFunction") ? true : false;
+        }
+        public static byte IsSigmoidTransferFunctionByte(Func<double, double> func)
+        {
+            return func.Method.Name.Equals("SigmoidTransferFunction") ? Convert.ToByte(1) : Convert.ToByte(0);
         }
     }
 }

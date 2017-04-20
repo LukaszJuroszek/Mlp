@@ -34,22 +34,17 @@ namespace MLPProgram
                 st.Stop();
                 Console.WriteLine(st.Elapsed);
             }
-            var trainingSystems = GenerateTrainingSystems(mainNetwork, 10);
-            Console.WriteLine(trainingSystems.IsReadOnly);
-            var test = Gpu.Default.Allocate(trainingSystems);
-            //for (int i = 0; i < trainingSystems.Length; i++)
-            //{
-            Gpu.Default.For(0, test.Length, i =>
-             {  
-                 //st.Reset();
-                 //st.Start();
-                 test[i].TrainByInsideNetwork(numberOfEpochs: 50, batchSize: 30, learnRate: 0.05, momentum: 0.5);
-                 //double testAccuracy = MLPNew.CountAccuracy(trainingSystems[i]._network);
-                 //Console.WriteLine($"{testAccuracy:N9}");
-                 //st.Stop();
-                 //Console.WriteLine(st.Elapsed);
-             }); 
-            //}
+            var trainingSystems = GenerateTrainingSystems(mainNetwork, 351);
+            for (int i = 0; i < trainingSystems.Length; i++)
+            {
+                st.Reset();
+                st.Start();
+                trainingSystems[i].TrainByInsideNetwork(numberOfEpochs: 1, batchSize: 30, learnRate: 0.05, momentum: 0.5);
+                double testAccuracy = MLPNew.CountAccuracy(trainingSystems[i]._network);
+                Console.WriteLine($"{testAccuracy:N9}");
+                st.Stop();
+                Console.WriteLine(st.Elapsed);
+            }
         }
 
         private static TrainingSystem[] GenerateTrainingSystems(MLPNew mainNetwork, int trainDataInOneNetwork)
@@ -106,6 +101,26 @@ namespace MLPProgram
                 }
             }
         }
+        public static void ForwardPass(double[][,] weights, int[] networkLayers, double[][] output, double[,] _trainingDataSet, int numbersOfLayers, byte classification, byte isSigmoidFunction, int indexOftrainingDataSet, int lok = -1)
+        {
+            for (int i = 0; i < networkLayers[0]; i++)
+            {
+                output[(int)NetworkLayer.Input][i] = _trainingDataSet[indexOftrainingDataSet, i];
+            }
+            for (int l = 1; l < numbersOfLayers; l++)
+            {
+                for (int n = 0; n < output[l].GetLength(0); n++)
+                {
+                    double sum = 0;
+                    for (int w = 0; w < output[l - 1].GetLength(0); w++)
+                    {
+                        sum += output[l - 1][w] * weights[l][n, w];
+                    }
+                    sum += weights[l][n, output[l - 1].Length]; //bias
+                    output[l][n] = (l == output[l].Length - 1 && !(classification == 1)) ? sum : GradientLearning.TransferFunction(isSigmoidFunction, sum);
+                }
+            }
+        }
         public static void ForwardPass(MLPNew network, int indexOftrainingDataSet, int lok = -1)
         {
             for (int i = 0; i < network.networkLayers[0]; i++)
@@ -122,7 +137,7 @@ namespace MLPProgram
                         sum += network.output[l - 1][w] * network.weights[l][n, w];
                     }
                     sum += network.weights[l][n, network.output[l - 1].Length]; //bias
-                    network.output[l][n] = (l == network.output[l].Length - 1 && !network.classification) ? sum : GradientLearning.TransferFunction(network, sum);
+                    network.output[l][n] = (l == network.output[l].Length - 1 && !(network.classification == 1)) ? sum : GradientLearning.TransferFunction(network, sum);
                 }
             }
         }
