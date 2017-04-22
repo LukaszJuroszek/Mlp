@@ -1,4 +1,5 @@
 ﻿using Alea;
+using Alea.CSharp;
 using Alea.Parallel;
 using MLPProgram.Networks;
 using System;
@@ -18,6 +19,7 @@ namespace MLPProgram.LearningAlgorithms
             _errorExponent = 2.0;
             _network = network;
         }
+        [GpuManaged]
         public MLPNew TrainByInsideNetwork(int numberOfEpochs = 30, int batchSize = 30, double learnRate = 0.05, double momentum = 0.5)
         {
             double errorExponent = _errorExponent;
@@ -30,20 +32,17 @@ namespace MLPProgram.LearningAlgorithms
             for (int epoch = 0; epoch < numberOfEpochs; epoch++)
             {
                 MakeGradientZero(net);
-                CalculateForAllRow(net, errorExponent, learnRate);
-                UpdateWeightsRprop(net, learnRate, momentum, etaPlus, _etaMinus, _minDelta, _maxDelta);
+                CalculateForAllRowOnGpu(net, errorExponent, learnRate);
+                UpdateWeightsRprop(net, learnRate, momentum, etaPlus, etaMinus, minDelta, maxDelta);
                 MakeGradientZero(net);
             }
             _network = net;
             return _network;
         }
-
         public static void CalculateForAllRow(MLPNew network, double errorExponent, double learnRate)
         {
-            Gpu.Default.For(0, network.baseData._numberOfInputRow, batch =>
+            for (int batch = 0; batch < network.baseData._numberOfInputRow; batch++)
             {
-                //    for (int batch = 0; batch < network.baseData._numberOfInputRow; batch++)
-                //{
                 Program.ForwardPass(network, batch);
                 for (int l = 0; l < network.baseData._numberOfOutput; l++)
                     network.signalError[(int)NetworkLayer.Output][l] = CalculateSignalErrorsForOutputLayer(network, batch, l, errorExponent);
@@ -51,10 +50,61 @@ namespace MLPProgram.LearningAlgorithms
                     for (int n = 0; n < network.networkLayers[l]; n++)
                         network.signalError[l][n] = CalculateSignalErrorFroHiddenLayer(network, l, n);
                 CalculateBias(network, learnRate);
-            //}
-            });
+            }
         }
-
+        [GpuManaged]
+        public static void CalculateForAllRowOnGpu(MLPNew network, double errorExponent, double learnRate)
+        {
+            //Gpu.Default.Launch(() => { 
+            for (int batch = 0; batch < network.baseData._numberOfInputRow; batch++)
+            {
+                Program.ForwardPassOnGpu(network, batch);
+                CalculateSignalErrorsForOutputLayerOnGpu(network, errorExponent, batch);
+                CalculateSignalErrorFroHiddenLayerOnGpu(network);
+                CalculateBiasOnGpu(network, learnRate);
+            }
+            //}, new LaunchParam(256, 128));
+        }
+        [GpuManaged]
+        private static void CalculateSignalErrorFroHiddenLayerOnGpu(MLPNew network)
+        {
+            Gpu.Default.Launch(() =>
+            {
+                for (int l = network.numbersOfLayers - 2; l > 0; l--)
+                    for (int n = 0; n < network.networkLayers[l]; n++)
+                        network.signalError[l][n] = CalculateSignalErrorFroHiddenLayer(network, l, n);
+            }, new LaunchParam(256, 128));
+        }
+        [GpuManaged]
+        private static void CalculateSignalErrorsForOutputLayerOnGpu(MLPNew network, double errorExponent, int batch)
+        {
+            Gpu.Default.Launch(() =>
+            {
+                for (int l = 0; l < network.baseData._numberOfOutput; l++)
+                    network.signalError[(int)NetworkLayer.Output][l] = CalculateSignalErrorsForOutputLayer(network, batch, l, errorExponent);
+            }, new LaunchParam(256, 128));
+        }
+        [GpuManaged]
+        public static void CalculateBiasOnGpu(MLPNew network, double learnRate)
+        {
+            //var temp = new double[network.numbersOfLayers - 1][];
+            //for (int i = 0; i < network.numbersOfLayers - 1; i++)
+            //{
+            //    temp[i] = new double[network.networkLayers[i]];
+            //}
+            Gpu.Default.Launch(() =>
+              {
+                  for (int l = network.numbersOfLayers - 1; l > 0; l--)
+                      for (int n = 0; n < network.networkLayers[l]; n++)
+                      {
+                          network.weightDiff[l][n, network.networkLayers[l - 1]] = network.weightDiff[l][n, network.networkLayers[l - 1]] + (learnRate * network.signalError[l][n]);
+                          for (int w = 0; w < network.networkLayers[l - 1]; w++)
+                          {
+                              network.weightDiff[l][n, w] = network.weightDiff[l][n, w] + (learnRate * network.signalError[l][n] * network.output[l - 1][w]);
+                          }
+                      }
+              },new LaunchParam(256,128));
+        }
         public static void CalculateBias(MLPNew network, double learnRate)
         {
             for (int l = network.numbersOfLayers - 1; l > 0; l--)

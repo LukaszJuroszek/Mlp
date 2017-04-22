@@ -1,4 +1,5 @@
 ﻿using Alea;
+using Alea.CSharp;
 using Alea.Parallel;
 using MLPProgram.LearningAlgorithms;
 using MLPProgram.Networks;
@@ -28,7 +29,7 @@ namespace MLPProgram
                 //to memory
                 st.Reset();
                 st.Start();
-                learningAlgorithm.Train(numberOfEpochs: 50, batchSize: 30, learnRate: 0.05, momentum: 0.5);
+                learningAlgorithm.Train(numberOfEpochs:5, batchSize: 30, learnRate: 0.05, momentum: 0.5);
                 double testAccuracy = MLP.CountAccuracy(network);
                 Console.WriteLine(testAccuracy);
                 st.Stop();
@@ -39,7 +40,7 @@ namespace MLPProgram
             {
                 st.Reset();
                 st.Start();
-                trainingSystems[i].TrainByInsideNetwork(numberOfEpochs: 50, batchSize: 30, learnRate: 0.05, momentum: 0.5);
+                trainingSystems[i].TrainByInsideNetwork(numberOfEpochs: 5, batchSize: 30, learnRate: 0.05, momentum: 0.5);
                 double testAccuracy = MLPNew.CountAccuracy(trainingSystems[i]._network);
                 Console.WriteLine($"{testAccuracy:N9}");
                 st.Stop();
@@ -78,26 +79,6 @@ namespace MLPProgram
                     }
                     sum += network.weights[l][n][network.output[l - 1].Length]; //bias
                     network.output[l][n] = (l == network.output.Length - 1 && !network.classification) ? sum : GradientLearning.TransferFunction(network, sum);
-                }
-            }
-        }
-        public static void ForwardPass(double[][,] weights, int[] networkLayers, double[][] output, double[,] _trainingDataSet, int numbersOfLayers, bool classification, bool isSigmoidFunction, int indexOftrainingDataSet, int lok = -1)
-        {
-            for (int i = 0; i < networkLayers[0]; i++)
-            {
-                output[(int)NetworkLayer.Input][i] = _trainingDataSet[indexOftrainingDataSet, i];
-            }
-            for (int l = 1; l < numbersOfLayers; l++)
-            {
-                for (int n = 0; n < output[l].GetLength(0); n++)
-                {
-                    double sum = 0;
-                    for (int w = 0; w < output[l - 1].GetLength(0); w++)
-                    {
-                        sum += output[l - 1][w] * weights[l][n, w];
-                    }
-                    sum += weights[l][n, output[l - 1].Length]; //bias
-                    output[l][n] = (l == output[l].Length - 1 && !classification) ? sum : GradientLearning.TransferFunction(isSigmoidFunction, sum);
                 }
             }
         }
@@ -140,6 +121,30 @@ namespace MLPProgram
                     network.output[l][n] = (l == network.output[l].Length - 1 && !(network.classification == 1)) ? sum : GradientLearning.TransferFunction(network, sum);
                 }
             }
+        }
+        [GpuManaged]
+        public static void ForwardPassOnGpu(MLPNew network, int indexOftrainingDataSet, int lok = -1)
+        {
+            Gpu.Default.Launch(() =>
+            {
+            for (int i = 0; i < network.networkLayers[0]; i++)
+            {
+                network.output[(int)NetworkLayer.Input][i] = network.baseData._trainingDataSet[indexOftrainingDataSet, i];
+            }
+                for (int l = 1; l < network.numbersOfLayers; l++)
+                {
+                    for (int n = 0; n < network.output[l].GetLength(0); n++)
+                    {
+                        double sum = 0;
+                        for (int w = 0; w < network.output[l - 1].GetLength(0); w++)
+                        {
+                            sum += network.output[l - 1][w] * network.weights[l][n, w];
+                        }
+                        sum += network.weights[l][n, network.output[l - 1].Length]; //bias
+                        network.output[l][n] = (l == network.output[l].Length - 1 && !(network.classification == 1)) ? sum : GradientLearning.TransferFunction(network, sum);
+                    }
+                }
+            }, new LaunchParam(256, 128));
         }
         public static T[][] ToJagged2DArray<T>(this T[,] source)
         {

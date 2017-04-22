@@ -53,7 +53,7 @@ namespace AleaClasTest
         [GpuParam] public SampleStruct _field;
         static void Main(string[] args)
         {
-            Func<int,double> op = (x) => 1;
+            Func<int, double> op = (x) => 1;
             var testOfBools = new BoolTest[2];
             var testOfBytes = new ByteTest[2];
             testOfBools[0] = new BoolTest(true);
@@ -66,10 +66,6 @@ namespace AleaClasTest
             var str = new Program { _field = new SampleStruct(size) };
             var gpu = Gpu.Default;
             //throws Excp var allocatedBool = gpu.Allocate(testOfBools);
-            var allocatedbytes3 = gpu.AllocateUnified(testOfBytes);
-            var allocatedbytes2= gpu.AllocatePinned(testOfBytes);
-            var allocatedbytes1 = gpu.AllocateDevice(testOfBytes);
-            var allocatedbytes = gpu.Allocate(testOfBytes);
             var st = new Stopwatch();
             st.Start();
             var testEnu = new Dictionary<TestEnum, double[,]>
@@ -102,6 +98,8 @@ namespace AleaClasTest
             teste[0] = str._field.arg1;
             teste[1] = str._field.arg2;
             teste[2] = str._field.arg2;
+
+
             //Gpu.Copy(results, temp); //throws error 
 
         }

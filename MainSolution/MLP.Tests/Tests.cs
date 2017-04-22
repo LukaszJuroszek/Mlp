@@ -17,10 +17,9 @@ namespace MLPTests
         private readonly double _etaMinus = 0.5;
         private readonly double _minDelta = 0.00001;
         private readonly double _maxDelta = 10;
-        private readonly ITestOutputHelper _outputHelper;
         private readonly int _numberOfEpochos = 50;
         private readonly int _accu = 7;
-
+        private readonly ITestOutputHelper _outputHelper;
         public Tests(ITestOutputHelper testOutputHelper)
         {
             _outputHelper = testOutputHelper;
@@ -110,8 +109,7 @@ namespace MLPTests
             {
                 Program.ForwardPass(net, v);
                 Program.ForwardPass(netNew, v);
-                Program.ForwardPass(
-                    netNewSecond.weights,
+                Program.ForwardPass(netNewSecond.weights,
                     netNewSecond.networkLayers,
                     netNewSecond.output,
                     netNewSecond.baseData._trainingDataSet,
@@ -151,6 +149,32 @@ namespace MLPTests
             IsTwoMLPNetworksAreEq(net, netNew);
         }
         [Fact]
+        public void IsTrainingMethodWorkInMLPsOldStyleWithGpu()
+        {
+            var fileParser = new FileParser(_filePath, GradientLearning.SigmoidTransferFunction);
+            var fileParserNew = new FIleParserNew(_filePath, GradientLearning.SigmoidTransferFunction);
+            var data = new BaseDataHolder(fileParser);
+            var dataNew = new DataHolder(fileParserNew);
+            var net = new MLP(data);
+            var netNew = new MLPNew(dataNew, net.weights);
+            AssertThatCreateWeigthZeroAndAsignDeltaValueWorkInTheSameWayInMLPs(net, netNew);
+            for (int epoch = 0; epoch < _numberOfEpochos; epoch++)
+            {
+                ActThatMakeZeroGradientWorkingInMLPs(net, netNew);
+                for (int batch = 0; batch < net.baseData._numberOFVectors; batch++)
+                {
+                    ActForwardPassWorkingInMLPs(net, netNew, batch);
+                    AssertSignalErrosInOutputLayer(net, netNew, batch);
+                    AssertSignalErrorsInHiddenLayer(net, netNew);
+                    ActBiasOnGpu(net, netNew);
+                }
+                ActUpgradeWeithsWorkingInMLPs(net, netNew);
+                ActThatMakeZeroGradientWorkingInMLPs(net, netNew);
+            }
+            AssertOfAccuracy(net, netNew);
+            IsTwoMLPNetworksAreEq(net, netNew);
+        }
+        [Fact]
         public void IsTrainingMethodWorkInMLPsNewStyle()
         {
             var fileParser = new FileParser(_filePath, GradientLearning.SigmoidTransferFunction);
@@ -163,7 +187,7 @@ namespace MLPTests
             for (int epoch = 0; epoch < _numberOfEpochos; epoch++)
             {
                 ActThatMakeZeroGradientWorkingInMLPs(net, netNew);
-                AssertCalculateForRowsAndVectorWorkInMLPs(net, netNew);
+                AssertCalculateForRowsAndVectorWorkInMLPsWithGpu(net, netNew);
                 ActUpgradeWeithsWorkingInMLPs(net, netNew);
                 ActThatMakeZeroGradientWorkingInMLPs(net, netNew);
                 IsTwoMLPNetworksAreEq(net, netNew);
@@ -171,14 +195,12 @@ namespace MLPTests
             AssertOfAccuracy(net, netNew);
             IsTwoMLPNetworksAreEq(net, netNew);
         }
-
-        private void AssertCalculateForRowsAndVectorWorkInMLPs(MLP net, MLPNew netNew)
+        private void AssertCalculateForRowsAndVectorWorkInMLPsWithGpu(MLP net, MLPNew netNew)
         {
             GradientLearning.CalculateForAllVectors(net, _errorExponent, _learnRate);
-            TrainingSystem.CalculateForAllRow(netNew, _errorExponent, _learnRate);
+            TrainingSystem.CalculateForAllRowOnGpu(netNew, _errorExponent, _learnRate);
             IsTwoMLPNetworksAreEq(net, netNew);
         }
-
         public void AssertOfAccuracy(MLP net, MLPNew netNew)
         {
 
@@ -194,23 +216,23 @@ namespace MLPTests
         }
         private void ActForwardPassWorkingInMLPs(MLP net, MLPNew netNew, int batch)
         {
+            Program.ForwardPass(net, batch);//GradientLearning
             Program.ForwardPass(netNew, batch);//TrainingSystem
-            Program.ForwardPass(net, batch);//GradientLearning  
-
         }
         private void ActThatMakeZeroGradientWorkingInMLPs(MLP net, MLPNew netNew)
         {
-            TrainingSystem.MakeGradientZero(netNew);
             GradientLearning.MakeGradientZero(net);
+            TrainingSystem.MakeGradientZero(netNew);
         }
         private void ActBias(MLP net, MLPNew netNew)
         {
-            for (int l = netNew.numbersOfLayers - 1; l > 0; l--)
-                for (int n = 0; n < netNew.networkLayers[l]; n++)
-                {
-                    GradientLearning.CalculateBias(net, _learnRate, l, n);
-                }
+            GradientLearning.CalculateBias(net, _learnRate);
             TrainingSystem.CalculateBias(netNew, _learnRate);
+        }
+        private void ActBiasOnGpu(MLP net, MLPNew netNew)
+        {
+            GradientLearning.CalculateBias(net, _learnRate);
+            TrainingSystem.CalculateBiasOnGpu(netNew, _learnRate);
         }
         private void AssertThatCreateWeigthZeroAndAsignDeltaValueWorkInTheSameWayInMLPs(MLP net, MLPNew netNew)
         {
