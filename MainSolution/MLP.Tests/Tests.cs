@@ -142,15 +142,18 @@ namespace MLPTests
                 {
                     ActForwardPassWorkingInMLPs(net, netNew, netForGpu, batch);
                     AssertSignalErrosInOutputLayer(net, netNew, netForGpu, batch);
-                    AssertSignalErrorsInHiddenLayer(net, netNew);
-                    ActBiases(net, netNew);
+                    AssertSignalErrorsInHiddenLayer(net, netNew, netForGpu);
+                    ActBiases(net, netNew, netForGpu);
                 }
-                ActUpgradeWeithsWorkingInMLPs(net, netNew);
+                ActUpgradeWeithsWorkingInMLPs(net, netNew, netForGpu);
                 ActThatMakeZeroGradientWorkingInMLPs(net, netNew, netForGpu);
                 IsTwoMLPNetworksAreEq(net, netNew);
+                IsTwoMLPNetworksAreEq(net, netForGpu);
             }
-            AssertOfAccuracy(net, netNew);
+            AssertOfAccuracy(net, netNew, netForGpu);
             IsTwoMLPNetworksAreEq(net, netNew);
+            IsTwoMLPNetworksAreEq(net, netForGpu);
+
         }
         [Fact]
         public void IsTrainingMethodWorkInMLPsNewStyle()
@@ -161,40 +164,42 @@ namespace MLPTests
             var dataNew = new DataHolder(fileParserNew);
             var net = new MLP(data);
             var netNew = new MLPNew(dataNew, net.weights);
-            AssertThatCreateWeigthZeroAndAsignDeltaValueWorkInTheSameWayInMLPs(net, netNew);
+            var netForGpu = new MLPNew(dataNew, net.weights);
+
+            AssertThatCreateWeigthZeroAndAsignDeltaValueWorkInTheSameWayInMLPs(net, netNew, netForGpu);
             for (int epoch = 0; epoch < _numberOfEpochos; epoch++)
             {
-                ActThatMakeZeroGradientWorkingInMLPs(net, netNew);
-                ActCalculateForRowsAndVectorWorkInMLPs(net, netNew);
-                ActUpgradeWeithsWorkingInMLPs(net, netNew);
-                ActThatMakeZeroGradientWorkingInMLPs(net, netNew);
+                ActThatMakeZeroGradientWorkingInMLPs(net, netNew, netForGpu);
+                ActCalculateForRowsAndVectorWorkInMLPs(net, netNew, netForGpu);
+                ActUpgradeWeithsWorkingInMLPs(net, netNew, netForGpu);
+                ActThatMakeZeroGradientWorkingInMLPs(net, netNew, netForGpu);
                 IsTwoMLPNetworksAreEq(net, netNew);
+                IsTwoMLPNetworksAreEq(net, netForGpu);
             }
-            AssertOfAccuracy(net, netNew);
+            AssertOfAccuracy(net, netNew, netForGpu);
             IsTwoMLPNetworksAreEq(net, netNew);
+            IsTwoMLPNetworksAreEq(net, netForGpu);
         }
-        private void AssertCalculateForRowsAndVectorWorkInMLPs(MLP net, MLPNew netNew)
+        private void ActCalculateForRowsAndVectorWorkInMLPs(MLP net, MLPNew netNew, MLPNew netForGpu)
         {
             GradientLearning.CalculateForAllVectors(net, _errorExponent, _learnRate);
             TrainingSystem.CalculateForAllRow(netNew, _errorExponent, _learnRate);
+            TrainingSystemGpu.CalculateForAllRowGpu(netForGpu, _errorExponent, _learnRate);
         }
-        private void ActCalculateForRowsAndVectorWorkInMLPs(MLP net, MLPNew netNew)
+        public void AssertOfAccuracy(MLP net, MLPNew netNew, MLPNew netForGpu)
         {
-            GradientLearning.CalculateForAllVectors(net, _errorExponent, _learnRate);
-            TrainingSystem.CalculateForAllRow(netNew, _errorExponent, _learnRate);
-        }
-        public void AssertOfAccuracy(MLP net, MLPNew netNew)
-        {
-
             double result = MLP.CountAccuracy(net);
             double resultNew = MLPNew.CountAccuracy(netNew);
+            double resultForGpu = MLPNew.CountAccuracy(netForGpu);
             Assert.Equal(result, resultNew, _accu);
+            Assert.Equal(result, resultForGpu, _accu);
 
         }
-        private void ActUpgradeWeithsWorkingInMLPs(MLP net, MLPNew netNew)
+        private void ActUpgradeWeithsWorkingInMLPs(MLP net, MLPNew netNew, MLPNew netForGpu)
         {
             GradientLearning.UpdateWeightsRprop(net, _learnRate, _momentum, _etaPlus, _etaMinus, _minDelta, _maxDelta);
             TrainingSystem.UpdateWeightsRprop(netNew, _learnRate, _momentum, _etaPlus, _etaMinus, _minDelta, _maxDelta);
+            TrainingSystemGpu.UpdateWeightsRpropGpu(netForGpu, _learnRate, _momentum, _etaPlus, _etaMinus, _minDelta, _maxDelta);
         }
         private void ActForwardPassWorkingInMLPs(MLP net, MLPNew netNew, MLPNew netForGpu, int batch)
         {
@@ -208,10 +213,11 @@ namespace MLPTests
             TrainingSystem.MakeGradientZero(netNew);
             TrainingSystemGpu.MakeGradientZeroGpu(netForGpu);
         }
-        private void ActBiases(MLP net, MLPNew netNew)
+        private void ActBiases(MLP net, MLPNew netNew, MLPNew netForGpu)
         {
             GradientLearning.CalculateBias(net, _learnRate);
             TrainingSystem.CalculateBias(netNew, _learnRate);
+            TrainingSystemGpu.CalculateBiasOnGpu(netForGpu, _learnRate);
         }
         private void AssertThatCreateWeigthZeroAndAsignDeltaValueWorkInTheSameWayInMLPs(MLP net, MLPNew netNew, MLPNew netForGpu)
         {
@@ -228,16 +234,19 @@ namespace MLPTests
                         Assert.Equal(net.delta[l][n][w], netForGpu.delta[l][n, w]);
                     }
         }
-        private void AssertSignalErrorsInHiddenLayer(MLP net, MLPNew netNew)
+        private void AssertSignalErrorsInHiddenLayer(MLP net, MLPNew netNew, MLPNew netForGpu)
         {
             for (int l = net.numbersOfLayers - 2; l > 0; l--)
                 for (int n = 0; n < net.layer[l]; n++)
                 {
                     double expected = GradientLearning.CalculateSignalErrorFroHiddenLayer(net, l, n);
                     double actual = TrainingSystem.CalculateSignalErrorFroHiddenLayer(netNew, l, n);
-                    Assert.Equal(expected, actual, _accu);
+                    double actualGpu = TrainingSystemGpu.CalculateSignalErrorFroHiddenLayerGpu(netForGpu, l, n);
                     net.signalError[l][n] = expected;
                     netNew.signalError[l][n] = actual;
+                    netForGpu.signalError[l][n] = actualGpu;
+                    Assert.Equal(expected, actual, _accu);
+                    Assert.Equal(expected, actualGpu, _accu);
                 }
         }
         private void AssertSignalErrosInOutputLayer(MLP net, MLPNew netNew, MLPNew netForGpu, int batch)

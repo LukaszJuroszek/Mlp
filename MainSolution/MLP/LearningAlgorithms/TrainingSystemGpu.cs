@@ -9,7 +9,7 @@ namespace MLPProgram.LearningAlgorithms
     {
         public double _etaPlus, _etaMinus, _minDelta, _maxDelta, _errorExponent;
         public MLPNew _network;
-        private static LaunchParam _lp;
+        private static LaunchParam _lp = new LaunchParam(128, 128);
         public TrainingSystemGpu(MLPNew network)
         {
             _etaPlus = 1.2;
@@ -18,8 +18,6 @@ namespace MLPProgram.LearningAlgorithms
             _maxDelta = 10;
             _errorExponent = 2.0;
             _network = network;
-            _lp = new LaunchParam(256, 128);
-
         }
         public MLPNew TrainByInsideNetworkGPU(int numberOfEpochs = 30, int batchSize = 30, double learnRate = 0.05, double momentum = 0.5)
         {
@@ -32,10 +30,10 @@ namespace MLPProgram.LearningAlgorithms
             var maxDelta = _maxDelta;
             for (int epoch = 0; epoch < numberOfEpochs; epoch++)
             {
-                MakeGradientZero(net);
+                MakeGradientZeroGpu(net);
                 CalculateForAllRowGpu(net, errorExponent, learnRate);
-                UpdateWeightsRprop(net, learnRate, momentum, etaPlus, etaMinus, minDelta, maxDelta);
-                MakeGradientZero(net);
+                UpdateWeightsRpropGpu(net, learnRate, momentum, etaPlus, etaMinus, minDelta, maxDelta);
+                MakeGradientZeroGpu(net);
             }
             _network = net;
             return _network;
@@ -52,7 +50,7 @@ namespace MLPProgram.LearningAlgorithms
                     CalculateSignalErrorFroHiddenLayerGpu(network);
                     CalculateBiasOnGpu(network, learnRate);
                 }
-            },_lp);
+            }, _lp);
         }
         //[GpuManaged]
         private static void CalculateSignalErrorFroHiddenLayerGpu(MLPNew network)
@@ -61,7 +59,7 @@ namespace MLPProgram.LearningAlgorithms
             //{
             for (int l = network.numbersOfLayers - 2; l > 0; l--)
                 for (int n = 0; n < network.networkLayers[l]; n++)
-                    network.signalError[l][n] = CalculateSignalErrorFroHiddenLayer(network, l, n);
+                    network.signalError[l][n] = CalculateSignalErrorFroHiddenLayerGpu(network, l, n);
             //}, new LaunchParam(256, 128));
         }
         //[GpuManaged]
@@ -94,7 +92,7 @@ namespace MLPProgram.LearningAlgorithms
                 }
             //},new LaunchParam(256,128));
         }
-        public static double CalculateSignalErrorFroHiddenLayer(MLPNew network, int l, int n)
+        public static double CalculateSignalErrorFroHiddenLayerGpu(MLPNew network, int l, int n)
         {
             return DerivativeFunction(network.classification, network.output[l][n]) * SumSignalErrorForHiddenLayer(network, l, n);
         }
@@ -133,7 +131,7 @@ namespace MLPProgram.LearningAlgorithms
                     for (int w = 0; w <= network.networkLayers[l - 1]; w++)
                         network.weightDiff[l][n, w] = 0;
         }
-        public static void UpdateWeightsRprop(MLPNew network,
+        public static void UpdateWeightsRpropGpu(MLPNew network,
            double learnRate,
            double momentum,
            double etaPlus,
