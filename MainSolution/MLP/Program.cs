@@ -122,11 +122,11 @@ namespace MLPProgram
                 }
             }
         }
-        [GpuManaged]
-        public static void ForwardPassOnGpu(MLPNew network, int indexOftrainingDataSet, int lok = -1)
+        //[GpuManaged]
+        public static void ForwardPassGpu(MLPNew network, int indexOftrainingDataSet, int lok = -1)
         {
-            Gpu.Default.Launch(() =>
-            {
+            //Gpu.Default.Launch(() =>
+            //{
             for (int i = 0; i < network.networkLayers[0]; i++)
             {
                 network.output[(int)NetworkLayer.Input][i] = network.baseData._trainingDataSet[indexOftrainingDataSet, i];
@@ -144,7 +144,7 @@ namespace MLPProgram
                         network.output[l][n] = (l == network.output[l].Length - 1 && !(network.classification == 1)) ? sum : GradientLearning.TransferFunction(network, sum);
                     }
                 }
-            }, new LaunchParam(256, 128));
+            //}, new LaunchParam(256, 128));
         }
         public static T[][] ToJagged2DArray<T>(this T[,] source)
         {

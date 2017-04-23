@@ -60,6 +60,7 @@
     <Compile Include="FIleParserNew.cs" />
     <Compile Include="LearningAlgorithms\GradientLearning.cs" />
     <Compile Include="LearningAlgorithms\TrainingSystem.cs" />
+    <Compile Include="LearningAlgorithms\TrainingSystemGpu.cs" />
     <Compile Include="Networks\BaseDataHolder.cs" />
     <Compile Include="Networks\MLP.cs" />
     <Compile Include="Networks\MLPNew.cs" />
